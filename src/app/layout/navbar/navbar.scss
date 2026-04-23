@@ -1,0 +1,96 @@
+@use '../../../styles/variables' as *;
+
+.main-header {
+  background-color: $brand-black;
+  height: 80px;
+  border-bottom: 1px solid rgba($brand-gray, 0.2);
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.nav-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  
+  img {
+    height: 55px; // Tamaño ideal para que el león se vea imponente pero no sature
+    width: auto;
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+}
+
+.nav-links ul {
+  list-style: none;
+  display: flex;
+  gap: 40px;
+  margin: 0;
+  padding: 0;
+
+  a {
+    color: $brand-white;
+    text-decoration: none;
+    font-family: $font-main; // Open Sans
+    font-weight: 600; // Semi-bold para legibilidad
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: $brand-red; // El toque sutil de la marca
+    }
+  }
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  .btn-login {
+    color: $brand-white;
+    text-decoration: none;
+    font-family: $font-h2; // Archivo Black para darle peso
+    font-size: 14px;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: $brand-gray;
+    }
+  }
+
+  .btn-cta {
+    background-color: $brand-red;
+    color: $brand-white;
+    padding: 12px 28px;
+    text-decoration: none;
+    font-family: $font-h2; // Archivo Black
+    font-size: 14px;
+    text-transform: uppercase;
+    border: 2px solid $brand-red;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: transparent;
+      color: $brand-red;
+    }
+  }
+}

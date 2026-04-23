@@ -1,0 +1,27 @@
+@use 'variables' as *;
+
+@font-face {
+  font-family: 'Archicoco';
+  // Angular sirve la carpeta "public" directamente en la raíz ("/")
+  src: url('/fonts/archicoco.woff2') format('woff2'),
+       url('/fonts/archicoco.ttf') format('truetype'); 
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; 
+}
+
+h1 {
+  font-family: $font-h1;
+  text-transform: uppercase;
+  color: $brand-white;
+}
+
+p {
+  font-family: $font-main;
+  line-height: 1.6;
+  font-weight: 400; // Mantenemos el peso regular para lectura
+}
+
+.text-bold {
+  font-weight: 800; // Aquí aplicamos el "Extra Bold" del manual solo donde sea necesario
+}

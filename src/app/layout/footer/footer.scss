@@ -1,0 +1,123 @@
+@use '../../../styles/variables' as *;
+
+.main-footer {
+  background-color: $brand-black;
+  border-top: 1px solid rgba($brand-gray, 0.2); // Línea sutil superior
+  padding: 60px 0;
+  width: 100%;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+// ==========================================
+// LADO IZQUIERDO: INFORMACIÓN
+// ==========================================
+.footer-info {
+  color: $brand-white;
+  font-family: $font-main;
+  font-size: 14px;
+  line-height: 1.6;
+
+  .footer-brand {
+    font-family: $font-h2; // Tipografía pesada
+    font-size: 20px;
+    font-style: italic; // El efecto de tu imagen
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    margin-top: 0;
+  }
+
+  p {
+    margin: 0 0 16px 0;
+    color: $brand-white;
+  }
+
+  .footer-hours {
+    margin-bottom: 0;
+  }
+}
+
+// ==========================================
+// LADO DERECHO: REDES Y LEGALES
+// ==========================================
+.footer-social-legal {
+  display: flex;
+  flex-direction: column;
+  align-items: center; // Centrado como en la foto
+  gap: 32px;
+}
+
+.social-icons {
+  display: flex;
+  gap: 16px;
+
+  a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 44px;
+    height: 44px;
+    border: 2px solid $brand-white; // Círculo blanco
+    border-radius: 50%;
+    color: $brand-white;
+    transition: all 0.3s ease;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    // Efecto Hover de Lujo
+    &:hover {
+      border-color: $brand-red;
+      color: $brand-red;
+      transform: translateY(-3px); // Pequeño salto
+    }
+  }
+}
+
+.legal-links {
+  display: flex;
+  gap: 24px;
+
+  a {
+    font-family: $font-h2;
+    font-size: 14px;
+    font-style: italic;
+    color: $brand-white;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: $brand-red;
+    }
+  }
+}
+
+// ==========================================
+// RESPONSIVIDAD (MÓVILES)
+// ==========================================
+@media (max-width: 768px) {
+  .footer-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 48px;
+  }
+
+  .footer-social-legal {
+    align-items: center;
+  }
+
+  .legal-links {
+    flex-direction: column; // Apilamos los links legales en móvil
+    gap: 16px;
+  }
+}
