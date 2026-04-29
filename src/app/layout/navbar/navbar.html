@@ -1,22 +1,39 @@
 <header class="main-header">
   <div class="nav-container">
     
-    <a routerLink="/" class="brand-logo">
+    <a routerLink="/" class="brand-logo" (click)="closeMenu()">
       <img src="/assets/leon-isotipo.svg" alt="Pablo Herrera - Isotipo">
     </a>
 
-    <nav class="nav-links">
-      <ul>
-        <li><a routerLink="/servicios">Servicios</a></li>
-        <li><a routerLink="/acerca">Acerca de</a></li>
-        <li><a routerLink="/blog">Blog</a></li>
-        <li><a routerLink="/faqs">FAQS</a></li>
-      </ul>
-    </nav>
+    <button class="menu-toggle" (click)="toggleMenu()" aria-label="Alternar menú">
+      @if (!isMenuOpen) {
+        <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      } @else {
+        <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      }
+    </button>
 
-    <div class="nav-actions">
-      <a routerLink="/app/dashboard" class="btn-login">Iniciar Sesión</a>
-      <a href="#contacto" class="btn-cta">Agenda tu Cita</a>
+    <div class="nav-wrapper" [class.open]="isMenuOpen">
+      <nav class="nav-links">
+        <ul>
+          <li><a routerLink="/app/dashboard" (click)="closeMenu()">Iniciar Sesión</a></li>
+          <li><a routerLink="/servicios" (click)="closeMenu()">Servicios</a></li>
+          <li><a routerLink="/acerca" (click)="closeMenu()">Acerca de</a></li>
+          <li><a routerLink="/blog" (click)="closeMenu()">Blog</a></li>
+          <li><a routerLink="/faqs" (click)="closeMenu()">FAQS</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="#contacto" class="btn-cta" (click)="closeMenu()">Agenda tu Cita</a>
+      </div>
     </div>
 
   </div>

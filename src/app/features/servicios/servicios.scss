@@ -1,0 +1,519 @@
+@use '../../../styles/variables' as *;
+
+// ==========================================
+// CONFIGURACIÓN GLOBAL (Evitar desbordamientos)
+// ==========================================
+:host {
+  display: block;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+// ==========================================
+// 1. SERVICIOS HERO: Stacked Cinemático
+// ==========================================
+.services-hero-stacked {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: $brand-black;
+  box-sizing: border-box;
+  margin-top: 0; 
+}
+
+.hero-image-container {
+  width: 100%;
+  height: 75vh; 
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%; 
+    filter: contrast(1.1) brightness(0.85); 
+    -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+  }
+}
+
+.hero-text-block {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  margin-top: -220px; 
+  padding: 0 24px 100px 24px;
+  position: relative;
+  z-index: 10; 
+  box-sizing: border-box;
+}
+
+.text-content-wrapper {
+  max-width: 800px; 
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.main-title {
+  font-family: $font-h1;
+  font-size: clamp(36px, 6vw, 68px); 
+  color: $brand-white;
+  text-transform: uppercase;
+  line-height: 1.05;
+  margin-bottom: 24px;
+  text-shadow: 0px 4px 24px rgba(0,0,0,1);
+  overflow-wrap: break-word; 
+  word-wrap: break-word;
+  width: 100%;
+  
+  .text-red { color: $brand-red; }
+}
+
+.subtitle {
+  font-family: $font-main;
+  // 🛑 FIX LECTURA: Aumentamos a 18px y damos más opacidad al blanco para mayor contraste
+  font-size: 18px; 
+  color: rgba($brand-white, 0.85); 
+  line-height: 1.8;
+  margin-bottom: 40px;
+  max-width: 800px;
+  width: 100%;
+  text-shadow: 0px 2px 10px rgba(0,0,0,0.8); 
+}
+
+.header-action {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+// Botón estándar (Hero)
+.btn-reservar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background-color: $brand-black;
+  color: $brand-white;
+  padding: 16px 40px;
+  font-family: $font-h2;
+  font-size: 18px;
+  text-decoration: none; // Evita el subrayado morado
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border: 1px solid $brand-white;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  max-width: 100%;
+
+  .chevron-icon {
+    width: 24px;
+    height: 24px;
+    color: $brand-red;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background-color: $brand-white;
+    color: $brand-black;
+    border-color: $brand-black;
+    .chevron-icon { transform: translateX(5px); }
+  }
+}
+
+// ==========================================
+// 2. GRID DE PILARES 
+// ==========================================
+.services-grid-section {
+  background-color: $brand-black;
+  padding: 40px 24px 140px 24px;
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.grid-container {
+  max-width: 1200px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 48px; 
+}
+
+.stacked-service-card {
+  display: flex;
+  flex-direction: column; 
+  background-color: $brand-black; 
+  border: 1px solid rgba($brand-gray, 0.08);
+  box-sizing: border-box;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border-radius: 12px; 
+  overflow: hidden; 
+  cursor: pointer;
+  z-index: 1;
+
+  &:hover {
+    transform: translateY(-8px); 
+    border-color: rgba($brand-white, 0.15);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+    .card-visual img { transform: scale(1.05); }
+    .watermark-number {
+      opacity: 0.08; 
+      color: $brand-red;
+    }
+  }
+}
+
+.card-visual {
+  width: 100%;
+  height: 340px; 
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%; 
+    filter: contrast(1.1) brightness(0.7); 
+    transition: transform 0.6s ease;
+    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+  }
+}
+
+.card-text-block {
+  width: 100%;
+  padding: 0 40px 40px 40px; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  margin-top: -40px; 
+  box-sizing: border-box;
+}
+
+.watermark-number {
+  position: absolute;
+  top: -40px; 
+  right: -10px;
+  font-family: 'Georgia', serif;
+  font-size: 160px; 
+  font-style: italic;
+  font-weight: 900;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba($brand-white, 0.06);
+  opacity: 0.04; 
+  z-index: -1;
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px; 
+  margin-bottom: 24px;
+  width: 100%;
+  justify-content: center;
+}
+
+.inbody-icon {
+  width: 22px; 
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.card-title {
+  font-family: $font-h1;
+  font-size: 20px; 
+  color: $brand-white;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0; 
+}
+
+.card-body {
+  font-family: $font-main;
+  // 🛑 FIX LECTURA: Aumentamos a 16px y color más blanco
+  font-size: 16px;
+  color: rgba($brand-white, 0.85);
+  line-height: 1.8;
+  margin: 0;
+  max-width: 100%;
+}
+
+// ==========================================
+// 3. SECCIÓN PREMIUM (Experiencia In-House)
+// ==========================================
+.premium-feature-section {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-height: 80vh;
+  background-color: $brand-black;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-top: 1px solid rgba($brand-gray, 0.05); 
+}
+
+.layout-text-left .split-image img,
+.layout-text-left .split-image .cinematic-overlay {
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 25%);
+  mask-image: linear-gradient(to left, transparent 0%, black 25%);
+}
+
+.split-text {
+  flex: 1;
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 10%;
+  box-sizing: border-box;
+  z-index: 2;
+
+  .section-heading {
+    font-family: $font-h1;
+    font-size: clamp(32px, 4.5vw, 56px); 
+    color: $brand-white;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    .text-red { color: $brand-red; }
+  }
+
+  .section-body {
+    font-family: $font-main;
+    // 🛑 FIX LECTURA: 18px de tamaño y color claro
+    font-size: 18px;
+    color: rgba($brand-white, 0.85);
+    line-height: 1.8;
+    margin-bottom: 32px;
+    max-width: 550px; 
+  }
+
+  .slogan {
+    font-family: $font-h2;
+    font-size: 16px; // Un poco más grande
+    color: $brand-white;
+    text-transform: uppercase;
+    letter-spacing: 4px; 
+    margin: 16px 0 40px 0;
+    opacity: 0.8;
+  }
+}
+
+// 🛑 NUEVO: Botón Blindado (Rojo Sólido, Nunca Morado) 🛑
+.btn-primary-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background-color: $brand-red;
+  color: $brand-white !important; // Fuerza el color blanco sobre defaults
+  padding: 18px 48px;
+  font-family: $font-h2;
+  font-size: 18px;
+  text-decoration: none !important; // Mata la línea morada
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border: none;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  max-width: 100%;
+  box-shadow: 0 10px 20px rgba($brand-red, 0.3);
+
+  .chevron-icon {
+    color: $brand-white; // Chevron blanco para contrastar
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background-color: darken(#FF0000, 10%); // Se oscurece un poco en hover
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba($brand-red, 0.5);
+    .chevron-icon { transform: translateX(5px); }
+  }
+}
+
+// --- El diseño premium del Video InBody ---
+.video-teaser {
+  flex: 1;
+  width: 50%;
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: contrast(1.1) brightness(0.5); // Oscurecido para legibilidad
+    transition: transform 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+
+  .cinematic-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 80%);
+    z-index: 1;
+  }
+
+  // 💎 NUEVO: Panel de Cristal Esmerilado (Glassmorphism)
+  .video-glass-panel {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    // Efecto de cristal
+    background: rgba(10, 10, 10, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 48px 40px;
+    max-width: 80%;
+    transition: all 0.4s ease;
+  }
+
+  .video-title {
+    font-family: $font-h1;
+    font-size: 32px;
+    color: $brand-white;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+
+  .video-subtitle {
+    font-family: $font-main;
+    font-size: 16px;
+    font-style: italic;
+    color: rgba($brand-white, 0.7);
+    margin-bottom: 40px;
+  }
+
+  // 🔴 Botón de Play con Latido
+  .play-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: $brand-red;
+    border: none;
+    color: $brand-white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s ease;
+    box-shadow: 0 0 20px rgba($brand-red, 0.5);
+    
+    svg {
+      width: 32px;
+      height: 32px;
+      margin-left: 4px; 
+    }
+  }
+
+  .pulse-effect {
+    animation: pulse-red 2s infinite;
+  }
+
+  &:hover {
+    img {
+      transform: scale(1.05); 
+    }
+    .video-glass-panel {
+      background: rgba(10, 10, 10, 0.75); // Se oscurece el cristal
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+    .play-btn {
+      background-color: $brand-white;
+      color: $brand-red;
+      transform: scale(1.1);
+      animation: none; 
+      box-shadow: 0 10px 40px rgba($brand-white, 0.3);
+    }
+  }
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba($brand-red, 0.7); }
+  70% { box-shadow: 0 0 0 20px rgba($brand-red, 0); }
+  100% { box-shadow: 0 0 0 0 rgba($brand-red, 0); }
+}
+
+// ==========================================
+// RESPONSIVIDAD (Celulares)
+// ==========================================
+@media (max-width: 900px) {
+  .hero-image-container { height: 50vh; }
+  .hero-text-block {
+    margin-top: -60px;
+    padding: 0 16px 60px 16px;
+  }
+  
+  .services-grid-section { padding: 20px 24px 80px 24px; }
+  .grid-container { grid-template-columns: 1fr; }
+  .card-visual { height: 220px; }
+  .card-text-block { padding: 0 24px 32px 24px; }
+
+  .premium-feature-section {
+    flex-direction: column !important;
+    min-height: auto;
+  }
+  .split-text, .video-teaser { width: 100%; }
+
+  .video-teaser {
+    order: 1;
+    min-height: 50vh;
+    padding: 60px 20px;
+
+    img, .cinematic-overlay {
+      -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%) !important;
+      mask-image: linear-gradient(to bottom, black 60%, transparent 100%) !important;
+    }
+
+    .video-glass-panel {
+      padding: 32px 20px;
+      max-width: 95%;
+    }
+    .video-title { font-size: 24px; }
+  }
+
+  .split-text {
+    order: 2;
+    padding: 40px 24px 80px 24px;
+  }
+  
+  .btn-reservar, .btn-primary-solid {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 16px;
+  }
+}

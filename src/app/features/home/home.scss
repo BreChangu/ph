@@ -1,47 +1,149 @@
 @use '../../../styles/variables' as *;
 
 // ==========================================
-// 1. SECCIÓN HERO (Principal)
+// ESTRUCTURA BASE 50/50 (ESCRITORIO & TABLET)
 // ==========================================
-.hero-split {
+.split-section {
   display: flex;
-  min-height: calc(100vh - 80px);
+  flex-direction: row; // Flujo normal de izquierda a derecha
   width: 100%;
-  background-color: $brand-black; 
-  overflow: hidden;
+  min-height: calc(100vh - 80px); 
+  background-color: $brand-black;
+  box-sizing: border-box;
+  overflow: hidden; 
+  border-bottom: 1px solid rgba($brand-gray, 0.1);
 }
 
-.hero-text-column {
+// ------------------------------------------
+// 50% TEXTO
+// ------------------------------------------
+.split-text {
   flex: 1;
+  width: 50%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: center; 
   text-align: center;
   padding: 0 10%;
+  box-sizing: border-box;
   z-index: 2;
+
+  // Fondo para la sección de filosofía
+  &.bg-darker {
+    background-color: #050505; 
+  }
 }
 
-.hero-title {
+// ------------------------------------------
+// 50% IMAGEN
+// ------------------------------------------
+.split-image {
+  flex: 1;
+  width: 50%;
+  position: relative;
+  box-sizing: border-box;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: contrast(1.1) brightness(0.9);
+  }
+}
+
+// ==========================================
+// LÓGICA DE FADES (EL HUMO) SEGÚN LA POSICIÓN
+// ==========================================
+
+// Cuando el Texto está a la Izquierda y la Imagen a la Derecha (Hero, Testimonios)
+// Queremos borrar el borde izquierdo de la imagen
+.layout-text-left .split-image img {
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, black 20%);
+  mask-image: linear-gradient(to left, transparent 0%, black 20%);
+}
+
+// Cuando la Imagen está a la Izquierda y el Texto a la Derecha (Filosofía)
+// Queremos borrar el borde derecho de la imagen
+.layout-image-left .split-image img {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%);
+  mask-image: linear-gradient(to right, transparent 0%, black 20%);
+}
+
+// Testimonios: Matamos el fade para que la foto de transformación se vea nítida
+.testimonial-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background-color: #0a0a0a;
+
+  img {
+    object-fit: contain;
+    -webkit-mask-image: none !important; 
+    mask-image: none !important;
+  }
+}
+
+// ==========================================
+// ELEMENTOS INTERNOS (TIPOGRAFÍAS Y BOTONES)
+// ==========================================
+.main-title {
   font-family: $font-h1;
   font-size: clamp(32px, 4vw, 56px);
-  color: $brand-white; 
+  color: $brand-white;
   text-transform: uppercase;
   line-height: 1.1;
   margin-bottom: 16px;
+  overflow-wrap: break-word;
+  width: 100%;
 }
 
-.hero-subtitle {
+.subtitle {
   font-family: $font-main;
   font-size: 18px;
   color: $brand-gray;
   margin-bottom: 40px;
+  width: 100%;
 }
 
+.section-heading {
+  font-family: $font-h1;
+  font-size: clamp(24px, 3.5vw, 40px);
+  color: $brand-white;
+  text-transform: uppercase;
+  line-height: 1.2;
+  margin-bottom: 32px;
+  overflow-wrap: break-word;
+  width: 100%;
+  .text-red { color: $brand-red; }
+}
+
+.section-body {
+  font-family: $font-main;
+  font-size: 16px;
+  color: $brand-gray;
+  line-height: 1.8;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.slogan {
+  font-family: $font-h2;
+  font-size: 18px;
+  color: $brand-white;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 16px 0 40px 0;
+  width: 100%;
+}
+
+// --- BOTONES ---
 .btn-reservar {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 16px;
   background-color: $brand-black;
   color: $brand-white;
   padding: 16px 40px;
@@ -52,120 +154,26 @@
   letter-spacing: 2px;
   border: 1px solid $brand-white;
   transition: all 0.3s ease;
+  box-sizing: border-box;
+  max-width: 100%;
 
-  .flecha {
+  .chevron-icon {
+    width: 24px;
+    height: 24px;
     color: $brand-red;
-    font-weight: bold;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
   }
 
   &:hover {
     background-color: $brand-white;
     color: $brand-black;
     border-color: $brand-black;
+    .chevron-icon { transform: translateX(5px); }
   }
-}
-
-.hero-image-column {
-  flex: 1;
-  position: relative;
-  
-  .hero-bg-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 30%);
-    mask-image: linear-gradient(to right, transparent 0%, black 30%);
-  }
-}
-
-// ==========================================
-// 2. SECCIONES DIVIDIDAS (Z-PATTERN)
-// ==========================================
-.split-section {
-  display: flex;
-  min-height: 80vh;
-  background-color: $brand-black;
-  border-top: 1px solid rgba($brand-gray, 0.1);
-}
-
-// Inversión de columnas para dinamismo visual
-.reverse-layout {
-  flex-direction: row-reverse;
-  background-color: #0a0a0a; // Separación sutil del fondo principal
-}
-
-// Contenedor de Textos (Filosofía / Testimonios)
-.split-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 10%;
-  z-index: 2;
-}
-
-// Contenedor de Imágenes con Fade Dinámico
-.split-image {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: contrast(1.1) brightness(0.9);
-    
-    // Por defecto (Imagen a la izquierda): borramos el lado derecho
-    -webkit-mask-image: linear-gradient(to left, transparent 0%, black 30%);
-    mask-image: linear-gradient(to left, transparent 0%, black 30%);
-  }
-}
-
-// MAGIA CSS: Invertimos el fade automáticamente si la sección está al revés
-.reverse-layout .split-image img {
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 30%);
-  mask-image: linear-gradient(to right, transparent 0%, black 30%);
-}
-
-// Ajuste para que la foto de "Antes y Después" no se recorte
-.before-after-container {
-  padding: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  img {
-    object-fit: contain;
-  }
-}
-
-// ==========================================
-// 3. TIPOGRAFÍAS Y ELEMENTOS INTERNOS
-// ==========================================
-.section-heading {
-  font-family: $font-h1;
-  font-size: clamp(24px, 3vw, 40px);
-  color: $brand-white;
-  text-transform: uppercase;
-  line-height: 1.2;
-  margin-bottom: 24px;
-
-  .text-red {
-    color: $brand-red;
-  }
-}
-
-.section-body {
-  font-family: $font-main;
-  font-size: 16px;
-  color: $brand-gray;
-  line-height: 1.8;
-  margin-bottom: 40px;
 }
 
 .btn-whatsapp {
-  align-self: flex-start;
   background-color: transparent;
   color: $brand-white;
   padding: 14px 32px;
@@ -173,21 +181,21 @@
   font-size: 14px;
   text-transform: uppercase;
   text-decoration: none;
-  border: 1px solid $brand-gray;
+  border: 1px solid $brand-red;
   transition: all 0.3s ease;
-
-  &:hover {
-    border-color: $brand-red;
-    color: $brand-red;
-  }
+  box-sizing: border-box;
+  max-width: 100%;
+  text-align: center;
+  &:hover { background-color: $brand-red; }
 }
 
+// --- TESTIMONIOS ---
 .quote-icon {
   font-family: 'Georgia', serif;
-  font-size: 80px;
+  font-size: 100px;
   color: $brand-red;
   line-height: 0.5;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .testimonial-text {
@@ -196,7 +204,8 @@
   font-style: italic;
   color: $brand-white;
   line-height: 1.8;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
+  width: 100%;
 }
 
 .client-name {
@@ -205,25 +214,60 @@
   color: $brand-gray;
   text-transform: uppercase;
   letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  overflow-wrap: break-word;
+  
+  .chevron-icon-small {
+    width: 18px;
+    height: 18px;
+    color: $brand-red;
+    flex-shrink: 0;
+  }
 }
 
 // ==========================================
-// 4. RESPONSIVIDAD GLOBAL (Móviles)
+// MEDIA QUERIES (MÓVIL: APILADO Y COHERENTE)
 // ==========================================
 @media (max-width: 900px) {
-  // Apilamos todas las secciones divididas
-  .hero-split, .split-section {
+  
+  // Rompemos el 50/50 y lo volvemos columna
+  .split-section {
     flex-direction: column !important;
+    min-height: auto;
   }
-  
+
+  .split-text, .split-image {
+    width: 100%;
+  }
+
+  // 🛑 ORDEN DE UX MÓVIL: IMAGEN SIEMPRE ARRIBA, TEXTO SIEMPRE ABAJO 🛑
   .split-image {
-    min-height: 400px; 
+    order: 1; 
+    min-height: 40vh; 
+    
+    img {
+      // En móvil, el fade siempre va hacia ABAJO sin importar si estaba a la izq o der en escritorio
+      -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%) !important;
+      mask-image: linear-gradient(to bottom, black 60%, transparent 100%) !important;
+    }
   }
-  
-  // En celular la imagen queda arriba, así que el fade debe ir hacia arriba (to top)
-  .hero-image-column .hero-bg-img,
-  .split-image img {
-    -webkit-mask-image: linear-gradient(to top, transparent 0%, black 30%) !important;
-    mask-image: linear-gradient(to top, transparent 0%, black 30%) !important;
+
+  .split-text {
+    order: 2; 
+    padding: 20px 24px 60px 24px; 
+  }
+
+  // Respetamos la foto sin fade para el testimonio en móvil
+  .testimonial-image {
+    padding: 24px;
+    img {
+      max-height: 50vh; 
+      -webkit-mask-image: none !important; 
+      mask-image: none !important;
+    }
   }
 }
