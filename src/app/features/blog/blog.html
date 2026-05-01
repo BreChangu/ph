@@ -1,0 +1,77 @@
+<div class="blog-page-container">
+
+  <!-- ENCABEZADO DE SECCIÓN -->
+  <header class="blog-header">
+    <h1 class="page-title">CONOCIMIENTO <span class="text-red">NTS</span></h1>
+    <p class="page-subtitle">Ciencia, biomecánica y nutrición aplicadas a tu transformación.</p>
+  </header>
+
+  <!-- LOADER (Por si decides volver a poner el delay simulado) -->
+  <div class="loader-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Cargando artículos...</p>
+  </div>
+
+  <!-- CONTENIDO DEL BLOG -->
+  <ng-container *ngIf="!isLoading">
+    
+    <!-- 1. NOTA DESTACADA (HERO DEL BLOG) -->
+    <section class="featured-section" *ngIf="featuredPost">
+      <article class="featured-card">
+        <div class="featured-image-wrapper">
+          <!-- Imagen clickeable -->
+          <img [src]="featuredPost.coverImage" 
+               [alt]="featuredPost.title" 
+               class="featured-img" 
+               [routerLink]="['/blog', featuredPost.id]" 
+               style="cursor: pointer;">
+          <span class="category-badge">{{ featuredPost.category }}</span>
+        </div>
+        <div class="featured-content">
+          <div class="meta-data">
+            <span class="date">{{ featuredPost.date | date:'mediumDate' }}</span>
+            <span class="dot">•</span>
+            <span class="read-time">{{ featuredPost.readTime }}</span>
+          </div>
+          <h2 class="featured-title">{{ featuredPost.title }}</h2>
+          <p class="featured-excerpt">{{ featuredPost.excerpt }}</p>
+          
+          <!-- Botón conectado -->
+          <button class="btn-read-more" [routerLink]="['/blog', featuredPost.id]">
+            LEER ARTÍCULO COMPLETO
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <!-- 2. GRID DE ARTÍCULOS SECUNDARIOS -->
+    <section class="grid-section" *ngIf="gridPosts.length > 0">
+      <article class="grid-card" *ngFor="let post of gridPosts">
+        <div class="card-image-wrapper">
+          <!-- Imagen clickeable -->
+          <img [src]="post.coverImage" 
+               [alt]="post.title" 
+               class="card-img" 
+               [routerLink]="['/blog', post.id]">
+          <span class="category-badge-small">{{ post.category }}</span>
+        </div>
+        <div class="card-content">
+          <div class="meta-data">
+            <span class="date">{{ post.date | date:'mediumDate' }}</span>
+            <span class="dot">•</span>
+            <span class="read-time">{{ post.readTime }}</span>
+          </div>
+          <h3 class="card-title">{{ post.title }}</h3>
+          <p class="card-excerpt">{{ post.excerpt }}</p>
+          
+          <!-- Botón conectado -->
+          <button class="btn-text-only" [routerLink]="['/blog', post.id]">
+            LEER MÁS <span>→</span>
+          </button>
+        </div>
+      </article>
+    </section>
+
+  </ng-container>
+
+</div>

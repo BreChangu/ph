@@ -11,7 +11,7 @@
   },
   "include": [
     "src/**/*.ts"
-  ],
+, "src/app/core/models/blog-post.model"  ],
   "exclude": [
     "src/**/*.spec.ts"
   ]
