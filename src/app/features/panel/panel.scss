@@ -1,0 +1,209 @@
+// Paleta de colores Quiet Luxury
+$bg-color: #F8F9FA; // Un gris ultraclaro, casi blanco
+$surface-color: #FFFFFF;
+$text-primary: #1A1A1A;
+$text-secondary: #737373;
+$accent-color: #000000;
+$border-color: #E5E5E5;
+
+.dashboard-container {
+  min-height: 100vh;
+  background-color: $bg-color;
+  color: $text-primary;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+// Estilos de la Cabecera
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 4rem;
+  background-color: $surface-color;
+  border-bottom: 1px solid $border-color;
+
+  .brand h2 {
+    margin: 0;
+    font-weight: 500;
+    letter-spacing: 1px;
+    font-size: 1.2rem;
+    
+    .brand-sub {
+      color: $text-secondary;
+      font-weight: 300;
+    }
+  }
+
+  .user-actions {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+
+    .greeting {
+      font-size: 0.95rem;
+      color: $text-secondary;
+    }
+
+    .btn-logout {
+      background: none;
+      border: none;
+      color: $text-secondary;
+      font-size: 0.95rem;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: $accent-color;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+// Área de contenido
+.dashboard-content {
+  padding: 4rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.welcome-section {
+  margin-bottom: 4rem;
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 300; // Letra delgada y elegante
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+  }
+
+  .date {
+    color: $text-secondary;
+    font-size: 1rem;
+    text-transform: capitalize;
+  }
+}
+
+// Layout de Grid para las tarjetas
+.grid-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 3rem;
+}
+
+// Estética de las Tarjetas
+.card {
+  background-color: $surface-color;
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02); // Sombra muy difuminada
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+
+    h3 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 500;
+    }
+
+    .badge {
+      font-size: 0.8rem;
+      padding: 0.4rem 1rem;
+      background-color: #F2F2F2;
+      border-radius: 30px;
+      color: $text-secondary;
+      font-weight: 500;
+
+      &.calories {
+        background-color: transparent;
+        border: 1px solid $border-color;
+      }
+    }
+  }
+
+  .card-body {
+    p {
+      color: $text-secondary;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+  }
+}
+
+// Listas de datos dentro de las tarjetas
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2.5rem 0;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.95rem;
+
+    span:last-child {
+      color: $text-secondary;
+      font-weight: 500;
+    }
+  }
+}
+
+// Botones
+.btn-primary, .btn-secondary {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: $accent-color;
+  color: $surface-color;
+  border: 1px solid $accent-color;
+
+  &:hover {
+    background-color: transparent;
+    color: $accent-color;
+  }
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: $accent-color;
+  border: 1px solid $accent-color;
+
+  &:hover {
+    background-color: $accent-color;
+    color: $surface-color;
+  }
+}
+
+// Ajustes para móviles
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+  .dashboard-content {
+    padding: 2rem 1.5rem;
+  }
+}

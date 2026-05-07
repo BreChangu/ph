@@ -1,0 +1,61 @@
+<div class="dashboard-container">
+  
+  <!-- CABECERA QUIET LUXURY -->
+  <header class="dashboard-header">
+    <div class="brand">
+      <h2>Pablo Herrera <span class="brand-sub">| Fitness</span></h2>
+    </div>
+    <div class="user-actions">
+      <span class="greeting">Hola, {{ userName }}</span>
+      <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="dashboard-content">
+    
+    <div class="welcome-section">
+      <h1>Tu espacio personal</h1>
+      <p class="date">{{ fechaHoy }}</p>
+    </div>
+
+    <!-- GRID DE TARJETAS -->
+    <div class="grid-layout">
+      
+      <!-- Tarjeta 1: RUTINAS -->
+      <section class="card routine-card">
+        <div class="card-header">
+          <h3>Rutina de Hoy</h3>
+          <span class="badge">Día 3: Tren Superior</span>
+        </div>
+        <div class="card-body">
+          <p>Prepárate para tu sesión. Recuerda mantener la técnica y la simetría en cada repetición.</p>
+          <ul class="task-list">
+            <li><span>Press de Banca</span> <span>4 x 10</span></li>
+            <li><span>Remo con Barra</span> <span>4 x 12</span></li>
+            <li><span>Elevaciones Laterales</span> <span>3 x 15</span></li>
+          </ul>
+          <button class="btn-primary">Ver rutina completa</button>
+        </div>
+      </section>
+
+      <!-- Tarjeta 2: ALIMENTACIÓN -->
+      <section class="card nutrition-card">
+        <div class="card-header">
+          <h3>Plan de Alimentación</h3>
+          <span class="badge calories">2,100 kcal</span>
+        </div>
+        <div class="card-body">
+          <p>Tu menú para hoy está diseñado para optimizar tu recuperación física y sueño profundo.</p>
+          <ul class="task-list">
+            <li><span>Desayuno</span> <span>Avena, proteína y nueces</span></li>
+            <li><span>Comida</span> <span>Pollo a la plancha y quinoa</span></li>
+            <li><span>Cena</span> <span>Salmón con espárragos</span></li>
+          </ul>
+          <button class="btn-secondary">Ver plan nutricional</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
