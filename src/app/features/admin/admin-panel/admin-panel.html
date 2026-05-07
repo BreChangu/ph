@@ -1,0 +1,117 @@
+<div class="admin-container">
+
+  <ng-container *ngIf="vistaActual === 'lista'">
+    <header class="admin-header">
+      <div class="header-titles">
+        <h2>Pacientes Activos</h2>
+        <span class="badge">Panel de Administración</span>
+      </div>
+      <button class="btn-primary">+ Nuevo Paciente</button>
+    </header>
+
+    <div class="dashboard-grid">
+      <div class="patient-card" *ngFor="let paciente of pacientes" (click)="abrirExpediente(paciente)">
+        <div class="patient-info">
+          <h3>{{ paciente.nombre }}</h3>
+          <span class="status-indicator" [class.active]="paciente.estado_aprobacion === 'aprobado'">
+            {{ paciente.estado_aprobacion === 'aprobado' ? 'Activo' : 'En Revisión' }}
+          </span>
+        </div>
+        
+        <div class="patient-meta">
+          <p>Última mod:<br>{{ paciente.ultimaActualizacion }}</p>
+          
+          <div class="action-buttons">
+            <button class="btn-text-action danger" *ngIf="paciente.estado_aprobacion === 'aprobado'" (click)="toggleEstado(paciente, $event)">
+              Suspender
+            </button>
+            <button class="btn-text-action success" *ngIf="paciente.estado_aprobacion === 'pendiente'" (click)="toggleEstado(paciente, $event)">
+              Aprobar ✓
+            </button>
+            <button class="btn-text-action neutral">Editar Plan →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+
+  <ng-container *ngIf="vistaActual === 'editor'">
+    <header class="admin-header">
+      <div class="header-titles">
+        <button class="btn-back" (click)="volverAlPanel()">← Volver al panel</button>
+        <h2 style="margin-top: 1rem;">Expediente: {{ pacienteSeleccionado?.nombre }}</h2>
+        <span class="badge">Constructor de Dietas</span>
+      </div>
+      <button class="btn-primary" (click)="guardarPlan()">
+        Guardar Plan Nutricional
+      </button>
+    </header>
+
+    <form [formGroup]="planForm" class="form-layout">
+      <section class="card general-info">
+        <h3>Información General del Plan</h3>
+        <div class="input-grid">
+          <div class="input-group">
+            <label>Calorías Totales (Kcal)</label>
+            <input type="number" formControlName="calorias_totales" placeholder="Ej. 2100">
+          </div>
+          <div class="input-group">
+            <label>Suplementación Estratégica</label>
+            <input type="text" formControlName="suplementacion" placeholder="Ej. 5g Creatina, Omega 3...">
+          </div>
+          <div class="input-group">
+            <label>Medicamentos / Protocolos</label>
+            <input type="text" formControlName="medicacion" placeholder="Ej. Primobolan...">
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <div formArrayName="comidas" class="meals-container">
+        <div *ngFor="let comida of comidas.controls; let i = index" [formGroupName]="i" class="meal-card">
+          
+          <header class="meal-header">
+            <input type="text" class="meal-title-input" formControlName="nombre" placeholder="Nombre de la comida (Ej. Desayuno)">
+            <button type="button" class="btn-icon-delete" (click)="eliminarComida(i)">Eliminar</button>
+          </header>
+
+          <div class="input-group">
+            <input type="text" class="meal-note" formControlName="nota_comida" placeholder="Notas opcionales (Ej. Licuar todo junto)">
+          </div>
+
+          <div formArrayName="alimentos" class="foods-container">
+            <div class="food-labels" *ngIf="alimentosDeComida(i).length > 0">
+              <span>Alimento</span>
+              <span>Cal</span>
+              <span>Prot (g)</span>
+              <span>Carb (g)</span>
+              <span>Gras (g)</span>
+              <span></span>
+            </div>
+
+            <div *ngFor="let alimento of alimentosDeComida(i).controls; let j = index" [formGroupName]="j" class="food-row">
+              <input type="text" formControlName="descripcion" placeholder="Ej. 100g de Pollo">
+              <input type="number" formControlName="calorias" placeholder="0">
+              <input type="number" formControlName="proteinas" placeholder="0">
+              <input type="number" formControlName="carbos" placeholder="0">
+              <input type="number" formControlName="grasas" placeholder="0">
+              <button type="button" class="btn-delete-row" (click)="eliminarAlimento(i, j)">✕</button>
+            </div>
+          </div>
+
+          <button type="button" class="btn-add-secondary" (click)="agregarAlimento(i)">
+            + Agregar Alimento
+          </button>
+        </div>
+      </div>
+
+      <button type="button" class="btn-add-primary" (click)="agregarComida()">
+        + Agregar Nueva Comida
+      </button>
+
+    </form>
+  </ng-container>
+
+</div>

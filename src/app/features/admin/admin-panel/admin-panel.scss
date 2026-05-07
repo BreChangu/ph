@@ -1,0 +1,402 @@
+$bg-main: #f8f9fa;
+$surface: #ffffff;
+$text-main: #1a1a1a;
+$text-light: #737373;
+$border: #e5e5e5;
+$accent: #000000;
+$danger: #dc3545;
+
+.admin-container {
+  min-height: 100vh;
+  background-color: $bg-main;
+  padding: 3rem 4rem;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: $text-main;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+
+  h2 {
+    font-size: 1.8rem;
+    font-weight: 300;
+    margin: 0 0 0.5rem 0;
+  }
+  .badge {
+    font-size: 0.8rem;
+    background-color: #eaeaea;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    color: $text-light;
+    font-weight: 500;
+  }
+}
+
+// ==========================================
+// VISTA A: DASHBOARD
+// ==========================================
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.patient-card {
+  background-color: $surface;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    border-color: #d1d1d1;
+    .btn-text-action {
+      color: $accent;
+      transform: translateX(4px);
+    }
+  }
+}
+
+.patient-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  h3 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.status-indicator {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  background-color: #f0f0f0;
+  color: #666;
+  &.active {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+}
+
+.patient-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 1rem;
+  p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: $text-light;
+  }
+}
+
+.btn-text-action,
+.btn-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+.btn-text-action {
+  color: $text-light;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.btn-back {
+  color: $text-light;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  &:hover {
+    color: $accent;
+    text-decoration: underline;
+  }
+}
+
+// ==========================================
+// VISTA B: FORMULARIO
+// ==========================================
+.form-layout {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.card,
+.meal-card {
+  background-color: $surface;
+  border: 1px solid $border;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.01);
+}
+h3 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: $text-main;
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+  label {
+    font-size: 0.85rem;
+    color: $text-light;
+    margin-bottom: 0.5rem;
+  }
+  input {
+    border: 1px solid $border;
+    border-radius: 4px;
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    background-color: #fafafa;
+    transition: border-color 0.2s ease;
+    &:focus {
+      outline: none;
+      border-color: $accent;
+      background-color: $surface;
+    }
+  }
+}
+
+.divider {
+  height: 1px;
+  background-color: $border;
+  margin: 3rem 0;
+}
+
+.meal-card {
+  border-left: 3px solid $accent;
+  transition: transform 0.2s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.03);
+  }
+}
+.meal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+.meal-title-input { 
+    font-size: 1.4rem; 
+    font-weight: 500; 
+    border: none; 
+    // 🟢 Le agregamos un fondo sutil y una línea para que el usuario sepa que puede dar clic ahí
+    background-color: #f5f5f5;
+    border-bottom: 2px dashed #ccc;
+    border-radius: 4px 4px 0 0;
+    padding: 0.5rem 1rem; 
+    width: 60%; 
+    transition: all 0.2s ease; 
+
+    &::placeholder {
+      color: #aaa;
+    }
+
+    &:focus { 
+      outline: none; 
+      background-color: transparent;
+      border-bottom: 2px solid $accent; 
+    } 
+  }
+}
+.meal-note {
+  font-size: 0.9rem !important;
+  color: $text-light;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px dashed $border !important;
+  border-radius: 0 !important;
+  padding-left: 0 !important;
+  &:focus {
+    border-bottom-color: $accent !important;
+  }
+}
+
+// 🟢 SOLUCIÓN DEL DESBORDAMIENTO: Ajuste preciso del Grid y min-width
+.foods-container {
+  margin: 2rem 0;
+  width: 100%;
+  overflow-x: auto;
+} // Protege contra pantallas pequeñas
+
+.food-labels,
+.food-row {
+  display: grid;
+  // Redistribución de fracciones para que encajen los 5 inputs y el botón X
+  grid-template-columns: minmax(120px, 2.5fr) repeat(4, minmax(60px, 1fr)) 30px;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.food-labels {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid $border;
+  margin-bottom: 1rem;
+  span {
+    font-size: 0.75rem;
+    color: $text-light;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.food-row {
+  margin-bottom: 0.8rem;
+  input {
+    min-width: 0; // 🟢 ESTO EVITA QUE ROMPAN LA TARJETA
+    width: 100%;
+    border: 1px solid $border;
+    border-radius: 4px;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+    &:focus {
+      outline: none;
+      border-color: $accent;
+    }
+  }
+}
+
+// Botones
+.btn-primary {
+  background-color: $accent;
+  color: $surface;
+  border: none;
+  padding: 0.8rem 2rem;
+  font-size: 0.95rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  &:hover {
+    opacity: 0.8;
+  }
+  &:disabled {
+    background-color: $border;
+    cursor: not-allowed;
+  }
+}
+.btn-add-primary {
+  width: 100%;
+  background-color: transparent;
+  color: $accent;
+  border: 1px dashed $border;
+  padding: 1.2rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+  &:hover {
+    border-color: $accent;
+    background-color: #f0f0f0;
+  }
+}
+.btn-add-secondary {
+  background-color: transparent;
+  color: $text-light;
+  border: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  &:hover {
+    color: $accent;
+    text-decoration: underline;
+  }
+}
+.btn-icon-delete {
+  background: transparent;
+  color: $danger;
+  border: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  &:hover {
+    opacity: 1;
+  }
+}
+.btn-delete-row {
+  background: transparent;
+  color: $text-light;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  &:hover {
+    color: $danger;
+  }
+}
+
+// Ajuste para la parte inferior de la tarjeta
+.patient-meta {
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; // Alinea verticalmente al centro
+  border-top: 1px solid #f0f0f0; 
+  padding-top: 1.2rem;
+  margin-top: 1.5rem;
+
+  p { 
+    margin: 0; 
+    font-size: 0.8rem; 
+    color: #737373; 
+    line-height: 1.4;
+  }
+}
+
+// Contenedor para ordenar los botones de Aprobar/Editar
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px; // Espaciado perfecto entre botones
+}
+
+// Estilos específicos de cada botón de acción
+.btn-text-action {
+  background: none; 
+  border: none; 
+  cursor: pointer; 
+  padding: 0; 
+  transition: all 0.2s ease;
+  font-size: 0.85rem; 
+
+  &.danger {
+    color: #DC3545;
+    &:hover { color: #b02a37; text-decoration: underline; }
+  }
+
+  &.success {
+    color: #2e7d32;
+    font-weight: 600;
+    &:hover { color: #1b5e20; text-decoration: underline; }
+  }
+
+  &.neutral {
+    color: #1A1A1A;
+    font-weight: 500;
+    &:hover { color: #000000; transform: translateX(2px); }
+  }
+}
