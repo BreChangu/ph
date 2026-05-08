@@ -17,6 +17,11 @@
   font-family: 'Open Sans', sans-serif;
 }
 
+.auth-card,
+.auth-card * {
+  box-sizing: border-box;
+}
+
 .auth-header {
   text-align: center;
   margin-bottom: 2rem;
@@ -108,6 +113,10 @@
   }
 }
 
+.password-wrapper input {
+  padding-right: 3rem !important;
+}
+
 .btn-primary {
   width: 100%;
   padding: 1rem;
@@ -176,5 +185,41 @@
   
   &:hover {
     color: #1a1a1a !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-wrapper {
+    align-items: flex-start;
+    min-height: calc(100vh - 80px);
+    padding: 1.5rem 1rem;
+  }
+
+  .auth-card {
+    border-radius: 8px;
+    padding: 2rem 1.25rem;
+  }
+
+  .auth-header {
+    margin-bottom: 1.5rem;
+
+    .title {
+      font-size: 1.25rem;
+    }
+  }
+
+  .btn-google,
+  .btn-primary {
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 380px) {
+  .auth-wrapper {
+    padding: 1rem 0.75rem;
+  }
+
+  .auth-card {
+    padding: 1.5rem 1rem;
   }
 }

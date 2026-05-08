@@ -1,0 +1,229 @@
+<div class="onboarding-wrapper">
+  
+  <header class="onboarding-header">
+    <div class="brand-logo">PH TEAM</div>
+    <h1>{{ isEditMode ? 'Editar Entrevista Inicial' : 'Entrevista Inicial' }}</h1>
+    <p>
+      {{ isEditMode
+        ? 'Actualiza los datos que necesites corregir. Si no eliges fotos nuevas, conservaremos las actuales.'
+        : 'Este cuestionario nos ayudará a entender tu estilo de vida, tus hábitos alimenticios y tu experiencia con el entrenamiento. Tus respuestas nos permitirán diseñar un programa completamente personalizado y realista.'
+      }}
+    </p>
+  </header>
+
+  <form [formGroup]="onboardingForm" class="onboarding-form" (ngSubmit)="enviarCuestionario()">
+
+    <!-- 1. DATOS VITALES Y COMPOSICIÓN -->
+    <section class="form-card">
+      <h2>Datos Personales y Composición Corporal</h2>
+      
+      <div class="input-group">
+        <label>Nombre Completo *</label>
+        <input type="text" formControlName="nombre_completo" placeholder="Fernando...">
+      </div>
+
+      <div class="input-grid">
+        <div class="input-group">
+          <label>Edad *</label>
+          <input type="number" formControlName="edad">
+        </div>
+        <div class="input-group">
+          <label>Peso actual (kg) *</label>
+          <input type="number" formControlName="peso_kg">
+        </div>
+        <div class="input-group">
+          <label>Altura (cm) *</label>
+          <input type="number" formControlName="altura_cm">
+        </div>
+        <div class="input-group">
+          <label>Género Biológico *</label>
+          <select formControlName="genero">
+            <option value="">Seleccionar...</option>
+            <option value="Hombre">Hombre</option>
+            <option value="Mujer">Mujer</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-grid-2">
+        <div class="input-group">
+          <label>Porcentaje de grasa (Si no lo conoces omite)</label>
+          <input type="text" formControlName="porcentaje_grasa">
+        </div>
+        <div class="input-group">
+          <label>Peso objetivo o porcentaje de grasa buscado *</label>
+          <input type="text" formControlName="peso_objetivo">
+        </div>
+      </div>
+
+      <div class="info-banner mt-2">
+        <strong>Indicaciones para la medición de la cintura:</strong> Asegurarse que la cinta métrica tenga un adecuado contacto con la piel (No apretado). Tomar la medida luego de una respiración normal. Mantener el abdomen relajado a la altura del ombligo.
+      </div>
+
+      <div class="input-group mt-2">
+        <label>Circunferencia de cintura (cm) *</label>
+        <input type="number" formControlName="cintura_cm">
+      </div>
+
+      <div class="input-group mt-2">
+        <label>En caso de haberte realizado un análisis corporal (INBODY) manda la foto de la hoja de evaluación</label>
+        <input type="file" accept="image/*,.pdf" (change)="onFileSelected($event, 'inbody')" class="file-input">
+        <span *ngIf="linksFotosActuales['inbody']" class="current-file">InBody actual guardado. Sube otro archivo solo si quieres reemplazarlo.</span>
+      </div>
+    </section>
+
+    <!-- 2. OBJETIVOS -->
+    <section class="form-card">
+      <h2>Objetivos y Experiencia</h2>
+      
+      <div class="input-group">
+        <label>¿Cuál es tu objetivo? ¿Qué te gustaría lograr con esta asesoría? *</label>
+        <input type="text" formControlName="objetivo">
+      </div>
+
+      <div class="input-grid-2">
+        <div class="input-group">
+          <label>¿Alguna vez has seguido un plan alimenticio o dieta? *</label>
+          <select formControlName="dieta_previa">
+            <option value="">Seleccionar...</option>
+            <option value="Si">Sí</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>¿Quién te ha diseñado dicho plan?</label>
+          <select formControlName="creador_dieta">
+            <option value="">Seleccionar...</option>
+            <option value="Nutriologo">Nutriólogo</option>
+            <option value="coach/preparador fisico">Coach / Preparador Físico</option>
+            <option value="medico">Médico</option>
+            <option value="nadie">Nadie</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>¿Por qué abandonaste dicho plan?</label>
+        <input type="text" formControlName="motivo_abandono" placeholder="Ej. Por qué no podía seguir los horarios...">
+      </div>
+    </section>
+
+    <!-- 3. ESTILO DE VIDA Y ENTRENAMIENTO -->
+    <section class="form-card">
+      <h2>Estilo de Vida y Entrenamiento</h2>
+      <p class="section-desc">Para poder crear un plan que se adapte a ti, necesitamos conocer mejor tu estilo de vida. Comparte tu experiencia, no importa si eres principiante o avanzado.</p>
+
+      <div class="input-group"><label>¿A qué te dedicas? ¿Pasas mucho tiempo sentado? *</label><input type="text" formControlName="ocupacion"></div>
+      
+      <div class="input-grid-2">
+        <div class="input-group"><label>¿En qué gym entrenas actualmente? *</label><input type="text" formControlName="gym_actual"></div>
+        <div class="input-group"><label>¿Cuántos días a la semana y con cuánto tiempo puedes dedicarle? *</label><input type="text" formControlName="dias_entreno" placeholder="Ej. 3 días 1 hora"></div>
+      </div>
+
+      <div class="input-group"><label>¿Tienes alguna lesión importante que deba conocer o ejercicios que lastimen?</label><input type="text" formControlName="lesiones"></div>
+      
+      <div class="input-grid-2">
+        <div class="input-group">
+          <label>¿Cuánto tiempo llevas entrenando? *</label>
+          <select formControlName="tiempo_entrenando">
+            <option value="">Seleccionar...</option>
+            <option value="Primera vez">Es mi primera vez en un gym</option>
+            <option value="Menos de 6 meses">Menos de 6 meses</option>
+            <option value="Entre 6 meses y 1 año">Entre 6 meses y 1 año</option>
+            <option value="De 2 a 3 años">De 2 a 3 años</option>
+            <option value="Mas de 3 años">Más de 3 años</option>
+            <option value="Retomando">Tengo experiencia, pero voy a retomarlo</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>¿En qué horario sueles entrenar? (Especificar AM o PM)</label>
+          <input type="time" formControlName="horario_entreno">
+        </div>
+      </div>
+
+      <div class="input-group"><label>¿Qué enfoque buscas del entrenamiento? ¿Alguna zona para darle enfoque? *</label><input type="text" formControlName="enfoque_entrenamiento"></div>
+    </section>
+
+    <!-- 4. CLÍNICOS (CON CHECKBOXES) -->
+   <section class="form-card">
+      <h2>Antecedentes Clínicos</h2>
+      
+      <div class="input-group"><label>¿Tienes alguna enfermedad diagnosticada? ¿Cuál? *</label><input type="text" formControlName="enfermedades"></div>
+      <div class="input-group"><label>¿Tomas algún medicamento? ¿Cuál o cuáles? *</label><input type="text" formControlName="medicamentos"></div>
+      
+      <div class="input-group mt-2" formGroupName="antecedentes_familiares">
+        <label>Tus padres, abuelos, hermanos padecen de: *</label>
+        
+        <div class="checkbox-grid">
+          <label class="custom-checkbox"><input type="checkbox" formControlName="obesidad"><span class="checkmark"></span> Obesidad</label>
+          <label class="custom-checkbox"><input type="checkbox" formControlName="diabetes"><span class="checkmark"></span> Diabetes</label>
+          <label class="custom-checkbox"><input type="checkbox" formControlName="hipertension"><span class="checkmark"></span> Hipertensión</label>
+          <label class="custom-checkbox"><input type="checkbox" formControlName="cancer"><span class="checkmark"></span> Cáncer</label>
+          <label class="custom-checkbox"><input type="checkbox" formControlName="trigliceridos"><span class="checkmark"></span> Triglicéridos Altos</label>
+          <label class="custom-checkbox"><input type="checkbox" formControlName="renales"><span class="checkmark"></span> Problemas Renales</label>
+          <label class="custom-checkbox"><input type="checkbox" formControlName="hepaticos"><span class="checkmark"></span> Problemas Hepáticos</label>
+          <label class="custom-checkbox"><input type="checkbox" formControlName="infartos"><span class="checkmark"></span> Infartos</label>
+        </div>
+
+        <div class="input-group mt-2">
+          <label style="color: #737373; font-size: 0.85rem;">Otros antecedentes (Especificar)</label>
+          <input type="text" formControlName="otros" placeholder="Ej. Ninguno, Alzheimer, Tiroides...">
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. ALIMENTACIÓN -->
+    <section class="form-card">
+      <h2>Alimentación Habitual</h2>
+      <div class="input-group"><label>¿Cuántas comidas sueles hacer al día? ¿En qué horarios aprox? *</label><input type="text" formControlName="comidas_al_dia"></div>
+      <div class="input-group"><label>Dame un ejemplo de tu desayuno, comida y cena de tu día a día. *</label><input type="text" formControlName="ejemplo_dia"></div>
+      <div class="input-group"><label>¿Cuáles son tus alimentos favoritos? (Los que no puedes dejar) *</label><input type="text" formControlName="alimentos_favoritos"></div>
+      <div class="input-group"><label>¿Qué alimentos no toleras bien, no te gustan o eres alérgico? *</label><input type="text" formControlName="alimentos_odiados"></div>
+      <div class="input-group"><label>¿Piensas que sueles comer por ansiedad, estrés, aburrimiento? ¿Qué comes? *</label><input type="text" formControlName="ansiedad_comer"></div>
+      <div class="input-group"><label>¿Cuál dirías que es el mayor conflicto con tu alimentación actualmente? *</label><input type="text" formControlName="conflicto_alimentacion"></div>
+      <div class="input-group"><label>¿En cuál o cuáles comidas te da más hambre del día?</label><input type="text" formControlName="comidas_mas_hambre"></div>
+      <div class="input-group"><label>¿Sueles usar colaciones entre comidas? Si es sí, ¿a qué hora? *</label><input type="text" formControlName="colaciones"></div>
+      <div class="input-group"><label>¿Consumes algún suplemento? ¿Cuál y cuánto en cantidad? *</label><input type="text" formControlName="suplementos"></div>
+    </section>
+
+    <!-- 6. FOTOGRAFÍAS -->
+    <section class="form-card">
+      <h2>Fotografías para ver el progreso</h2>
+      <p class="section-desc">
+        Las fotos son una <b>herramienta clave</b> para que yo pueda valorar tu progreso de manera precisa y objetiva. El peso en la báscula puede fluctuar y no siempre refleja los cambios reales en tu cuerpo.<br><br>
+        Al ver tus fotos de <b>perfil, espalda y de frente</b>, puedo analizar y ajustar tu plan para maximizar tus resultados.<br><br>
+        No te preocupes, estas fotos son <b>completamente confidenciales</b> y solo yo tendré acceso a ellas.
+      </p>
+
+      <div class="input-grid mt-2">
+        <div class="input-group file-upload-group">
+          <label>FOTO DE FRENTE *</label>
+          <span style="font-size: 0.75rem; color: #737373; margin-bottom: 0.5rem; display:block;">Traje de baño o ropa deportiva (Puedes omitir rostro)</span>
+          <input type="file" accept="image/*" (change)="onFileSelected($event, 'frente')" class="file-input">
+          <span *ngIf="linksFotosActuales['frente']" class="current-file">Foto actual guardada.</span>
+        </div>
+        <div class="input-group file-upload-group">
+          <label>FOTOGRAFÍA DE PERFIL *</label>
+          <span style="font-size: 0.75rem; color: #737373; margin-bottom: 0.5rem; display:block;">Traje de baño o ropa deportiva (Puedes omitir rostro)</span>
+          <input type="file" accept="image/*" (change)="onFileSelected($event, 'perfil')" class="file-input">
+          <span *ngIf="linksFotosActuales['perfil']" class="current-file">Foto actual guardada.</span>
+        </div>
+        <div class="input-group file-upload-group">
+          <label>FOTO DE ESPALDA *</label>
+          <span style="font-size: 0.75rem; color: #737373; margin-bottom: 0.5rem; display:block;">Traje de baño o ropa deportiva (Puedes omitir rostro)</span>
+          <input type="file" accept="image/*" (change)="onFileSelected($event, 'espalda')" class="file-input">
+          <span *ngIf="linksFotosActuales['espalda']" class="current-file">Foto actual guardada.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTÓN FINAL -->
+    <div class="submit-section">
+      <button type="submit" class="btn-primary-large" [disabled]="isLoading">
+        {{ isLoading ? 'Procesando expediente...' : (isEditMode ? 'Guardar Cambios' : 'Enviar Entrevista Inicial') }}
+      </button>
+    </div>
+
+  </form>
+</div>

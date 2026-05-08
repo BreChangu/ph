@@ -1,402 +1,600 @@
-$bg-main: #f8f9fa;
+@use '../../../../styles/variables' as *;
+
 $surface: #ffffff;
-$text-main: #1a1a1a;
-$text-light: #737373;
-$border: #e5e5e5;
-$accent: #000000;
-$danger: #dc3545;
+$panel-line: rgba(0, 0, 0, 0.12);
 
 .admin-container {
   min-height: 100vh;
-  background-color: $bg-main;
-  padding: 3rem 4rem;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: $text-main;
+  background:
+    linear-gradient(135deg, rgba($brand-red, 0.04), transparent 32rem),
+    $brand-white;
+  color: $brand-black;
+  font-family: $font-main;
+  padding: 3rem 4rem 4rem;
 }
 
 .admin-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 3rem;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  border-bottom: 3px solid $brand-black;
+  padding-bottom: 1.5rem;
+}
 
-  h2 {
-    font-size: 1.8rem;
-    font-weight: 300;
-    margin: 0 0 0.5rem 0;
+.header-titles {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.eyebrow {
+  color: $brand-red;
+  font-family: $font-h2;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.admin-header h2 {
+  margin: 0;
+  color: $brand-black;
+  font-family: $font-h1;
+  font-size: 2.4rem;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.editor-title {
+  font-family: $font-h2 !important;
+  font-size: 2rem !important;
+}
+
+.badge {
+  width: fit-content;
+  border: 1px solid $panel-line;
+  background: $surface;
+  color: $brand-gray;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.badge-tmb {
+  border-color: rgba($brand-red, 0.35);
+  color: $brand-red-dark;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  article {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid $panel-line;
+    background: $surface;
+    padding: 1.25rem;
+
+    &::after {
+      content: '';
+      position: absolute;
+      right: -1.4rem;
+      bottom: -1.4rem;
+      width: 7rem;
+      height: 4rem;
+      background: repeating-linear-gradient(
+        135deg,
+        rgba($brand-red, 0.16) 0 0.45rem,
+        transparent 0.45rem 0.9rem
+      );
+      transform: rotate(-8deg);
+    }
   }
-  .badge {
-    font-size: 0.8rem;
-    background-color: #eaeaea;
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    color: $text-light;
-    font-weight: 500;
+
+  span,
+  small {
+    color: $brand-gray;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  strong {
+    display: block;
+    margin: 0.35rem 0;
+    font-family: $font-h2;
+    font-size: 2.2rem;
   }
 }
 
-// ==========================================
-// VISTA A: DASHBOARD
-// ==========================================
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  border: 1px solid $panel-line;
+  background: $surface;
+  color: $brand-gray;
+  padding: 2rem;
+  text-align: center;
 }
 
 .patient-card {
-  background-color: $surface;
-  border: 1px solid $border;
-  border-radius: 8px;
-  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid $panel-line;
+  background: $surface;
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+  padding: 1.25rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 0.35rem;
+    background: $brand-red;
+  }
 
   &:hover {
+    border-color: $brand-black;
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.08);
     transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
-    border-color: #d1d1d1;
-    .btn-text-action {
-      color: $accent;
-      transform: translateX(4px);
-    }
   }
 }
 
 .patient-info {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  margin-bottom: 1.5rem;
-  h3 {
+  gap: 0.9rem;
+  padding-top: 0.55rem;
+
+  h3,
+  p {
     margin: 0;
-    font-size: 1.2rem;
   }
+
+  h3 {
+    font-family: $font-h2;
+    font-size: 1rem;
+    text-transform: uppercase;
+  }
+
+  p {
+    color: $brand-gray;
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.patient-avatar {
+  display: grid;
+  place-items: center;
+  width: 3.6rem;
+  aspect-ratio: 1;
+  border: 2px solid $brand-black;
+  background: $brand-white;
+  color: $brand-red;
+  font-family: $font-h2;
+  font-size: 1rem;
 }
 
 .status-indicator {
-  font-size: 0.75rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 12px;
-  background-color: #f0f0f0;
-  color: #666;
+  border: 1px solid rgba($brand-red, 0.35);
+  background: rgba($brand-red, 0.08);
+  color: $brand-red-dark;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+
   &.active {
-    background-color: #e8f5e9;
-    color: #2e7d32;
+    border-color: $brand-black;
+    background: $brand-black;
+    color: $brand-white;
   }
 }
 
-.patient-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 1rem;
-  p {
-    margin: 0;
-    font-size: 0.8rem;
-    color: $text-light;
+.patient-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  border-block: 1px solid $panel-line;
+  margin: 1.25rem 0;
+  padding: 1rem 0;
+
+  div {
+    min-width: 0;
   }
+
+  span {
+    display: block;
+    color: $brand-gray;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  strong {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.patient-meta,
+.action-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.patient-meta {
+  justify-content: flex-end;
 }
 
 .btn-text-action,
 .btn-back {
-  background: none;
-  border: none;
+  border: 0;
+  background: transparent;
+  color: $brand-black;
   cursor: pointer;
-  padding: 0;
-  transition: all 0.2s ease;
+  font-family: $font-h2;
+  font-size: 0.78rem;
+  text-transform: uppercase;
 }
+
 .btn-text-action {
-  color: $text-light;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-.btn-back {
-  color: $text-light;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
+  &.danger {
+    color: $brand-red;
+  }
+
+  &.success {
+    color: $brand-red-dark;
+  }
+
+  &.neutral {
+    color: $brand-black;
+  }
+
   &:hover {
-    color: $accent;
     text-decoration: underline;
   }
 }
 
-// ==========================================
-// VISTA B: FORMULARIO
-// ==========================================
-.form-layout {
-  max-width: 900px;
-  margin: 0 auto;
-}
-.card,
-.meal-card {
-  background-color: $surface;
-  border: 1px solid $border;
-  border-radius: 8px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.01);
-}
-h3 {
-  font-size: 1.1rem;
-  font-weight: 500;
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  color: $text-main;
+.btn-back {
+  width: fit-content;
+  color: $brand-gray;
+  padding: 0;
 }
 
-.input-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+.form-layout {
+  width: min(100%, 1040px);
+  margin: 0 auto;
 }
-.input-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1rem;
+
+.clinical-section {
+  margin-bottom: 2rem;
+}
+
+.card,
+.meal-card {
+  border: 1px solid $panel-line;
+  background: $surface;
+  margin-bottom: 1.4rem;
+  padding: 1.5rem;
+}
+
+.card h3,
+.meal-card h3 {
+  margin: 0 0 1.25rem;
+  border-bottom: 2px solid $brand-red;
+  padding-bottom: 0.8rem;
+  font-family: $font-h2;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+}
+
+.input-grid,
+.answer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.info-block {
+  display: grid;
+  gap: 0.35rem;
+
   label {
-    font-size: 0.85rem;
-    color: $text-light;
-    margin-bottom: 0.5rem;
+    color: $brand-gray;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
   }
+
+  p {
+    margin: 0;
+    color: $brand-black;
+    font-size: 0.92rem;
+  }
+
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+.full-questionnaire,
+.gallery-title {
+  border-top: 1px solid $panel-line;
+  margin-top: 1.5rem;
+  padding-top: 1.2rem;
+}
+
+.full-questionnaire h4,
+.gallery-title {
+  color: $brand-black;
+  font-family: $font-h2;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.photo-gallery {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.photo-item {
+  flex: 0 0 auto;
+}
+
+.photo-label {
+  display: block;
+  color: $brand-gray;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+}
+
+.clinical-photo,
+.inbody-link {
+  width: 9rem;
+  height: 12rem;
+  border: 1px solid $panel-line;
+  object-fit: cover;
+}
+
+.inbody-link {
+  display: grid;
+  place-items: center;
+  color: $brand-red;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.empty-clinical-state {
+  color: $brand-gray;
+  padding: 1rem 0;
+  text-align: center;
+}
+
+.input-group {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+
+  label {
+    color: $brand-gray;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
   input {
-    border: 1px solid $border;
-    border-radius: 4px;
-    padding: 0.8rem 1rem;
-    font-size: 0.95rem;
-    background-color: #fafafa;
-    transition: border-color 0.2s ease;
+    width: 100%;
+    min-height: 2.75rem;
+    border: 1px solid $panel-line;
+    background: $brand-white;
+    color: $brand-black;
+    font: inherit;
+    padding: 0 0.8rem;
+
     &:focus {
+      border-color: $brand-red;
       outline: none;
-      border-color: $accent;
-      background-color: $surface;
     }
   }
 }
 
 .divider {
-  height: 1px;
-  background-color: $border;
-  margin: 3rem 0;
+  height: 0.25rem;
+  background: repeating-linear-gradient(
+    90deg,
+    $brand-black 0 2.4rem,
+    transparent 2.4rem 3.2rem
+  );
+  margin: 2rem 0;
 }
 
 .meal-card {
-  border-left: 3px solid $accent;
-  transition: transform 0.2s ease;
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.03);
-  }
+  border-left: 0.4rem solid $brand-red;
 }
+
 .meal-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
   align-items: center;
   margin-bottom: 1rem;
-.meal-title-input { 
-    font-size: 1.4rem; 
-    font-weight: 500; 
-    border: none; 
-    // 🟢 Le agregamos un fondo sutil y una línea para que el usuario sepa que puede dar clic ahí
-    background-color: #f5f5f5;
-    border-bottom: 2px dashed #ccc;
-    border-radius: 4px 4px 0 0;
-    padding: 0.5rem 1rem; 
-    width: 60%; 
-    transition: all 0.2s ease; 
-
-    &::placeholder {
-      color: #aaa;
-    }
-
-    &:focus { 
-      outline: none; 
-      background-color: transparent;
-      border-bottom: 2px solid $accent; 
-    } 
-  }
 }
-.meal-note {
-  font-size: 0.9rem !important;
-  color: $text-light;
-  background: transparent !important;
-  border: none !important;
-  border-bottom: 1px dashed $border !important;
-  border-radius: 0 !important;
-  padding-left: 0 !important;
+
+.meal-title-input,
+.meal-note,
+.food-row input {
+  border: 1px solid $panel-line;
+  background: $brand-white;
+  color: $brand-black;
+  font: inherit;
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+
   &:focus {
-    border-bottom-color: $accent !important;
+    border-color: $brand-red;
+    outline: none;
   }
 }
 
-// 🟢 SOLUCIÓN DEL DESBORDAMIENTO: Ajuste preciso del Grid y min-width
+.meal-title-input {
+  font-family: $font-h2;
+  text-transform: uppercase;
+}
+
 .foods-container {
-  margin: 2rem 0;
-  width: 100%;
+  margin: 1rem 0;
   overflow-x: auto;
-} // Protege contra pantallas pequeñas
+}
 
 .food-labels,
 .food-row {
   display: grid;
-  // Redistribución de fracciones para que encajen los 5 inputs y el botón X
-  grid-template-columns: minmax(120px, 2.5fr) repeat(4, minmax(60px, 1fr)) 30px;
-  gap: 0.8rem;
+  grid-template-columns: minmax(160px, 2fr) repeat(4, minmax(70px, 1fr)) 2.4rem;
+  gap: 0.65rem;
   align-items: center;
+  min-width: 680px;
 }
 
 .food-labels {
+  border-bottom: 1px solid $panel-line;
+  color: $brand-gray;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid $border;
-  margin-bottom: 1rem;
-  span {
-    font-size: 0.75rem;
-    color: $text-light;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+  text-transform: uppercase;
 }
 
 .food-row {
-  margin-bottom: 0.8rem;
-  input {
-    min-width: 0; // 🟢 ESTO EVITA QUE ROMPAN LA TARJETA
-    width: 100%;
-    border: 1px solid $border;
-    border-radius: 4px;
-    padding: 0.6rem;
-    font-size: 0.9rem;
-    &:focus {
-      outline: none;
-      border-color: $accent;
-    }
+  margin-bottom: 0.65rem;
+}
+
+.btn-primary,
+.btn-add-primary,
+.btn-add-secondary {
+  border: 1px solid $brand-black;
+  cursor: pointer;
+  font-family: $font-h2;
+  font-size: 0.82rem;
+  min-height: 2.7rem;
+  padding: 0 1rem;
+  text-transform: uppercase;
+}
+
+.btn-primary {
+  background: $brand-black;
+  color: $brand-white;
+
+  &:hover:not(:disabled) {
+    background: $brand-red;
+    border-color: $brand-red;
+  }
+
+  &:disabled {
+    background: $brand-gray;
+    border-color: $brand-gray;
+    cursor: progress;
   }
 }
 
-// Botones
-.btn-primary {
-  background-color: $accent;
-  color: $surface;
-  border: none;
-  padding: 0.8rem 2rem;
-  font-size: 0.95rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
+.btn-add-primary,
+.btn-add-secondary {
+  background: $surface;
+  color: $brand-black;
+
   &:hover {
-    opacity: 0.8;
-  }
-  &:disabled {
-    background-color: $border;
-    cursor: not-allowed;
+    border-color: $brand-red;
+    color: $brand-red;
   }
 }
+
 .btn-add-primary {
   width: 100%;
-  background-color: transparent;
-  color: $accent;
-  border: 1px dashed $border;
-  padding: 1.2rem;
-  font-size: 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
-  &:hover {
-    border-color: $accent;
-    background-color: #f0f0f0;
-  }
 }
-.btn-add-secondary {
-  background-color: transparent;
-  color: $text-light;
-  border: none;
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 0.5rem 0;
-  &:hover {
-    color: $accent;
-    text-decoration: underline;
-  }
-}
-.btn-icon-delete {
-  background: transparent;
-  color: $danger;
-  border: none;
-  font-size: 0.85rem;
-  cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
-  &:hover {
-    opacity: 1;
-  }
-}
+
+.btn-icon-delete,
 .btn-delete-row {
+  border: 0;
   background: transparent;
-  color: $text-light;
-  border: none;
-  font-size: 1.2rem;
+  color: $brand-red;
   cursor: pointer;
-  &:hover {
-    color: $danger;
+  font-family: $font-h2;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .admin-container {
+    padding: 2rem 1rem 3rem;
+  }
+
+  .admin-header {
+    flex-direction: column;
+  }
+
+  .header-actions {
+    width: 100%;
+
+    .btn-primary,
+    .btn-text-action {
+      flex: 1;
+    }
+  }
+
+  .admin-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-info,
+  .meal-header {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-details {
+    grid-template-columns: 1fr;
   }
 }
 
-// Ajuste para la parte inferior de la tarjeta
-.patient-meta {
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; // Alinea verticalmente al centro
-  border-top: 1px solid #f0f0f0; 
-  padding-top: 1.2rem;
-  margin-top: 1.5rem;
-
-  p { 
-    margin: 0; 
-    font-size: 0.8rem; 
-    color: #737373; 
-    line-height: 1.4;
-  }
-}
-
-// Contenedor para ordenar los botones de Aprobar/Editar
-.action-buttons {
-  display: flex;
-  align-items: center;
-  gap: 12px; // Espaciado perfecto entre botones
-}
-
-// Estilos específicos de cada botón de acción
-.btn-text-action {
-  background: none; 
-  border: none; 
-  cursor: pointer; 
-  padding: 0; 
-  transition: all 0.2s ease;
-  font-size: 0.85rem; 
-
-  &.danger {
-    color: #DC3545;
-    &:hover { color: #b02a37; text-decoration: underline; }
+@media (max-width: 520px) {
+  .admin-header h2 {
+    font-size: 1.85rem;
   }
 
-  &.success {
-    color: #2e7d32;
-    font-weight: 600;
-    &:hover { color: #1b5e20; text-decoration: underline; }
+  .header-actions {
+    flex-direction: column;
   }
 
-  &.neutral {
-    color: #1A1A1A;
-    font-weight: 500;
-    &:hover { color: #000000; transform: translateX(2px); }
+  .card,
+  .meal-card {
+    padding: 1rem;
   }
 }

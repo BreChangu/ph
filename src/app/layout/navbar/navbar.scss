@@ -186,9 +186,9 @@
       a {
         font-family: $font-h1; 
         font-style: italic; 
-        font-size: clamp(24px, 7vw, 36px); // 🛑 FIX: Escala controlada para que no se salga 🛑
+        font-size: 32px;
         line-height: 1.1;
-        letter-spacing: -1px;
+        letter-spacing: 0;
         color: $brand-white;
         display: block; 
         transition: color 0.3s ease, padding-left 0.3s ease;
@@ -216,5 +216,17 @@
       letter-spacing: 3px;
       box-sizing: border-box;
     }
+  }
+}
+
+@media (max-width: 420px) {
+  .nav-links li a {
+    font-size: 26px;
+  }
+
+  .nav-actions .btn-cta {
+    font-size: 14px;
+    letter-spacing: 1px;
+    padding: 16px 18px;
   }
 }

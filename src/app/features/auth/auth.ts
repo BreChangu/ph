@@ -1,8 +1,8 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/supabase/auth';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-auth',
@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
   templateUrl: './auth.html',
   styleUrls: ['./auth.scss'],
 })
-export class AuthComponent {
+export class AuthComponent implements OnInit {
   // Variables del formulario
   email = '';
   password = '';
@@ -29,8 +29,21 @@ export class AuthComponent {
   constructor(
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
     private router: Router,
   ) {}
+
+  async ngOnInit() {
+    if (this.route.snapshot.queryParamMap.get('signedOut') === '1') {
+      this.authService.clearLocalSession();
+      return;
+    }
+
+    const session = await this.authService.getSession();
+    if (session?.user) {
+      await this.redirigirUsuarioAutenticado(session.user.id, session.user.email);
+    }
+  }
 
   // Cambiar entre Login y Registro
   toggleMode() {
@@ -161,32 +174,8 @@ export class AuthComponent {
 
         this.showMessage('¡Acceso concedido! Verificando credenciales...', false);
 
-        // 🟢 PREGUNTAMOS EL ROL Y EL ESTADO ANTES DE MOVERLO
         if (authData.user?.id) {
-          const perfil = await this.authService.getUserProfile(authData.user.id);
-
-          // 1. Verificamos que el perfil exista en la base de datos
-          if (!perfil) {
-            this.showMessage('Error de sistema: Perfil no encontrado.', true);
-            await this.authService.signOut();
-            return;
-          }
-
-          // 2. 🟢 LA NUEVA BARRERA DE APROBACIÓN
-          if (perfil.estado_aprobacion === 'pendiente' && perfil.rol !== 'admin') {
-            this.showMessage('Tu cuenta está en revisión. Te avisaremos cuando sea aprobada.', true);
-            await this.authService.signOut(); // Lo expulsamos de la sesión inmediatamente
-            return; // Detenemos el código aquí
-          }
-
-          // 3. Si pasó la barrera, lo mandamos a su ruta correspondiente
-          if (perfil.rol === 'admin') {
-            console.log('📍 Redirigiendo a zona de Administración');
-            this.router.navigate(['/admin-panel']);
-          } else {
-            console.log('📍 Redirigiendo a zona de Pacientes');
-            this.router.navigate(['/panel']);
-          }
+          await this.redirigirUsuarioAutenticado(authData.user.id, authData.user.email);
         }
       } else {
         // =====================================
@@ -227,5 +216,29 @@ export class AuthComponent {
     this.message = text;
     this.isError = isError;
     this.cdr.detectChanges();
+  }
+
+  private async redirigirUsuarioAutenticado(userId: string, email?: string) {
+    const perfil = await this.authService.getUserProfileForAuth(userId, email);
+
+    if (!perfil) {
+      this.showMessage('Error de sistema: Perfil no encontrado.', true);
+      await this.authService.signOut();
+      return;
+    }
+
+    if (perfil.estado_aprobacion === 'pendiente' && perfil.rol !== 'admin') {
+      this.showMessage('Tu cuenta está en revisión. Te avisaremos cuando sea aprobada.', true);
+      await this.authService.signOut();
+      return;
+    }
+
+    if (perfil.rol === 'admin') {
+      await this.router.navigate(['/admin-panel']);
+      return;
+    }
+
+    const expediente = await this.authService.getExpedienteClinico(perfil.id);
+    await this.router.navigate([expediente ? '/panel' : '/onboarding']);
   }
 }

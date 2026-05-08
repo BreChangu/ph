@@ -1,6 +1,6 @@
 <header class="main-header">
   <div class="nav-container">
-    
+
     <a routerLink="/" class="brand-logo" (click)="closeMenu()">
       <img src="/assets/leon-isotipo.svg" alt="Pablo Herrera - Isotipo">
     </a>
@@ -22,12 +22,25 @@
 
     <div class="nav-wrapper" [class.open]="isMenuOpen">
       <nav class="nav-links">
-        <ul>
-          <li><a routerLink="/auth" (click)="closeMenu()">Iniciar Sesión</a></li>
+       <ul>
           <li><a routerLink="/servicios" (click)="closeMenu()">Servicios</a></li>
           <li><a routerLink="/acerca" (click)="closeMenu()">Acerca de</a></li>
           <li><a routerLink="/blog" (click)="closeMenu()">Blog</a></li>
           <li><a routerLink="/faqs" (click)="closeMenu()">FAQS</a></li>
+
+          @if (!isLoggedIn) {
+            <li><a routerLink="/auth" (click)="closeMenu()" style="font-weight: bold; color: var(--primary-color);">Iniciar Sesión</a></li>
+          } @else {
+
+            @if (isAdmin) {
+              <li><a (click)="irAlPanel()" style="cursor: pointer; font-weight: bold; color: var(--primary-color);">Panel de Coach</a></li>
+            }
+            @else {
+              <li><a (click)="irAlPanel()" style="cursor: pointer; font-weight: bold; color: var(--primary-color);">Mi Expediente</a></li>
+            }
+
+            <li><a (click)="cerrarSesion()" style="cursor: pointer; color: #e74c3c;">Cerrar Sesión</a></li>
+          }
         </ul>
       </nav>
 

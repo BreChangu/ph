@@ -1,68 +1,187 @@
 <div class="admin-container">
-
   <ng-container *ngIf="vistaActual === 'lista'">
-    <header class="admin-header">
+    <header class="admin-header dashboard-heading">
       <div class="header-titles">
+        <span class="eyebrow">Panel de administracion</span>
         <h2>Pacientes Activos</h2>
-        <span class="badge">Panel de Administración</span>
       </div>
-      <button class="btn-primary">+ Nuevo Paciente</button>
+      <div class="header-actions">
+        <button class="btn-primary" type="button" (click)="cargarPacientes()" [disabled]="isLoadingPacientes">
+          {{ isLoadingPacientes ? 'Cargando...' : 'Refrescar' }}
+        </button>
+        <button class="btn-text-action danger" type="button" (click)="cerrarSesion()">Cerrar sesion</button>
+      </div>
     </header>
 
+    <section class="admin-kpis" aria-label="Resumen de pacientes">
+      <article>
+        <span>Total</span>
+        <strong>{{ totalPacientes }}</strong>
+        <small>Pacientes registrados</small>
+      </article>
+      <article>
+        <span>Activos</span>
+        <strong>{{ pacientesActivos }}</strong>
+        <small>Listos para seguimiento</small>
+      </article>
+      <article>
+        <span>Revision</span>
+        <strong>{{ pendientesRevision }}</strong>
+        <small>Pendientes de aprobar</small>
+      </article>
+    </section>
+
     <div class="dashboard-grid">
-      <div class="patient-card" *ngFor="let paciente of pacientes" (click)="abrirExpediente(paciente)">
-        <div class="patient-info">
-          <h3>{{ paciente.nombre }}</h3>
+      <div *ngIf="isLoadingPacientes && pacientes.length === 0" class="empty-state">
+        Cargando pacientes...
+      </div>
+
+      <div *ngIf="!isLoadingPacientes && pacientes.length === 0" class="empty-state">
+        No hay pacientes registrados todavia.
+      </div>
+
+      <article class="patient-card" *ngFor="let paciente of pacientes" (click)="abrirExpediente(paciente)">
+        <header class="patient-info">
+          <div class="patient-avatar">{{ getPacienteIniciales(paciente) }}</div>
+          <div>
+            <h3>{{ paciente.nombre_completo || 'Paciente nuevo' }}</h3>
+            <p>{{ paciente.email || 'Sin correo registrado' }}</p>
+          </div>
           <span class="status-indicator" [class.active]="paciente.estado_aprobacion === 'aprobado'">
-            {{ paciente.estado_aprobacion === 'aprobado' ? 'Activo' : 'En Revisión' }}
+            {{ paciente.estado_aprobacion === 'aprobado' ? 'Activo' : 'Revision' }}
           </span>
-        </div>
-        
-        <div class="patient-meta">
-          <p>Última mod:<br>{{ paciente.ultimaActualizacion }}</p>
-          
-          <div class="action-buttons">
-            <button class="btn-text-action danger" *ngIf="paciente.estado_aprobacion === 'aprobado'" (click)="toggleEstado(paciente, $event)">
-              Suspender
-            </button>
-            <button class="btn-text-action success" *ngIf="paciente.estado_aprobacion === 'pendiente'" (click)="toggleEstado(paciente, $event)">
-              Aprobar ✓
-            </button>
-            <button class="btn-text-action neutral">Editar Plan →</button>
+        </header>
+
+        <div class="patient-details">
+          <div>
+            <span>Registro</span>
+            <strong>{{ paciente.created_at | date:'dd MMM yyyy' }}</strong>
+          </div>
+          <div>
+            <span>Peso</span>
+            <strong>{{ paciente.peso_kg || '--' }} kg</strong>
+          </div>
+          <div>
+            <span>Meta</span>
+            <strong>{{ getPacienteObjetivo(paciente) }}</strong>
           </div>
         </div>
-      </div>
+
+        <footer class="patient-meta">
+          <button type="button" class="btn-text-action danger" *ngIf="paciente.estado_aprobacion === 'aprobado'" (click)="toggleEstado(paciente, $event)">
+            Suspender
+          </button>
+          <button type="button" class="btn-text-action success" *ngIf="paciente.estado_aprobacion === 'pendiente'" (click)="toggleEstado(paciente, $event)">
+            Aprobar
+          </button>
+          <button type="button" class="btn-text-action neutral" (click)="abrirExpediente(paciente); $event.stopPropagation()">
+            Editar plan
+          </button>
+        </footer>
+      </article>
     </div>
   </ng-container>
 
-
   <ng-container *ngIf="vistaActual === 'editor'">
-    <header class="admin-header">
+    <header class="admin-header editor-heading">
       <div class="header-titles">
-        <button class="btn-back" (click)="volverAlPanel()">← Volver al panel</button>
-        <h2 style="margin-top: 1rem;">Expediente: {{ pacienteSeleccionado?.nombre }}</h2>
-        <span class="badge">Constructor de Dietas</span>
+        <button class="btn-back" type="button" (click)="volverAlPanel()">Volver al panel</button>
+        <span class="eyebrow">Editor de paciente</span>
+        <h2 class="editor-title">{{ pacienteSeleccionado?.nombre_completo || 'Sin nombre' }}</h2>
+
+        <span class="badge badge-tmb">
+          TMB sugerida: {{ calcularCaloriasBase(pacienteSeleccionado) }} {{ calcularCaloriasBase(pacienteSeleccionado) === 'Datos clinicos pendientes' ? '' : 'kcal' }}
+        </span>
       </div>
-      <button class="btn-primary" (click)="guardarPlan()">
-        Guardar Plan Nutricional
+      <button class="btn-primary" type="button" (click)="guardarPlan()" [disabled]="isSavingPlan || isLoadingExpediente">
+        {{ isSavingPlan ? 'Guardando...' : 'Guardar plan' }}
       </button>
     </header>
 
+    <div *ngIf="isLoadingExpediente" class="empty-state editor-loading">
+      Cargando expediente...
+    </div>
+
+    <div class="form-layout clinical-section">
+      <section class="card clinical-data">
+        <h3>Entrevista inicial y fotos</h3>
+
+        <div *ngIf="expedienteClinico">
+          <div class="input-grid clinical-grid">
+            <div class="info-block">
+              <label>Objetivo principal</label>
+              <p>{{ expedienteClinico.respuestas_completas?.objetivo }}</p>
+            </div>
+            <div class="info-block">
+              <label>Meta</label>
+              <p>{{ expedienteClinico.respuestas_completas?.peso_objetivo }}</p>
+            </div>
+            <div class="info-block">
+              <label>Cintura actual</label>
+              <p>{{ expedienteClinico.respuestas_completas?.cintura_cm }} cm</p>
+            </div>
+            <div class="info-block">
+              <label>Enfermedades / lesiones</label>
+              <p>{{ expedienteClinico.respuestas_completas?.enfermedades }} / {{ expedienteClinico.respuestas_completas?.lesiones || 'Ninguna' }}</p>
+            </div>
+            <div class="info-block full-width">
+              <label>Ejemplo de un dia de comida</label>
+              <p>{{ expedienteClinico.respuestas_completas?.ejemplo_dia }}</p>
+            </div>
+          </div>
+
+          <div class="full-questionnaire">
+            <h4>Cuestionario completo</h4>
+            <div class="answer-grid">
+              <div class="info-block" *ngFor="let item of expedienteClinico.respuestas_completas | keyvalue">
+                <label>{{ getRespuestaLabel(item.key) }}</label>
+                <p>{{ formatRespuesta(item.value) }}</p>
+              </div>
+            </div>
+          </div>
+
+          <h4 class="gallery-title">Evidencia fotografica</h4>
+          <div class="photo-gallery">
+            <div *ngIf="expedienteClinico.fotos_progreso?.frente" class="photo-item">
+              <span class="photo-label">Frente</span>
+              <img [src]="expedienteClinico.fotos_progreso.frente" class="clinical-photo">
+            </div>
+            <div *ngIf="expedienteClinico.fotos_progreso?.perfil" class="photo-item">
+              <span class="photo-label">Perfil</span>
+              <img [src]="expedienteClinico.fotos_progreso.perfil" class="clinical-photo">
+            </div>
+            <div *ngIf="expedienteClinico.fotos_progreso?.espalda" class="photo-item">
+              <span class="photo-label">Espalda</span>
+              <img [src]="expedienteClinico.fotos_progreso.espalda" class="clinical-photo">
+            </div>
+            <div *ngIf="expedienteClinico.fotos_progreso?.inbody" class="photo-item">
+              <span class="photo-label">InBody</span>
+              <a [href]="expedienteClinico.fotos_progreso.inbody" target="_blank" class="inbody-link">Ver InBody</a>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!expedienteClinico" class="empty-clinical-state">
+          <p>Este paciente aun no ha completado su entrevista inicial.</p>
+        </div>
+      </section>
+    </div>
+
     <form [formGroup]="planForm" class="form-layout">
       <section class="card general-info">
-        <h3>Información General del Plan</h3>
+        <h3>Informacion general del plan</h3>
         <div class="input-grid">
           <div class="input-group">
-            <label>Calorías Totales (Kcal)</label>
+            <label>Calorias totales (kcal)</label>
             <input type="number" formControlName="calorias_totales" placeholder="Ej. 2100">
           </div>
           <div class="input-group">
-            <label>Suplementación Estratégica</label>
-            <input type="text" formControlName="suplementacion" placeholder="Ej. 5g Creatina, Omega 3...">
+            <label>Suplementacion estrategica</label>
+            <input type="text" formControlName="suplementacion" placeholder="Ej. 5g creatina, omega 3">
           </div>
           <div class="input-group">
-            <label>Medicamentos / Protocolos</label>
-            <input type="text" formControlName="medicacion" placeholder="Ej. Primobolan...">
+            <label>Medicamentos / protocolos</label>
+            <input type="text" formControlName="medicacion" placeholder="Ej. protocolo personalizado">
           </div>
         </div>
       </section>
@@ -71,47 +190,33 @@
 
       <div formArrayName="comidas" class="meals-container">
         <div *ngFor="let comida of comidas.controls; let i = index" [formGroupName]="i" class="meal-card">
-          
           <header class="meal-header">
-            <input type="text" class="meal-title-input" formControlName="nombre" placeholder="Nombre de la comida (Ej. Desayuno)">
+            <input type="text" class="meal-title-input" formControlName="nombre" placeholder="Nombre de la comida">
             <button type="button" class="btn-icon-delete" (click)="eliminarComida(i)">Eliminar</button>
           </header>
 
           <div class="input-group">
-            <input type="text" class="meal-note" formControlName="nota_comida" placeholder="Notas opcionales (Ej. Licuar todo junto)">
+            <input type="text" class="meal-note" formControlName="nota_comida" placeholder="Notas opcionales">
           </div>
 
           <div formArrayName="alimentos" class="foods-container">
             <div class="food-labels" *ngIf="alimentosDeComida(i).length > 0">
-              <span>Alimento</span>
-              <span>Cal</span>
-              <span>Prot (g)</span>
-              <span>Carb (g)</span>
-              <span>Gras (g)</span>
-              <span></span>
+              <span>Alimento</span><span>Cal</span><span>Prot</span><span>Carb</span><span>Grasa</span><span></span>
             </div>
 
             <div *ngFor="let alimento of alimentosDeComida(i).controls; let j = index" [formGroupName]="j" class="food-row">
-              <input type="text" formControlName="descripcion" placeholder="Ej. 100g de Pollo">
+              <input type="text" formControlName="descripcion" placeholder="Ej. 100g de pollo">
               <input type="number" formControlName="calorias" placeholder="0">
               <input type="number" formControlName="proteinas" placeholder="0">
               <input type="number" formControlName="carbos" placeholder="0">
               <input type="number" formControlName="grasas" placeholder="0">
-              <button type="button" class="btn-delete-row" (click)="eliminarAlimento(i, j)">✕</button>
+              <button type="button" class="btn-delete-row" (click)="eliminarAlimento(i, j)">x</button>
             </div>
           </div>
-
-          <button type="button" class="btn-add-secondary" (click)="agregarAlimento(i)">
-            + Agregar Alimento
-          </button>
+          <button type="button" class="btn-add-secondary" (click)="agregarAlimento(i)">Agregar alimento</button>
         </div>
       </div>
-
-      <button type="button" class="btn-add-primary" (click)="agregarComida()">
-        + Agregar Nueva Comida
-      </button>
-
+      <button type="button" class="btn-add-primary" (click)="agregarComida()">Agregar nueva comida</button>
     </form>
   </ng-container>
-
 </div>
