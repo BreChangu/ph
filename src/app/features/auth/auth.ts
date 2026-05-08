@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/supabase/auth';
@@ -12,12 +12,10 @@ import { ActivatedRoute, Router } from '@angular/router';
   styleUrls: ['./auth.scss'],
 })
 export class AuthComponent implements OnInit {
-  // Variables del formulario
   email = '';
   password = '';
   confirmPassword = '';
 
-  // Variables de estado (UI)
   isLoginMode = true;
   isRecoveryMode = false;
   isEmailSent = false;
@@ -31,11 +29,13 @@ export class AuthComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private router: Router,
+    private ngZone: NgZone // 🟢 Necesario para que Angular actualice la vista al entrar
   ) {}
 
   async ngOnInit() {
+    // 🟢 FIX: Usamos el método signOut reactivo
     if (this.route.snapshot.queryParamMap.get('signedOut') === '1') {
-      this.authService.clearLocalSession();
+      await this.authService.signOut();
       return;
     }
 
@@ -45,7 +45,6 @@ export class AuthComponent implements OnInit {
     }
   }
 
-  // Cambiar entre Login y Registro
   toggleMode() {
     this.isLoginMode = !this.isLoginMode;
     this.isRecoveryMode = false;
@@ -53,19 +52,16 @@ export class AuthComponent implements OnInit {
     this.resetForm();
   }
 
-  // Alternar modo recuperación
   toggleRecoveryMode() {
     this.isRecoveryMode = !this.isRecoveryMode;
     this.isEmailSent = false;
     this.resetForm();
   }
 
-  // Mostrar/Ocultar contraseña
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
   }
 
-  // Limpiar formulario y mensajes
   private resetForm() {
     this.message = '';
     this.password = '';
@@ -73,51 +69,30 @@ export class AuthComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // Login con Google
   async handleGoogleLogin() {
     await this.authService.signInWithGoogle();
   }
 
-  // Flujo principal de Correo/Contraseña
   async handleEmailAuth() {
     if (!this.email) {
       this.showMessage('Por favor, ingresa tu correo electrónico.', true);
       return;
     }
 
-    // =====================================
-    // 🟢 FLUJO 1: RECUPERACIÓN DE CONTRASEÑA (Blindado)
-    // =====================================
     if (this.isRecoveryMode) {
-      console.log('📍 INICIO: Solicitando correo de recuperación para', this.email);
       this.isLoading = true;
       this.message = '';
       this.cdr.detectChanges();
 
-      // Cronómetro de seguridad: 10 segundos máximo
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(
-          () =>
-            reject(
-              new Error(
-                'El servidor tardó demasiado. Revisa tu conexión o la configuración de Supabase.',
-              ),
-            ),
-          10000,
-        ),
+        setTimeout(() => reject(new Error('El servidor tardó demasiado.')), 10000)
       );
 
       try {
-        // Carrera entre Supabase y el cronómetro
         await Promise.race([this.authService.resetPassword(this.email), timeoutPromise]);
-
-        console.log('📍 ÉXITO: Supabase procesó la petición.');
-
         this.isEmailSent = true;
-        this.showMessage('¡Enlace enviado! Revisa tu bandeja de entrada o spam.', false);
+        this.showMessage('¡Enlace enviado! Revisa tu bandeja.', false);
         this.email = '';
-
-        // Magia UX: Regreso suave al login después de 3.5s
         setTimeout(() => {
           this.isRecoveryMode = false;
           this.isLoginMode = true;
@@ -126,20 +101,14 @@ export class AuthComponent implements OnInit {
           this.cdr.detectChanges();
         }, 3500);
       } catch (error: any) {
-        console.error('🔥 ERROR CAPTURADO EN RECUPERACIÓN:', error);
-        const errorReal = error?.message || 'Error de conexión con el servidor.';
-        this.showMessage(`Aviso: ${errorReal}`, true);
+        this.showMessage(`Aviso: ${error?.message || 'Error de conexión'}`, true);
       } finally {
-        console.log('📍 FIN: Destrabando el botón obligatoriamente.');
         this.isLoading = false;
         this.cdr.detectChanges();
       }
-      return; // Terminamos aquí si es recuperación
+      return;
     }
 
-    // =====================================
-    // 🔵 FLUJO 2: LOGIN Y REGISTRO
-    // =====================================
     if (!this.password) {
       this.showMessage('Por favor, ingresa tu contraseña.', true);
       return;
@@ -163,33 +132,19 @@ export class AuthComponent implements OnInit {
 
     try {
       if (this.isLoginMode) {
-        // =====================================
-        // MODO: INICIAR SESIÓN (CON AUDITORÍA Y APROBACIÓN)
-        // =====================================
-        const { data: authData, error } = await this.authService.signInWithEmail(
-          this.email,
-          this.password,
-        );
+        const { data: authData, error } = await this.authService.signInWithEmail(this.email, this.password);
         if (error) throw error;
-
-        this.showMessage('¡Acceso concedido! Verificando credenciales...', false);
-
+        this.showMessage('¡Acceso concedido! Verificando...', false);
         if (authData.user?.id) {
           await this.redirigirUsuarioAutenticado(authData.user.id, authData.user.email);
         }
       } else {
-        // =====================================
-        // MODO: REGISTRO
-        // =====================================
         const { data, error } = await this.authService.signUpWithEmail(this.email, this.password);
         if (error) throw error;
-
-        // Detector de correos duplicados
         if (data?.user?.identities && data.user.identities.length === 0) {
-          this.showMessage('Este correo ya está registrado. Por favor, inicia sesión.', true);
+          this.showMessage('Este correo ya está registrado. Inicia sesión.', true);
           return;
         }
-
         this.showMessage('¡Registro exitoso! Revisa tu bandeja de entrada.', false);
         this.resetForm();
         this.isLoginMode = true;
@@ -201,9 +156,9 @@ export class AuthComponent implements OnInit {
       } else if (msg.includes('Email not confirmed')) {
         this.showMessage('Por favor, verifica tu correo antes de entrar.', true);
       } else if (msg.includes('User already registered')) {
-        this.showMessage('Este correo ya está registrado. Por favor, inicia sesión.', true);
+        this.showMessage('Este correo ya está registrado. Inicia sesión.', true);
       } else {
-        this.showMessage('Ocurrió un error inesperado. Intenta de nuevo.', true);
+        this.showMessage('Ocurrió un error inesperado.', true);
       }
     } finally {
       this.isLoading = false;
@@ -211,7 +166,6 @@ export class AuthComponent implements OnInit {
     }
   }
 
-  // Utilidad para mostrar mensajes
   private showMessage(text: string, isError: boolean) {
     this.message = text;
     this.isError = isError;
@@ -233,12 +187,14 @@ export class AuthComponent implements OnInit {
       return;
     }
 
-    if (perfil.rol === 'admin') {
-      await this.router.navigate(['/admin-panel']);
-      return;
-    }
-
-    const expediente = await this.authService.getExpedienteClinico(perfil.id);
-    await this.router.navigate([expediente ? '/panel' : '/onboarding']);
+    // 🟢 Hacemos que Angular salte a la vista deseada instantáneamente
+    this.ngZone.run(async () => {
+      if (perfil.rol === 'admin') {
+        await this.router.navigate(['/admin-panel']);
+      } else {
+        const expediente = await this.authService.getExpedienteClinico(perfil.id);
+        await this.router.navigate([expediente ? '/panel' : '/onboarding']);
+      }
+    });
   }
 }

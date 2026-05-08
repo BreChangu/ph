@@ -1,0 +1,224 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: src/app//*
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+src/app/app.config.server.ts
+src/app/app.config.ts
+src/app/app.html
+src/app/app.routes.server.ts
+src/app/app.routes.ts
+src/app/app.scss
+src/app/app.spec.ts
+src/app/app.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/app/app.config.server.ts">
+import { mergeApplicationConfig, ApplicationConfig } from '@angular/core';
+import { provideServerRendering, withRoutes } from '@angular/ssr';
+import { appConfig } from './app.config';
+import { serverRoutes } from './app.routes.server';
+
+const serverConfig: ApplicationConfig = {
+  providers: [
+    provideServerRendering(withRoutes(serverRoutes))
+  ]
+};
+
+export const config = mergeApplicationConfig(appConfig, serverConfig);
+</file>
+
+<file path="src/app/app.config.ts">
+import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideRouter } from '@angular/router';
+
+import { routes } from './app.routes';
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideRouter(routes), provideClientHydration(withEventReplay())
+  ]
+};
+</file>
+
+<file path="src/app/app.scss">
+
+</file>
+
+<file path="src/app/app.spec.ts">
+import { TestBed } from '@angular/core/testing';
+import { App } from './app';
+
+describe('App', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+    }).compileComponents();
+  });
+
+  it('should create the app', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
+  });
+
+  it('should render title', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, pablo-herrera');
+  });
+});
+</file>
+
+<file path="src/app/app.ts">
+import { Component, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet],
+  templateUrl: './app.html',
+  styleUrl: './app.scss'
+})
+export class App {
+  protected readonly title = signal('pablo-herrera');
+}
+</file>
+
+<file path="src/app/app.html">
+<router-outlet></router-outlet>
+</file>
+
+<file path="src/app/app.routes.server.ts">
+// src/app/app.routes.server.ts
+import { RenderMode, ServerRoute } from '@angular/ssr';
+
+export const serverRoutes: ServerRoute[] = [
+  {
+    // Le decimos que NO pre-renderice las notas del blog individualmente
+    path: 'blog/:id',
+    renderMode: RenderMode.Server
+  },
+  {
+    // Pero que el resto de la página (Home, Acerca, etc.) sí lo haga para que sea ultra rápida
+    path: '**',
+    renderMode: RenderMode.Prerender
+  }
+];
+</file>
+
+<file path="src/app/app.routes.ts">
+import { Routes } from '@angular/router';
+
+// 🟢 FIX: Importamos el cadenero (la FUNCIÓN), no el servicio.
+// Asegúrate de que la ruta coincida con donde guardaste tu auth.guard.ts
+import { authGuard } from './core/guards/auth-guard';
+
+export const routes: Routes = [
+  {
+    path: '',
+    loadComponent: () =>
+      import('./layout/public-layout/public/public.layout').then((m) => m.PublicLayout),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/home/home').then((m) => m.Home),
+      },
+      {
+        path: 'servicios',
+        loadComponent: () => import('./features/servicios/servicios').then((m) => m.Servicios),
+      },
+      {
+        path: 'acerca',
+        loadComponent: () => import('./features/acerca/acerca').then((m) => m.Acerca),
+      },
+      {
+        path: 'blog',
+        loadComponent: () => import('./features/blog/blog').then((m) => m.BlogComponent),
+      },
+      {
+        path: 'blog/:id',
+        loadComponent: () => import('./features/blog-detail/blog-detail').then((m) => m.BlogDetail),
+      },
+
+      {
+        path: 'auth',
+        loadComponent: () => import('./features/auth/auth').then((m) => m.AuthComponent),
+      },
+      {
+        path: 'panel',
+        canActivate: [authGuard], // <--- AHORA SÍ ES EL CADENERO CORRECTO
+        loadComponent: () => import('./features/panel/panel').then((m) => m.PanelComponent),
+      },
+      {
+        path: 'admin-panel',
+        canActivate: [authGuard], // <--- AHORA SÍ ES EL CADENERO CORRECTO
+        loadComponent: () => import('./features/admin/admin-panel/admin-panel').then((m) => m.AdminPanelComponent),
+      },
+      {
+        path: 'onboarding',
+        canActivate: [authGuard], // <--- AHORA SÍ ES EL CADENERO CORRECTO
+        loadComponent: () =>
+          import('./features/paciente/onboarding/onboarding').then((m) => m.Onboarding),
+      },
+      {
+        path: 'actualizar-password',
+        loadComponent: () =>
+          import('./features/auth/update-password/update-password').then(
+            (m) => m.UpdatePasswordComponent,
+          ),
+      },
+    ],
+  },
+  {
+    path: '**',
+    redirectTo: ''
+  }
+];
+</file>
+
+</files>

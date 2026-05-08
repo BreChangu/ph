@@ -6,21 +6,12 @@ export const authGuard: CanActivateFn = async (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  try {
-    if (authService.getCachedAuthUser()) {
-      return true;
-    }
+  // Verificamos si hay un usuario en el Signal O si la sesión de Supabase existe
+  const session = await authService.getSession();
 
-    const session = await authService.getSession();
-
-    if (session?.user) {
-      return true; // Usuario válido, lo dejamos pasar
-    } else {
-      router.navigate(['/auth']); // Intruso, a la pantalla de login
-      return false;
-    }
-  } catch (error) {
-    console.error('Error en AuthGuard:', error);
+  if (session) {
+    return true; 
+  } else {
     router.navigate(['/auth']);
     return false;
   }

@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { AuthService } from '../../core/supabase/auth';
@@ -112,50 +112,34 @@ export class PanelComponent implements OnInit, OnDestroy {
     },
   ];
 
-  measurements = [
-    'BIR',
-    'BDR',
-    'BIC',
-    'BDC',
-    'Torax',
-    'Cintura',
-    'Gluteo',
-    'Muslo',
-    'PI',
-    'PD',
-  ];
+  measurements = ['BIR', 'BDR', 'BIC', 'BDC', 'Torax', 'Cintura', 'Gluteo', 'Muslo', 'PI', 'PD'];
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   async ngOnInit() {
-    const cachedUser = this.authService.getCachedAuthUser();
+    // 🟢 FIX: Usamos isPlatformBrowser para proteger el SSR y omitimos getCachedAuthUser
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const session = await this.authService.getSession();
+        
+        if (!session?.user?.id) {
+          await this.router.navigate(['/auth']);
+          return;
+        }
 
-    if (cachedUser) {
-      this.userName = cachedUser.email || this.userName;
-    }
+        const perfil = await this.authService.getUserProfileForAuth(session.user.id, session.user.email);
+        const pacienteId = perfil?.id ?? session.user.id;
 
-    try {
-      const session = await this.authService.getSession();
-      const user = session?.user ?? cachedUser;
-
-      if (!user?.id) {
-        await this.router.navigate(['/auth']);
-        return;
-      }
-
-      const perfil = await this.authService.getUserProfileForAuth(user.id, user.email);
-      const pacienteId = perfil?.id ?? user.id;
-
-      this.userName = perfil?.nombre_completo?.split(' ')[0] || user.email || 'Paciente';
-      this.bootstrapPaciente(pacienteId);
-      this.cargarDatosSecundarios(pacienteId, user.email, perfil);
-    } catch (error) {
-      console.error('Error al cargar panel de paciente:', error);
-      if (!cachedUser) {
+        this.userName = perfil?.nombre_completo?.split(' ')[0] || session.user.email || 'Paciente';
+        this.bootstrapPaciente(pacienteId);
+        this.cargarDatosSecundarios(pacienteId, session.user.email, perfil);
+      } catch (error) {
+        console.error('Error al cargar panel de paciente:', error);
         await this.router.navigate(['/auth']);
       }
     }
@@ -203,10 +187,9 @@ export class PanelComponent implements OnInit, OnDestroy {
         this.planPaciente = plan;
       }
     } catch (error) {
-      console.error('Error al cargar plan del paciente:', error);
+      console.error('Error al cargar plan:', error);
       if (requestId === this.planRequestId) {
-        this.planError =
-          'No pudimos cargar tu plan. Si el coach ya lo guardo, revisa permisos de lectura en Supabase para planes_nutricionales, comidas y alimentos_comida.';
+        this.planError = 'Error al cargar la dieta.';
       }
     } finally {
       if (requestId === this.planRequestId) {
@@ -217,11 +200,16 @@ export class PanelComponent implements OnInit, OnDestroy {
   }
 
   async logout() {
-    this.authService.clearLocalSession();
-    this.planChannels.forEach((channel) => this.authService.unsubscribeChannel(channel));
-    this.planChannels = [];
-    await this.router.navigate(['/auth'], { queryParams: { signedOut: '1' } });
-    this.authService.signOut().catch((error) => console.error('Error al cerrar sesion:', error));
+    try {
+      this.planChannels.forEach((channel) => this.authService.unsubscribeChannel(channel));
+      this.planChannels = [];
+      // 🟢 FIX: El nuevo servicio reactivo se encarga de todo con signOut
+      await this.authService.signOut();
+    } catch (error) {
+      console.error('Error al limpiar sesión:', error);
+    } finally {
+      await this.router.navigate(['/auth'], { queryParams: { signedOut: '1' } });
+    }
   }
 
   async guardarMedidas() {
@@ -234,7 +222,7 @@ export class PanelComponent implements OnInit, OnDestroy {
         }
         return acc;
       },
-      {} as Record<string, number>,
+      {} as Record<string, number>
     );
 
     if (Object.keys(medidas).length === 0) {
@@ -267,7 +255,7 @@ export class PanelComponent implements OnInit, OnDestroy {
         }
         return acc;
       },
-      {} as Record<string, File>,
+      {} as Record<string, File>
     );
 
     if (Object.keys(fotos).length === 0) {
@@ -299,10 +287,10 @@ export class PanelComponent implements OnInit, OnDestroy {
 
   private async cargarDatosSecundarios(id: string, email?: string, perfilInicial?: any) {
     const expedienteResult = await Promise.resolve(
-      this.authService.getExpedienteClinico(id),
+      this.authService.getExpedienteClinico(id)
     ).then(
       (value) => ({ status: 'fulfilled' as const, value }),
-      (reason) => ({ status: 'rejected' as const, reason }),
+      (reason) => ({ status: 'rejected' as const, reason })
     );
 
     const perfil = perfilInicial ?? null;
@@ -316,14 +304,13 @@ export class PanelComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const ultimaMedicion =
-      expediente?.respuestas_completas?.seguimiento?.circunferencias?.[0]?.medidas ?? {};
+    const ultimaMedicion = expediente?.respuestas_completas?.seguimiento?.circunferencias?.[0]?.medidas ?? {};
     this.measurementValues = this.measurements.reduce(
       (acc, item) => ({
         ...acc,
         [item]: typeof ultimaMedicion[item] === 'number' ? ultimaMedicion[item] : null,
       }),
-      {} as Record<string, number | null>,
+      {} as Record<string, number | null>
     );
 
     this.cdr.detectChanges();
@@ -332,8 +319,10 @@ export class PanelComponent implements OnInit, OnDestroy {
   private activarActualizacionPlan(pacienteId: string) {
     if (this.planChannels.length > 0) return;
 
-    this.planChannels = this.authService.subscribePlanPaciente(pacienteId, () => {
+    const channel = this.authService.subscribePlanPaciente(pacienteId, () => {
       this.cargarPlanPaciente();
     });
+    
+    this.planChannels = [channel as unknown as RealtimeChannel];
   }
 }

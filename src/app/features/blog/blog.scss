@@ -192,11 +192,13 @@
     line-height: 1.6;
     margin-bottom: 2rem;
     display: -webkit-box;
+    line-clamp: 3;
     -webkit-line-clamp: 3; // Limita a 3 líneas y pone "..."
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 }
+
 
 // ==========================================
 // BOTONES

@@ -1,536 +1,200 @@
-import { Injectable } from '@angular/core';
-
-import {
-  createClient,
-  SupabaseClient,
-  Session,
-  User,
-  RealtimeChannel
-} from '@supabase/supabase-js';
-
+import { Injectable, Inject, PLATFORM_ID, NgZone, signal, computed } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { createClient, SupabaseClient, User, Session, RealtimeChannel } from '@supabase/supabase-js';
 import { environment } from '../../../enviroments/enviroments';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-
   public supabase: SupabaseClient;
 
-  constructor() {
+  // 🟢 1. ESTADO REACTIVO (SIGNALS) - ¡La magia moderna de Angular!
+  currentUser = signal<User | null>(null);
+  userProfile = signal<any | null>(null);
 
-    this.supabase = createClient(
-      environment.supabaseUrl,
-      environment.supabaseKey
-    );
+  // 🟢 2. ESTADOS COMPUTADOS (Se actualizan solos)
+  isLoggedIn = computed(() => !!this.currentUser());
+  isAdmin = computed(() => this.userProfile()?.rol === 'admin');
+
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private ngZone: NgZone
+  ) {
+    this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
+    this.initAuthState();
+  }
+
+  // 🟢 3. ESCUCHA GLOBAL DE SUPABASE
+  private initAuthState() {
+    if (isPlatformBrowser(this.platformId)) {
+      // Pedimos la sesión inicial
+      this.supabase.auth.getSession().then(({ data }) => {
+        this.updateState(data.session?.user || null);
+      });
+
+      // Escuchamos cualquier cambio (login, logout, token refresh)
+      this.supabase.auth.onAuthStateChange((event, session) => {
+        this.ngZone.run(() => {
+          this.updateState(session?.user || null);
+        });
+      });
+    }
+  }
+
+  // 🟢 4. ACTUALIZADOR CENTRAL DE ESTADO
+  private async updateState(user: User | null) {
+    this.currentUser.set(user);
+    if (user) {
+      const profile = await this.getUserProfile(user.id);
+      this.userProfile.set(profile);
+    } else {
+      this.userProfile.set(null);
+    }
   }
 
   // ==========================================
-  // AUTH
+  // AUTENTICACIÓN
   // ==========================================
 
   async getSession(): Promise<Session | null> {
-
-    const { data, error } =
-      await this.supabase.auth.getSession();
-
-    if (error || !data.session) {
-      return null;
-    }
-
+    const { data } = await this.supabase.auth.getSession();
     return data.session;
   }
 
-  getCachedAuthUser(): User | null {
+  async signInWithEmail(email: string, password: string) {
+    return await this.supabase.auth.signInWithPassword({ email, password });
+  }
 
-    const possibleSession =
-      localStorage.getItem('supabase.auth.token');
-
-    if (!possibleSession) {
-      return null;
-    }
-
-    return null;
+  async signUpWithEmail(email: string, password: string) {
+    return await this.supabase.auth.signUp({ email, password });
   }
 
   async signInWithGoogle() {
-
     return await this.supabase.auth.signInWithOAuth({
-      provider: 'google'
+      provider: 'google',
+      options: { redirectTo: 'https://ph-hazel-omega.vercel.app/' }
     });
-  }
-
-  async signInWithEmail(
-    email: string,
-    password: string
-  ) {
-
-    return await this.supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-  }
-
-  async signUpWithEmail(
-    email: string,
-    password: string,
-    metadata?: any
-  ) {
-
-    return await this.supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata || {}
-      }
-    });
-  }
-
-  async signOut() {
-
-    return await this.supabase.auth.signOut();
-  }
-
-  async clearLocalSession() {
-
-    localStorage.clear();
-
-    return await this.signOut();
   }
 
   async resetPassword(email: string) {
-
-    return await this.supabase.auth.resetPasswordForEmail(
-      email,
-      {
-        redirectTo:
-          `${window.location.origin}/update-password`
-      }
-    );
-  }
-
-  async updatePassword(password: string) {
-
-    return await this.supabase.auth.updateUser({
-      password
+    return await this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'http://localhost:4200/actualizar-password',
     });
   }
 
+  async updatePassword(newPassword: string) {
+    return await this.supabase.auth.updateUser({ password: newPassword });
+  }
+
+  // 🟢 FIX: Un solo método de salida seguro. Sin tocar el localStorage de Angular.
+  async signOut() {
+    try {
+      await this.supabase.auth.signOut();
+      this.currentUser.set(null);
+      this.userProfile.set(null);
+    } catch (error) {
+      console.error('Error en signOut:', error);
+    }
+  }
+
   // ==========================================
-  // PERFILES
+  // PERFILES Y ROLES
   // ==========================================
 
   async getUserProfile(userId: string) {
-
-    const { data, error } =
-      await this.supabase
-        .from('perfiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-    if (error) {
-      return null;
-    }
-
+    const { data } = await this.supabase.from('perfiles').select('*').eq('id', userId).single();
     return data;
   }
 
-  async getUserProfileForAuth(
-    userId: string,
-    email?: string
-  ) {
-
+  async getUserProfileForAuth(userId: string, email?: string) {
     return await this.getUserProfile(userId);
   }
 
   async getPacientes() {
-
-    const { data, error } =
-      await this.supabase
-        .from('perfiles')
-        .select('*')
-        .eq('rol', 'paciente')
-        .order('created_at', {
-          ascending: false
-        });
-
-    if (error) {
-      throw error;
-    }
-
+    const { data, error } = await this.supabase.from('perfiles').select('*').eq('rol', 'paciente').order('created_at', { ascending: false });
+    if (error) throw error;
     return data;
   }
 
-  async actualizarEstadoPaciente(
-    pacienteId: string,
-    estado: string
-  ) {
-
-    const { data, error } =
-      await this.supabase
-        .from('perfiles')
-        .update({
-          estado_aprobacion: estado
-        })
-        .eq('id', pacienteId);
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
+  async actualizarEstadoPaciente(pacienteId: string, nuevoEstado: string) {
+    return await this.supabase.from('perfiles').update({ estado_aprobacion: nuevoEstado }).eq('id', pacienteId);
   }
 
   // ==========================================
-  // PLANES NUTRICIONALES
+  // PLANES Y REALTIME
   // ==========================================
 
-  async getPlanPaciente(
-    pacienteId: string
-  ) {
-
-    const { data, error } =
-      await this.supabase
-        .from('planes_nutricionales')
-        .select(`
-          *,
-          comidas (
-            *,
-            alimentos_comida (*)
-          )
-        `)
-        .eq('id_perfil', pacienteId)
-        .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
+  async getPlanPaciente(pacienteId: string) {
+    const { data } = await this.supabase.from('planes_nutricionales').select('*, comidas(*, alimentos_comida(*))').eq('id_perfil', pacienteId).maybeSingle();
     return data;
   }
 
-  async guardarPlanCompleto(
-    pacienteId: string,
-    planData: any
-  ) {
+  async guardarPlanCompleto(pacienteId: string, planData: any) {
+    await this.supabase.from('planes_nutricionales').delete().eq('id_perfil', pacienteId);
+    
+    const { data: plan, error: pError } = await this.supabase.from('planes_nutricionales').insert({
+        id_perfil: pacienteId,
+        calorias_totales: planData.calorias_totales,
+        suplementacion: planData.suplementacion,
+        medicacion: planData.medicacion
+      }).select().single();
 
-    const { data: existingPlan } =
-      await this.supabase
-        .from('planes_nutricionales')
-        .select('*')
-        .eq('id_perfil', pacienteId)
-        .maybeSingle();
+    if (pError) throw pError;
 
-    let planId = existingPlan?.id;
+    if (planData.comidas && planData.comidas.length > 0) {
+      for (const c of planData.comidas) {
+        const { data: comida, error: cError } = await this.supabase.from('comidas').insert({ id_plan: plan.id, nombre: c.nombre, nota_comida: c.nota_comida }).select().single();
+        if (cError) throw cError;
 
-    // ======================================
-    // CREAR PLAN
-    // ======================================
-
-    if (!planId) {
-
-      const { data, error } =
-        await this.supabase
-          .from('planes_nutricionales')
-          .insert({
-            id_perfil: pacienteId,
-            calorias_totales:
-              planData.calorias_totales,
-
-            suplementacion:
-              planData.suplementacion,
-
-            medicacion:
-              planData.medicacion
-          })
-          .select()
-          .single();
-
-      if (error) {
-        throw error;
-      }
-
-      planId = data.id;
-
-    } else {
-
-      // ======================================
-      // ACTUALIZAR PLAN
-      // ======================================
-
-      const { error } =
-        await this.supabase
-          .from('planes_nutricionales')
-          .update({
-            calorias_totales:
-              planData.calorias_totales,
-
-            suplementacion:
-              planData.suplementacion,
-
-            medicacion:
-              planData.medicacion
-          })
-          .eq('id', planId);
-
-      if (error) {
-        throw error;
-      }
-
-      // ======================================
-      // ELIMINAR COMIDAS VIEJAS
-      // ======================================
-
-      await this.supabase
-        .from('comidas')
-        .delete()
-        .eq('id_plan', planId);
-    }
-
-    // ======================================
-    // INSERTAR COMIDAS
-    // ======================================
-
-    for (const comida of planData.comidas) {
-
-      const { data: comidaData, error } =
-        await this.supabase
-          .from('comidas')
-          .insert({
-            id_plan: planId,
-            nombre: comida.nombre,
-            nota_comida: comida.nota_comida
-          })
-          .select()
-          .single();
-
-      if (error) {
-        throw error;
-      }
-
-      // ======================================
-      // INSERTAR ALIMENTOS
-      // ======================================
-
-      if (comida.alimentos?.length) {
-
-        const alimentos =
-          comida.alimentos.map((a: any) => ({
-            id_comida: comidaData.id,
-            descripcion: a.descripcion,
-            calorias: a.calorias,
-            proteinas: a.proteinas,
-            carbos: a.carbos,
-            grasas: a.grasas
+        if (c.alimentos && c.alimentos.length > 0) {
+          const alimentosInsert = c.alimentos.map((a: any) => ({
+            id_comida: comida.id, descripcion: a.descripcion, calorias: a.calorias, proteinas: a.proteinas, carbos: a.carbos, grasas: a.grasas
           }));
-
-        const { error } =
-          await this.supabase
-            .from('alimentos_comida')
-            .insert(alimentos);
-
-        if (error) {
-          throw error;
+          await this.supabase.from('alimentos_comida').insert(alimentosInsert);
         }
       }
     }
+  }
 
-    return true;
+  subscribePacientes(callback: () => void): RealtimeChannel {
+    return this.supabase.channel('public:perfiles').on('postgres_changes', { event: '*', schema: 'public', table: 'perfiles' }, () => callback()).subscribe();
+  }
+
+  subscribePlanPaciente(pacienteId: string, callback: (payload: any) => void) {
+    return this.supabase.channel(`plan-${pacienteId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'planes_nutricionales', filter: `id_perfil=eq.${pacienteId}` }, callback).subscribe();
+  }
+
+  unsubscribeChannel(channel: any) {
+    if (channel) this.supabase.removeChannel(channel);
   }
 
   // ==========================================
-  // REALTIME
+  // ONBOARDING Y EXPEDIENTES
   // ==========================================
 
-  subscribePlanPaciente(
-    pacienteId: string,
-    callback: () => void
-  ): RealtimeChannel[] {
-
-    const channel =
-      this.supabase
-        .channel(`plan-${pacienteId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'planes_nutricionales',
-            filter:
-              `id_perfil=eq.${pacienteId}`
-          },
-          () => callback()
-        )
-        .subscribe();
-
-    return [channel];
-  }
-
-  subscribePacientes(
-    callback: () => void
-  ): RealtimeChannel {
-
-    return this.supabase
-      .channel('public:perfiles')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'perfiles'
-        },
-        () => callback()
-      )
-      .subscribe();
-  }
-
-  unsubscribeChannel(
-    channel: RealtimeChannel
-  ) {
-
-    if (channel) {
-      this.supabase.removeChannel(channel);
-    }
-  }
-
-  // ==========================================
-  // FOTOS
-  // ==========================================
-
-  async subirFoto(
-    pacienteId: string,
-    tipo: string,
-    archivo: File
-  ) {
-
-    const filePath =
-      `${pacienteId}/${tipo}_${Date.now()}`;
-
-    const { error } =
-      await this.supabase
-        .storage
-        .from('fotos-pacientes')
-        .upload(filePath, archivo);
-
-    if (error) {
-      throw error;
-    }
-
-    const { data } =
-      this.supabase
-        .storage
-        .from('fotos-pacientes')
-        .getPublicUrl(filePath);
-
+  async subirFoto(pacienteId: string, tipo: string, archivo: File) {
+    const filePath = `${pacienteId}/${tipo}_${Date.now()}`;
+    await this.supabase.storage.from('fotos-pacientes').upload(filePath, archivo);
+    const { data } = this.supabase.storage.from('fotos-pacientes').getPublicUrl(filePath);
     return data.publicUrl;
   }
 
-  async guardarRegistroFotografico(
-    pacienteId: string,
-    fotos: Record<string, File>
-  ) {
+  async guardarExpedienteInicial(pacienteId: string, respuestas: any, linksFotos: any) {
+    await this.supabase.from('perfiles').update({ nombre_completo: respuestas.nombre_completo, peso_kg: respuestas.peso_kg, altura_cm: respuestas.altura_cm, edad: respuestas.edad, genero: respuestas.genero }).eq('id', pacienteId);
+    return await this.supabase.from('expedientes_clinicos').upsert({ id_perfil: pacienteId, respuestas_completas: respuestas, fotos_progreso: linksFotos });
+  }
 
-    const links: any = {};
-
-    for (const [key, file]
-      of Object.entries(fotos)) {
-
-      links[key] =
-        await this.subirFoto(
-          pacienteId,
-          key,
-          file
-        );
-    }
-
-    const { data, error } =
-      await this.supabase
-        .from('expedientes_clinicos')
-        .upsert({
-          id_perfil: pacienteId,
-          fotos_progreso: links,
-          fecha_actualizacion:
-            new Date().toISOString()
-        });
-
-    if (error) {
-      throw error;
-    }
-
+  async getExpedienteClinico(pacienteId: string) {
+    const { data } = await this.supabase.from('expedientes_clinicos').select('*').eq('id_perfil', pacienteId).maybeSingle();
     return data;
   }
 
-  // ==========================================
-  // EXPEDIENTES
-  // ==========================================
-
-  async guardarExpedienteInicial(
-    pacienteId: string,
-    respuestas: any,
-    fotos: any
-  ) {
-
-    const payload = {
-
-      id_perfil: pacienteId,
-
-      respuestas_completas:
-        respuestas,
-
-      fotos_progreso:
-        fotos,
-
-      fecha_actualizacion:
-        new Date().toISOString()
-    };
-
-    const { data, error } =
-      await this.supabase
-        .from('expedientes_clinicos')
-        .upsert(payload);
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
+  async guardarCircunferencias(pacienteId: string, medidas: any) {
+    return await this.supabase.from('perfiles').update(medidas).eq('id', pacienteId);
   }
 
-  async guardarCircunferencias(
-    pacienteId: string,
-    medidas: any
-  ) {
-
-    const { data, error } =
-      await this.supabase
-        .from('perfiles')
-        .update(medidas)
-        .eq('id', pacienteId);
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
+  async guardarRegistroFotografico(pacienteId: string, links: any) {
+    return await this.supabase.from('expedientes_clinicos').upsert({ id_perfil: pacienteId, fotos_progreso: links, fecha_actualizacion: new Date().toISOString() });
   }
-
-  async getExpedienteClinico(
-    pacienteId: string
-  ) {
-
-    const { data, error } =
-      await this.supabase
-        .from('expedientes_clinicos')
-        .select('*')
-        .eq('id_perfil', pacienteId)
-        .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
-  }
-
 }

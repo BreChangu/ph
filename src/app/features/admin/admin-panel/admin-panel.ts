@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/supabase/auth';
 import { Router } from '@angular/router';
@@ -21,7 +21,6 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   isLoadingExpediente = false;
   isSavingPlan = false;
 
-  // 🟢 Variable declarada correctamente para guardar las respuestas y fotos
   expedienteClinico: any = null;
   private pacientesChannel: RealtimeChannel | null = null;
 
@@ -76,16 +75,21 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit() {
     this.initForm();
     this.cargarPacientes();
-    this.pacientesChannel = this.authService.subscribePacientes(() => {
-      if (this.vistaActual === 'lista') {
-        this.cargarPacientes();
-      }
-    });
+    
+    // 🟢 Protección SSR: Evita que el servidor se trabe "procesando"
+    if (isPlatformBrowser(this.platformId)) {
+      this.pacientesChannel = this.authService.subscribePacientes(() => {
+        if (this.vistaActual === 'lista') {
+          this.cargarPacientes();
+        }
+      });
+    }
   }
 
   ngOnDestroy() {
@@ -268,17 +272,6 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     }
 
     return Math.round(tmb);
-  }
-
-  async cerrarSesion() {
-    try {
-      this.authService.clearLocalSession();
-      this.authService.signOut().catch((error) => console.error('Error al cerrar sesion:', error));
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    } finally {
-      await this.router.navigate(['/auth'], { queryParams: { signedOut: '1' } });
-    }
   }
 
   getPacienteIniciales(paciente: any): string {
