@@ -101,41 +101,94 @@
 
 .subtitle {
   font-family: $font-main;
-  font-size: 18px;
+  font-size: 1.1rem; /* 18px */
   color: $brand-gray;
-  margin-bottom: 40px;
+  margin: 0 auto 40px; 
   width: 100%;
+  max-width: 65ch; 
+  text-align: center;
+  line-height: 1.6;
+  font-weight: 400; 
+
+  p {
+    margin: 0 0 1.25rem; 
+    text-wrap: balance; 
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .punchline {
+    color: $brand-white; /* 🟢 FIX: Blanco para que contraste con el fondo negro */
+    font-weight: 800;
+    margin-top: 2.5rem; 
+    font-size: 1.15em; 
+  }
 }
 
+//SEGUNDA SECCIÓN
+// TÍTULO PRINCIPAL (Blanco, imponente pero balanceado)
 .section-heading {
   font-family: $font-h1;
-  font-size: clamp(24px, 3.5vw, 40px);
+  font-size: clamp(28px, 4vw, 40px); // Un poco más compacto que antes
   color: $brand-white;
   text-transform: uppercase;
-  line-height: 1.2;
-  margin-bottom: 32px;
-  overflow-wrap: break-word;
-  width: 100%;
-  .text-red { color: $brand-red; }
+  line-height: 1.15; 
+  margin-bottom: 1rem; // Acercamos el título secundario
+  letter-spacing: 0.02em; 
+  text-wrap: balance;      
+  max-width: 26ch; // Limita el ancho para que el balance se vea "diseñado"
 }
 
+// 🟢 NUEVA CLASE: TÍTULO SECUNDARIO ROJO (Reduced hierarchy)
+// Aquí está la solución a tu petición de hacerlo "más bonito".
+.section-subheading {
+  font-family: $font-h2; // Swapping to H2 font for distinct break
+  font-size: 1rem;       // Mucho más pequeño, como user requested
+  color: $brand-red;
+  text-transform: uppercase;
+  letter-spacing: 0.1em; // Aumentamos el tracking para que se vea premium y exclusivo
+  margin-top: 0;
+  margin-bottom: 3rem;   // Gran pausa antes del cuerpo de texto
+  text-wrap: balance;
+  max-width: 45ch;
+  line-height: 1.4;
+}
+
+// CUERPO DE TEXTO (Readable and compact)
 .section-body {
   font-family: $font-main;
-  font-size: 16px;
+  font-size: 1rem;        // Un poco más pequeño (antes 1.1rem) para ganar espacio
   color: $brand-gray;
-  line-height: 1.8;
-  margin-bottom: 24px;
-  width: 100%;
+  line-height: 1.7;       
+  margin-bottom: 1.2rem; // Espaciado compacto entre párrafos
+  max-width: 50ch;        // 🟢 FIX CRÍTICO: Las pantallas muestran que es muy ancho. 
+                          // Esto limita el ancho para que sea cómodo de leer.
+  text-wrap: pretty;
+  font-weight: 400;
+  opacity: 0.9;
 }
 
+// SLOGAN Y CTA (Arreglando la colisión inferior)
 .slogan {
   font-family: $font-h2;
-  font-size: 18px;
+  font-size: 14px;
   color: $brand-white;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  margin: 16px 0 40px 0;
-  width: 100%;
+  letter-spacing: 4px; // Tracking agresivo para look premium
+  // 🟢 FIX CRÍTICO: margin inferior (2rem) para separar el botón de WhatsApp
+  margin: 3rem 0 2rem 0; 
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  &::before {
+    content: '';
+    width: 30px;
+    height: 1px;
+    background: $brand-red;
+  }
 }
 
 // --- BOTONES ---
