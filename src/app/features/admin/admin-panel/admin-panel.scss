@@ -134,6 +134,12 @@
   font-family: $font-h2;
   text-transform: uppercase;
   letter-spacing: 1px;
+
+  &.error {
+    border-color: rgba($brand-red, 0.45);
+    background: rgba($brand-red, 0.04);
+    color: $brand-red;
+  }
 }
 
 .patient-card {
@@ -572,6 +578,123 @@
 
 .mt-2 { margin-top: 2rem; }
 .text-center { text-align: center; }
+
+
+
+// ==============================================================================
+// MENÚ DE PESTAÑAS (SUB-NAVEGACIÓN)
+// ==============================================================================
+.panel-tabs {
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 2rem;
+  padding-bottom: 0.25rem;
+
+  button {
+    background: none;
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s ease, font-weight 0.2s ease;
+
+    &:hover {
+      color: #111827;
+    }
+
+    &.active {
+      color: #ff0000; // El color rojo acento de tu marca pHTeam
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: #ff0000;
+        border-radius: 2px;
+      }
+    }
+  }
+}
+
+// ==============================================================================
+// RE-ESTRUCTURACIÓN DE LA CUADRÍCULA DE ENTRENAMIENTO
+// ==============================================================================
+.training-labels {
+  display: grid;
+  // Distribución equilibrada: 3fr para el nombre largo, 80px series, 150px reps, 40px acción
+  grid-template-columns: 3fr 100px 180px 40px;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #4b5563;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 0.5rem;
+}
+
+.training-row {
+  display: grid;
+  grid-template-columns: 3fr 100px 180px 40px;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.5rem 0;
+
+  input {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background-color: #ffffff;
+    transition: border-color 0.15s ease;
+
+    &:focus {
+      border-color: #ff0000;
+      outline: none;
+    }
+    
+    &[type="number"] {
+      text-align: center;
+    }
+  }
+
+  .btn-delete-row {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: #ef4444;
+    }
+  }
+}
+
+// Estilo extra para el área de texto general de entrenamiento
+textarea {
+  width: 100%;
+  padding: 0.85rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+
+  &:focus {
+    border-color: #ff0000;
+    outline: none;
+  }
+}
 
 /* ==========================================
    MEDIA QUERIES

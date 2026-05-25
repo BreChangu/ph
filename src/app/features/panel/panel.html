@@ -1,191 +1,213 @@
 <div class="dashboard-container">
   <header class="profile-hero">
-<div class="avatar-mark">{{ (userName | slice:0:2 | uppercase) || 'PH' }}</div>
+    <div class="avatar-mark">{{ (userName | slice:0:2 | uppercase) || 'PH' }}</div>
     <h2>{{ userName }}</h2>
-    <p>Peso 83</p>
-    <small>Entrenador: Pablo Herrera</small>
+    <p>Paciente Activo</p>
+    <small>Coach: Pablo Herrera</small>
   </header>
 
   <nav class="panel-tabs" aria-label="Secciones del panel">
     <button type="button" [class.active]="activeSection === 'nutrition'" (click)="setSection('nutrition')">
-      Alimentacion
+      Alimentación
     </button>
     <button type="button" [class.active]="activeSection === 'training'" (click)="setSection('training')">
       Entrenamiento
     </button>
     <button type="button" [class.active]="activeSection === 'measurements'" (click)="setSection('measurements')">
-      Circunferencias
+      Medidas
     </button>
     <button type="button" [class.active]="activeSection === 'photos'" (click)="setSection('photos')">
       Fotos
+    </button>
+    <button type="button" [class.active]="activeSection === 'testimonio'" (click)="setSection('testimonio')">
+      Testimonio
     </button>
   </nav>
 
   <main class="dashboard-content">
     <div class="user-actions inline-actions">
       <span class="greeting">Hola, {{ userName }}</span>
-      <a class="btn-profile" routerLink="/onboarding" [queryParams]="{ editar: 'true' }">Mi expediente</a>
-      <button class="btn-logout" type="button" (click)="logout()">Cerrar sesion</button>
+      <div class="action-buttons">
+        <a class="btn-profile" routerLink="/onboarding" [queryParams]="{ editar: 'true' }">Mi expediente</a>
+        <button class="btn-logout" type="button" (click)="logout()">Cerrar sesión</button>
+      </div>
     </div>
 
     <section class="panel-section" *ngIf="activeSection === 'nutrition'">
       <header class="section-title">
-        <h1>Plan de Alimentacion</h1>
-        <p>Haz el registro de tus comidas para tener mayor control de tu plan.</p>
+        <h1>Plan de Alimentación</h1>
+        <p>Tu nutrición estratégica diseñada para el máximo rendimiento.</p>
       </header>
 
-      <div class="state-banner" *ngIf="isLoadingPlan && !planPaciente">Cargando tu plan nutricional...</div>
-      <div class="state-banner error" *ngIf="planError">{{ planError }}</div>
+      <div class="state-banner" *ngIf="isLoadingPlan && !planPaciente">Sincronizando plan...</div>
+
+      <div class="state-banner error" *ngIf="planError">
+        {{ planError }}
+      </div>
+
       <div class="state-banner" *ngIf="!isLoadingPlan && !planError && !planPaciente">
-        Tu coach todavia no ha publicado tu plan nutricional.
+        Tu coach todavía no ha publicado tu plan. Presiona "Actualizar" si acabas de recibir el aviso.
       </div>
 
       <div class="nutrition-summary" *ngIf="planPaciente">
-        <span>{{ planPaciente.calorias_totales || 0 }} kcal</span>
-        <span *ngIf="planPaciente.suplementacion">Suplementacion: {{ planPaciente.suplementacion }}</span>
-        <span *ngIf="planPaciente.medicacion">Medicacion: {{ planPaciente.medicacion }}</span>
+        <span><strong>{{ planPaciente.calorias_totales || 0 }}</strong> KCAL</span>
+        <span *ngIf="planPaciente.suplementacion"><strong>Sups:</strong> {{ planPaciente.suplementacion }}</span>
       </div>
 
-      <div class="state-banner" *ngIf="planPaciente && (planPaciente.comidas?.length || 0) === 0">
-        Tu plan ya existe, pero aun no tiene comidas cargadas.
+      <div class="state-banner" *ngIf="planPaciente && (planPaciente.comidas?.length ?? 0) === 0">
+        Tu plan ya está activo, pero todavía no tiene comidas cargadas. Pide a tu coach que agregue al menos una comida con alimentos y lo guarde de nuevo.
       </div>
 
       <article class="meal-card" *ngFor="let comida of planPaciente?.comidas; let i = index">
         <h2>{{ comida.nombre || ('Comida ' + (i + 1)) }}</h2>
         <p class="meal-note" *ngIf="comida.nota_comida">{{ comida.nota_comida }}</p>
-
         <div class="food-table">
           <div class="food-row food-head">
-            <span>Alimento</span>
-            <span>Cal</span>
-            <span>Prot</span>
-            <span>Carb</span>
-            <span>Grasa</span>
+            <span>Alimento</span><span>Cal</span><span>Prot</span><span>Carb</span><span>Grasa</span>
           </div>
           <div class="food-row" *ngFor="let alimento of comida.alimentos_comida || []">
-            <span>{{ alimento.descripcion }}</span>
-            <span>{{ alimento.calorias || 0 }}</span>
-            <span>{{ alimento.proteinas || 0 }}</span>
-            <span>{{ alimento.carbos || 0 }}</span>
-            <span>{{ alimento.grasas || 0 }}</span>
+            <span class="food-desc">{{ alimento.descripcion }}</span>
+            <span>{{ alimento.calorias }}</span>
+            <span>{{ alimento.proteinas }}</span>
+            <span>{{ alimento.carbos }}</span>
+            <span>{{ alimento.grasas }}</span>
           </div>
         </div>
       </article>
 
-      <button class="btn-primary narrow" type="button" (click)="cargarPlanPaciente()" [disabled]="isLoadingPlan">
-        {{ isLoadingPlan ? 'Actualizando...' : 'Actualizar plan' }}
-      </button>
+      <div class="action-footer">
+        <button class="btn-primary narrow" (click)="cargarPlanPaciente()" [disabled]="isLoadingPlan">
+          Actualizar Plan
+        </button>
+      </div>
     </section>
 
     <section class="panel-section" *ngIf="activeSection === 'training'">
       <header class="section-title">
-        <h1>Plan de Entrenamiento</h1>
-        <p>Rutina semanal de 7 dias.</p>
+        <h1>Programa de Entrenamiento</h1>
+        <p>Tu rutina semanal estructurada para hipertrofia y fuerza.</p>
       </header>
 
-      <div class="day-tabs">
-        <button
-          type="button"
-          *ngFor="let dia of entrenamientoSemanal; let i = index"
-          [class.active]="activeTrainingDay === i"
-          (click)="selectTrainingDay(i)"
-        >
-          {{ i + 1 }}
-        </button>
-      </div>
-
-      <article class="training-card">
-        <h2>{{ entrenamientoSemanal[activeTrainingDay].titulo }}</h2>
-        <div class="training-table">
-          <div class="training-row training-head">
-            <span>Ejercicio</span>
-            <span>S</span>
-            <span>R</span>
-            <span>Carga</span>
-          </div>
-          <div class="training-row" *ngFor="let item of entrenamientoSemanal[activeTrainingDay].ejercicios">
-            <span>{{ item.ejercicio }}</span>
-            <span>{{ item.series }}</span>
-            <span>{{ item.reps }}</span>
-            <input type="number" min="0" aria-label="Carga">
-          </div>
+      <ng-container *ngIf="entrenamientoSemanal && entrenamientoSemanal.length > 0">
+        <div class="training-days-nav">
+          <button type="button" class="btn-primary" 
+                  *ngFor="let dia of entrenamientoSemanal; let i = index"
+                  [class.active]="activeTrainingDay === i"
+                  (click)="selectTrainingDay(i)">
+            {{ dia.titulo }}
+          </button>
         </div>
-      </article>
 
-      <article class="training-notes">
-        <h3>Indicaciones</h3>
-        <p>Toma de 2 a 4 litros de agua al dia y cuida el descanso. Si una carga compromete la tecnica, reduce peso.</p>
-      </article>
+        <article class="meal-card" *ngIf="entrenamientoSemanal[activeTrainingDay]">
+          <h2>{{ entrenamientoSemanal[activeTrainingDay].titulo }}</h2>
+          <div class="food-table">
+            <div class="food-row food-head">
+              <span>Ejercicio</span>
+              <span>Series</span>
+              <span>Reps</span>
+            </div>
+            <div class="food-row" *ngFor="let ej of entrenamientoSemanal[activeTrainingDay].ejercicios">
+              <span class="food-desc">{{ ej.ejercicio }}</span>
+              <span>{{ ej.series }}</span>
+              <span>{{ ej.reps }}</span>
+            </div>
+          </div>
+        </article>
+      </ng-container>
+
+      <div class="state-banner" *ngIf="!entrenamientoSemanal || entrenamientoSemanal.length === 0">
+        Tu coach está diseñando tu rutina de entrenamiento.
+      </div>
     </section>
 
     <section class="panel-section" *ngIf="activeSection === 'measurements'">
       <header class="section-title">
-        <h1>Circunferencias</h1>
-        <p>Registra tus medidas para evaluar progreso con datos objetivos.</p>
+        <h1>Registro de Medidas</h1>
+        <p>Actualiza tus circunferencias para medir tu progreso real.</p>
       </header>
 
       <article class="measurement-card">
-        <h2>Registro de medidas</h2>
+        <h2 class="card-header-dark">Circunferencias (cm)</h2>
         <div class="measure-grid">
-          <label *ngFor="let item of measurements">
-            <span>{{ item }}</span>
-            <input
-              type="number"
-              min="0"
-              step="0.1"
-              placeholder="0"
-              [value]="measurementValues[item] ?? ''"
-              (input)="onMeasurementInput(item, $event)"
-            >
-          </label>
+          <div class="input-group" *ngFor="let item of measurements">
+            <label>{{ item }}</label>
+            <input type="number" step="0.1" (input)="onMeasurementInput(item, $event)" placeholder="0.0">
+          </div>
         </div>
-        <button class="btn-primary" type="button" (click)="guardarMedidas()" [disabled]="isSavingMeasurements">
-          {{ isSavingMeasurements ? 'Guardando...' : 'Guardar medidas' }}
-        </button>
-        <p class="form-message" *ngIf="measurementMessage">{{ measurementMessage }}</p>
-      </article>
-
-      <article class="procedure-card">
-        <h2>Procedimiento</h2>
-        <p><strong>BIR/BDR:</strong> brazo izquierdo/derecho relajado.</p>
-        <p><strong>BIC/BDC:</strong> brazo izquierdo/derecho contraido.</p>
-        <p><strong>Torax, cintura, gluteo, muslo y pantorrilla:</strong> toma la medida en centimetros sin apretar la cinta.</p>
+        <div class="action-footer p-1">
+          <button class="btn-primary w-100" (click)="guardarMedidas()" [disabled]="isSavingMeasurements">
+            {{ isSavingMeasurements ? 'Guardando...' : 'Guardar Medidas' }}
+          </button>
+          <p class="form-message" *ngIf="measurementMessage">{{ measurementMessage }}</p>
+        </div>
       </article>
     </section>
 
     <section class="panel-section" *ngIf="activeSection === 'photos'">
       <header class="section-title">
-        <h1>Registro Fotografico</h1>
-        <p>Sube fotos de frente, perfil y espalda para valorar el progreso.</p>
+        <h1>Reporte Visual</h1>
+        <p>Sube tus fotos de progreso (Frente, Perfil, Espalda).</p>
       </header>
 
-      <article class="photo-card">
-        <h2>Adjuntar fotografias</h2>
+      <article class="measurement-card">
+        <h2 class="card-header-dark">Actualizar Fotografías</h2>
         <div class="photo-grid">
           <label class="photo-slot">
-            <span class="photo-preview">Frente</span>
-            <input type="file" accept="image/*" (change)="onPhotoSelected('frente', $event)">
+            <span class="photo-preview">Foto Frente</span>
+            <input type="file" (change)="onPhotoSelected('frente', $event)" style="display: none;">
           </label>
           <label class="photo-slot">
-            <span class="photo-preview">Perfil</span>
-            <input type="file" accept="image/*" (change)="onPhotoSelected('perfil', $event)">
+            <span class="photo-preview">Foto Perfil</span>
+            <input type="file" (change)="onPhotoSelected('perfil', $event)" style="display: none;">
           </label>
           <label class="photo-slot">
-            <span class="photo-preview">Espalda</span>
-            <input type="file" accept="image/*" (change)="onPhotoSelected('espalda', $event)">
+            <span class="photo-preview">Foto Espalda</span>
+            <input type="file" (change)="onPhotoSelected('espalda', $event)" style="display: none;">
           </label>
         </div>
-        <button class="btn-primary narrow" type="button" (click)="guardarFotos()" [disabled]="isSavingPhotos">
-          {{ isSavingPhotos ? 'Guardando...' : 'Guardar progreso' }}
-        </button>
-        <p class="form-message" *ngIf="photoMessage">{{ photoMessage }}</p>
-      </article>
-
-      <article class="procedure-card">
-        <h2>Recomendaciones</h2>
-        <p>Usa el mismo lugar, luz y distancia. Procura ropa deportiva, cuerpo completo y postura neutral.</p>
-        <p>Estas imagenes son privadas y solo se usan para seguimiento del proceso.</p>
+        <div class="action-footer p-1">
+          <button class="btn-primary w-100" (click)="guardarFotos()" [disabled]="isSavingPhotos">
+            {{ isSavingPhotos ? 'Subiendo...' : 'Guardar Fotografías' }}
+          </button>
+          <p class="form-message" *ngIf="photoMessage">{{ photoMessage }}</p>
+        </div>
       </article>
     </section>
+
+    <section class="panel-section" *ngIf="activeSection === 'testimonio'">
+      <header class="section-title">
+        <h1>Tu Historia</h1>
+        <p>Comparte tu proceso para inspirar a otros miembros del pH Team.</p>
+      </header>
+
+      <article class="measurement-card">
+        <h2 class="card-header-dark">Cuéntanos tu experiencia</h2>
+        <div class="card-body-padded">
+          <div class="input-group">
+            <label>Testimonio</label>
+            <textarea [(ngModel)]="testimonioTexto" rows="5" placeholder="¿Cómo ha sido tu transformación?"></textarea>
+          </div>
+
+          <div class="testimonio-photo-grid">
+            <label class="photo-slot">
+              <span class="photo-preview preview-short">Foto Inicio</span>
+              <input type="file" (change)="onTestimonioFileSelected('antes', $event)" style="display: none;">
+            </label>
+            <label class="photo-slot">
+              <span class="photo-preview preview-short">Foto Actual</span>
+              <input type="file" (change)="onTestimonioFileSelected('despues', $event)" style="display: none;">
+            </label>
+          </div>
+
+          <div class="action-footer" style="margin-top: 2rem;">
+            <button class="btn-primary w-100" (click)="enviarTestimonio()" [disabled]="isSavingTestimonio">
+              {{ isSavingTestimonio ? 'Enviando...' : 'Publicar mi testimonio' }}
+            </button>
+            <p class="form-message" *ngIf="testimonioMessage">{{ testimonioMessage }}</p>
+          </div>
+        </div>
+      </article>
+    </section>
+
   </main>
 </div>

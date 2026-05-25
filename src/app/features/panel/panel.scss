@@ -487,6 +487,92 @@
   font-style: italic;
 }
 
+
+
+/* ==========================================
+   ESTILOS AGREGADOS: ENTRENAMIENTO, MEDIDAS, TESTIMONIO
+   ========================================== */
+
+/* Navegación de Días de Entrenamiento */
+.training-days-nav {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  margin-bottom: 2rem;
+  padding-bottom: 0.5rem; /* Para el scrollbar en móvil */
+
+  button {
+    white-space: nowrap;
+    opacity: 0.5; /* Estado inactivo por defecto */
+    transition: opacity 0.3s ease;
+
+    &.active {
+      opacity: 1;
+    }
+  }
+}
+
+/* Encabezados de Tarjetas tipo Dark */
+.card-header-dark {
+  background: $brand-black;
+  color: $brand-white;
+  padding: 1rem 1.5rem;
+  margin: 0;
+  font-family: $font-h2;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Contenedores Internos (Paddings y Grids) */
+.card-body-padded {
+  padding: 2rem 1.5rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    color: $brand-gray;
+    font-family: $font-h2;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  textarea {
+    width: 100%;
+    border: 1px solid rgba($brand-black, 0.15);
+    background: transparent;
+    color: $brand-black;
+    padding: 1rem;
+    font-family: $font-main;
+    resize: vertical;
+
+    &:focus {
+      border-color: $brand-red;
+      outline: none;
+    }
+  }
+}
+
+/* Grid para Testimonios (2 Columnas) */
+.testimonio-photo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Ajustes de Altura para Previews Específicos */
+.preview-short {
+  height: 100px;
+}
 /* ==========================================
    MEDIA QUERIES (Móvil)
    ========================================== */

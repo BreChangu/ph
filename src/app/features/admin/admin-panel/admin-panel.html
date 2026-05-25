@@ -31,8 +31,10 @@
       <div *ngIf="isLoadingPacientes && pacientes.length === 0" class="state-banner">
         Sincronizando base de datos...
       </div>
-
-      <div *ngIf="!isLoadingPacientes && pacientes.length === 0" class="state-banner">
+      <div *ngIf="!isLoadingPacientes && pacientesError" class="state-banner error">
+        {{ pacientesError }}
+      </div>
+      <div *ngIf="!isLoadingPacientes && !pacientesError && pacientes.length === 0" class="state-banner">
         No hay pacientes registrados en el sistema.
       </div>
 
@@ -82,7 +84,7 @@
     <header class="admin-header editor-heading">
       <div class="header-titles">
         <button class="btn-back" type="button" (click)="volverAlPanel()">← Volver al directorio</button>
-        <span class="eyebrow">Expediente Clínico</span>
+        <span class="eyebrow">Gestión de Objetivos</span>
         <h2 class="editor-title">{{ pacienteSeleccionado?.nombre_completo || 'Sin nombre' }}</h2>
         <span class="badge badge-tmb" *ngIf="calcularCaloriasBase(pacienteSeleccionado) !== 'Datos clinicos pendientes'">
           TMB Sugerida: {{ calcularCaloriasBase(pacienteSeleccionado) }} kcal
@@ -90,24 +92,36 @@
       </div>
       <div class="header-actions">
         <button class="btn-primary" type="button" (click)="guardarPlan()" [disabled]="isSavingPlan || isLoadingExpediente">
-          {{ isSavingPlan ? 'Guardando...' : 'Guardar Plan' }}
+          {{ isSavingPlan ? 'Guardando...' : 'Guardar Todo' }}
         </button>
       </div>
     </header>
+
+    <nav class="panel-tabs" aria-label="Navegación del expediente">
+      <button type="button" [class.active]="seccionEditor === 'evaluacion'" (click)="setSeccionEditor('evaluacion')">
+        1. Evaluación Clínica
+      </button>
+      <button type="button" [class.active]="seccionEditor === 'nutrition'" (click)="setSeccionEditor('nutrition')">
+        2. Plan de Alimentación
+      </button>
+      <button type="button" [class.active]="seccionEditor === 'training'" (click)="setSeccionEditor('training')">
+        3. Rutina de Ejercicios
+      </button>
+    </nav>
 
     <div *ngIf="isLoadingExpediente" class="state-banner">
       Abriendo expediente del paciente...
     </div>
 
-    <div class="form-layout clinical-section" *ngIf="!isLoadingExpediente">
+    <div class="form-layout clinical-section" *ngIf="!isLoadingExpediente && seccionEditor === 'evaluacion' && !expedienteError">
       <section class="clinical-card">
-        <h3 class="section-label">Fase 1: Entrevista y Evaluación</h3>
+        <h3 class="section-label">Entrevista Inicial de Onboarding</h3>
 
         <div *ngIf="expedienteClinico">
           <div class="input-grid clinical-grid">
             <div class="info-block">
               <label>Objetivo Principal</label>
-              <p>{{ expedienteClinico.respuestas_completas?.objetivo || 'No especificado' }}</p>
+              <p>{{ expedienteClinico.respuestas_completas?.objective || 'No especificado' }}</p>
             </div>
             <div class="info-block">
               <label>Meta de Peso</label>
@@ -128,7 +142,7 @@
           </div>
 
           <div class="full-questionnaire">
-            <h4>Registro Completo</h4>
+            <h4>Registro Completo de Respuestas</h4>
             <div class="answer-grid">
               <div class="info-block" *ngFor="let item of expedienteClinico.respuestas_completas | keyvalue">
                 <label>{{ getRespuestaLabel(item.key) }}</label>
@@ -152,10 +166,6 @@
                 <span class="photo-label">Espalda</span>
                 <img [src]="expedienteClinico.fotos_progreso.espalda" class="clinical-photo" alt="Espalda">
               </div>
-              <div *ngIf="expedienteClinico.fotos_progreso?.inbody" class="photo-item inbody-card">
-                <span class="photo-label">Estudio InBody</span>
-                <a [href]="expedienteClinico.fotos_progreso.inbody" target="_blank" class="btn-secondary">Visualizar Documento</a>
-              </div>
             </div>
           </div>
         </div>
@@ -166,9 +176,9 @@
       </section>
     </div>
 
-    <form [formGroup]="planForm" class="form-layout" *ngIf="!isLoadingExpediente">
+    <form [formGroup]="planForm" class="form-layout" *ngIf="!isLoadingExpediente && seccionEditor === 'nutrition' && !planEditorError">
       <section class="clinical-card">
-        <h3 class="section-label">Fase 2: Diseño de Plan Nutricional</h3>
+        <h3 class="section-label">Configuración Energética General</h3>
         <div class="input-grid">
           <div class="input-group">
             <label>Meta Calórica (Kcal)</label>
@@ -180,7 +190,7 @@
           </div>
           <div class="input-group">
             <label>Protocolos o Medicación</label>
-            <input type="text" formControlName="medicacion" placeholder="Ej. Ayuno 16/8, Eutirox">
+            <input type="text" formControlName="medicacion" placeholder="Ej. Ayuno 16/8">
           </div>
         </div>
       </section>
@@ -190,15 +200,15 @@
       <div formArrayName="comidas" class="meals-container">
         <div *ngFor="let comida of comidas.controls; let i = index" [formGroupName]="i" class="meal-editor-card">
           <header class="meal-header">
-            <input type="text" class="meal-title-input" formControlName="nombre" placeholder="NOMBRE DE LA COMIDA (Ej. Desayuno)">
+            <input type="text" class="meal-title-input" formControlName="nombre" placeholder="Nombre de la comida (Ej. Desayuno)">
             <button type="button" class="btn-icon-delete" (click)="eliminarComida(i)">Remover Comida</button>
           </header>
 
           <div class="input-group">
-            <input type="text" class="meal-note-input" formControlName="nota_comida" placeholder="Indicaciones para esta comida (Opcional)">
+            <input type="text" class="meal-note-input" formControlName="nota_comida" placeholder="Indicaciones opcionales">
           </div>
 
-          <div formArrayName="alimentos" class="foods-wrapper">
+          <div formArrayName="alimentos_comida" class="foods-wrapper">
             <div class="food-labels" *ngIf="alimentosDeComida(i).length > 0">
               <span>Descripción del Alimento</span>
               <span>Kcal</span>
@@ -217,13 +227,55 @@
               <button type="button" class="btn-delete-row" (click)="eliminarAlimento(i, j)">✕</button>
             </div>
           </div>
-          
           <button type="button" class="btn-add-secondary" (click)="agregarAlimento(i)">+ Añadir Ingrediente</button>
         </div>
       </div>
-      
+
       <div class="action-footer text-center mt-2">
         <button type="button" class="btn-add-primary" (click)="agregarComida()">+ Agregar Nueva Comida al Plan</button>
+      </div>
+    </form>
+
+    <form [formGroup]="planForm" class="form-layout" *ngIf="!isLoadingExpediente && seccionEditor === 'training'">
+      <section class="clinical-card">
+        <h3 class="section-label">Indicaciones Generales de Carga</h3>
+        <div class="input-group">
+          <label>Notas de Entrenamiento (Cardio, Descansos, RPE)</label>
+          <textarea formControlName="notas_entrenamiento" rows="3" placeholder="Ej. Mantener descansos de 90 segundos. Cardio en ayunas 30 min..."></textarea>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <div formArrayName="dias_entrenamiento" class="meals-container">
+        <div *ngFor="let dia of diasEntrenamiento.controls; let i = index" [formGroupName]="i" class="meal-editor-card">
+          <header class="meal-header">
+            <input type="text" class="meal-title-input" formControlName="titulo" placeholder="TÍTULO DEL DÍA (Ej. Día 1: Pierna Enfoque Cuádriceps)">
+            <button type="button" class="btn-icon-delete" (click)="eliminarDia(i)">Remover Día</button>
+          </header>
+
+          <div formArrayName="dias_ejercicios" class="foods-wrapper">
+            <div class="food-labels training-labels" *ngIf="ejerciciosDeDia(i).length > 0">
+              <span>Nombre del Ejercicio / Variante</span>
+              <span>Series</span>
+              <span>Repeticiones / RPE</span>
+              <span></span>
+            </div>
+
+            <div *ngFor="let ej of ejerciciosDeDia(i).controls; let j = index" [formGroupName]="j" class="food-row training-row">
+              <input type="text" formControlName="ejercicio" placeholder="Ej. Sentadilla Libre con Barra">
+              <input type="number" formControlName="series" placeholder="4">
+              <input type="text" formControlName="reps" placeholder="10-12 o Al Fallo">
+              <button type="button" class="btn-delete-row" (click)="eliminarEjercicio(i, j)">✕</button>
+            </div>
+          </div>
+
+          <button type="button" class="btn-add-secondary" (click)="agregarEjercicio(i)">+ Añadir Ejercicio</button>
+        </div>
+      </div>
+
+      <div class="action-footer text-center mt-2">
+        <button type="button" class="btn-add-primary" (click)="agregarDia()">+ Agregar Nuevo Día de Entrenamiento</button>
       </div>
     </form>
   </ng-container>
