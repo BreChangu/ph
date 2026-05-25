@@ -1,9 +1,10 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, Inject, PLATFORM_ID, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/supabase/auth';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { PlanNutricionalService } from '../../../core/services/plan-nutricional/plan-nutricional.service';
+import { EntrenamientoService } from '../../../core/services/entrenamiento/entrenamiento.service';
 
 @Component({
   selector: 'app-admin-panel',
@@ -13,8 +14,15 @@ import { PlanNutricionalService } from '../../../core/services/plan-nutricional/
   styleUrls: ['./admin-panel.scss'],
 })
 export class AdminPanelComponent implements OnInit, OnDestroy {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private planNutricionalService = inject(PlanNutricionalService);
+  private entrenamientoService = inject(EntrenamientoService);
+  private cdr = inject(ChangeDetectorRef);
+
   vistaActual: 'lista' | 'editor' = 'lista';
-  seccionEditor: 'evaluacion' | 'nutrition' | 'training' = 'evaluacion'; // 🟢 Control de las sub-pestañas del admin
+  seccionEditor: 'evaluacion' | 'nutrition' | 'training' = 'evaluacion';
+  activeTrainingEditorDay = 0;
   pacienteSeleccionado: any = null;
   pacientes: any[] = [];
   planForm!: FormGroup;
@@ -62,13 +70,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     suplementos: 'Suplementos',
   };
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private planNutricionalService: PlanNutricionalService, 
-    private cdr: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) private platformId: Object
-  ) {}
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
   get totalPacientes() { return this.pacientes.length; }
   get pacientesActivos() { return this.pacientes.filter(p => p.estado_aprobacion === 'aprobado').length; }
@@ -83,18 +85,12 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     }, 0);
     
     this.pacientesChannel = this.authService.subscribePacientes(() => {
-      if (this.vistaActual === 'lista') {
-        window.setTimeout(() => {
-          this.cargarPacientes();
-        }, 0);
-      }
+      if (this.vistaActual === 'lista') this.cargarPacientes();
     });
   }
 
   ngOnDestroy() {
-    if (this.pacientesChannel) {
-      this.authService.unsubscribeChannel(this.pacientesChannel);
-    }
+    if (this.pacientesChannel) this.authService.unsubscribeChannel(this.pacientesChannel);
   }
 
   private initForm() {
@@ -103,7 +99,6 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
       suplementacion: [''],
       medicacion: [''],
       comidas: this.fb.array([]),
-      // 🟢 NUEVO: Soporte reactivo para el módulo de entrenamiento unificado
       notas_entrenamiento: [''],
       dias_entrenamiento: this.fb.array([])
     });
@@ -118,12 +113,9 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     this.isLoadingPacientes = true;
     this.pacientesError = '';
     this.cdr.detectChanges();
-
     try {
       this.pacientes = await this.authService.getPacientes();
     } catch (error) {
-      console.error('Error al cargar pacientes:', error);
-      this.pacientes = [];
       this.pacientesError = this.getErrorMessage(error, 'No se pudieron cargar los pacientes.');
     } finally {
       this.isLoadingPacientes = false;
@@ -131,79 +123,106 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     }
   }
 
- async abrirExpediente(paciente: any) {
+async abrirExpediente(paciente: any) {
     this.pacienteSeleccionado = paciente;
     this.vistaActual = 'editor';
     this.seccionEditor = 'evaluacion'; 
+    this.activeTrainingEditorDay = 0;
     this.isLoadingExpediente = true;
     this.expedienteClinico = null;
     this.expedienteError = '';
     this.planEditorError = '';
-    this.initForm();
-    this.cdr.detectChanges(); // Pintamos el cargador de inmediato
+    this.initForm(); // Limpiamos la forma siempre al inicio
+    this.cdr.detectChanges();
 
     try {
-      const planExistente = await this.withTimeout(
-        this.planNutricionalService.getPlanPaciente(paciente.id),
-        'No se pudo cargar el plan anterior.'
-      );
-      
-      this.expedienteClinico = await this.withTimeout(
-        this.authService.getExpedienteClinico(paciente.id),
-        'Error cargando el expediente.'
-      ).catch(() => null);
+      // 🟢 USAMOS PROMISE.ALLSettled PARA QUE SI FALLA UNA COSA, NO ROMPA LAS DEMÁS
+      const [planRes, rutinaRes, expRes] = await Promise.allSettled([
+        this.withTimeout(this.planNutricionalService.getPlanPaciente(paciente.id), 'La carga del plan de alimentacion tardo demasiado.'),
+        this.withTimeout(this.entrenamientoService.getRutinaPaciente(paciente.id), 'La carga de rutina tardo demasiado.'),
+        this.withTimeout(this.authService.getExpedienteClinico(paciente.id), 'La carga del expediente tardo demasiado.')
+      ]);
 
-      if (planExistente) {
+      // 1. Cargamos Expediente (Fase 1)
+      if (expRes.status === 'fulfilled' && expRes.value) {
+        this.expedienteClinico = expRes.value;
+      } else {
+        this.expedienteError = 'No se encontró entrevista de Onboarding.';
+      }
+
+      // 2. Cargamos Nutrición (Fase 2)
+      if (planRes.status === 'fulfilled' && planRes.value) {
+        const planExistente = planRes.value;
         this.planForm.patchValue({
-          calorias_totales: planExistente.calorias_totales,
-          suplementacion: planExistente.suplementacion,
-          medicacion: planExistente.medicacion,
+          calorias_totales: planExistente.calorias_totales || '',
+          suplementacion: planExistente.suplementacion || '',
+          medicacion: planExistente.medicacion || '',
         });
 
-        (planExistente.comidas ?? []).forEach((c: any) => {
+        // Mapeo defensivo de comidas
+        const comidasDb = planExistente.comidas || [];
+        comidasDb.forEach((c: any) => {
           const comidaGroup = this.fb.group({
-            nombre: [c.nombre, Validators.required],
-            nota_comida: [c.nota_comida],
+            nombre: [c.nombre || '', Validators.required],
+            nota_comida: [c.nota_comida || ''],
             alimentos_comida: this.fb.array(
-              (c.alimentos_comida ?? []).map((a: any) =>
+              (c.alimentos_comida || []).map((a: any) =>
                 this.fb.group({
-                  descripcion: [a.descripcion, Validators.required],
-                  calorias: [a.calorias],
-                  proteinas: [a.proteinas],
-                  carbos: [a.carbos],
-                  grasas: [a.grasas],
-                }),
-              ),
+                  descripcion: [a.descripcion || '', Validators.required],
+                  calorias: [a.calorias || 0],
+                  proteinas: [a.proteinas || 0],
+                  carbos: [a.carbos || 0],
+                  grasas: [a.grasas || 0],
+                })
+              )
             ),
           });
           this.comidas.push(comidaGroup);
         });
+      } else if (planRes.status === 'rejected') {
+        this.planEditorError = this.getErrorMessage(planRes.reason, 'No se pudo cargar el plan anterior.');
       }
+
+      // 3. Cargamos Entrenamiento (Fase 3)
+      if (rutinaRes.status === 'fulfilled' && rutinaRes.value) {
+        const rutinaExistente = rutinaRes.value;
+        this.planForm.patchValue({
+          notas_entrenamiento: rutinaExistente.notas_entrenamiento || ''
+        });
+
+        const diasDb = rutinaExistente.dias_entrenamiento || [];
+        diasDb.forEach((d: any) => {
+          const diaGroup = this.fb.group({
+            titulo: [d.titulo || '', Validators.required],
+            ejercicios: this.fb.array(
+              (d.ejercicios || []).map((e: any) =>
+                this.fb.group({
+                  ejercicio: [e.ejercicio || '', Validators.required],
+                  series: [e.series || 4, [Validators.required, Validators.min(1)]],
+                  reps: [e.reps || '10-12', Validators.required]
+                })
+              )
+            )
+          });
+          this.diasEntrenamiento.push(diaGroup);
+        });
+      } else if (rutinaRes.status === 'rejected') {
+        this.planEditorError = this.getErrorMessage(rutinaRes.reason, 'No se pudo cargar la rutina anterior.');
+      }
+
     } catch (error) {
-      this.planEditorError = this.getErrorMessage(error, 'Falla al abrir expediente.');
+      console.error('Error general abriendo expediente:', error);
+      this.planEditorError = 'Error al construir el formulario del paciente.';
     } finally {
-      // 🟢 CORRECCIÓN DE LACH: Usamos macro-task pura para pintar al instante sin esperar clics
-      window.setTimeout(() => {
-        this.isLoadingExpediente = false;
-        this.cdr.detectChanges();
-      }, 0);
+      this.isLoadingExpediente = false;
+      this.cdr.detectChanges();
     }
   }
 
   async guardarPlan() {
-    if (this.planForm.invalid) {
+    if (this.planForm.invalid || !this.pacienteSeleccionado?.id) {
       this.planForm.markAllAsTouched();
-      alert('Revisa el plan: hay campos obligatorios incompletos en los formularios.');
-      return;
-    }
-
-    if (this.seccionEditor === 'nutrition' && !this.tieneComidasConAlimentos()) {
-      alert('Agrega al menos una comida con un alimento antes de guardar el plan nutricional.');
-      return;
-    }
-
-    if (!this.pacienteSeleccionado?.id) {
-      alert('Selecciona un paciente antes de procesar el guardado.');
+      alert('Revisa los formularios: hay campos obligatorios pendientes.');
       return;
     }
 
@@ -211,70 +230,84 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
 
     try {
-      await this.planNutricionalService.guardarPlanCompleto(this.pacienteSeleccionado.id, this.planForm.value);
-      alert('¡Información actualizada correctamente en Supabase!');
+      // Guardamos en paralelo nutrición y entrenamiento de forma atómica
+      const tareas: Promise<void>[] = [];
+
+      if (this.tieneComidasConAlimentos()) {
+        tareas.push(this.planNutricionalService.guardarPlanCompleto(this.pacienteSeleccionado.id, this.planForm.value));
+      }
+
+      if (this.tieneRutinaConEjercicios()) {
+        tareas.push(this.entrenamientoService.guardarRutinaCompleta(this.pacienteSeleccionado.id, this.planForm.value));
+      }
+
+      if (tareas.length === 0) {
+        alert('Agrega al menos una comida con alimento o un dia de entrenamiento con ejercicios.');
+        return;
+      }
+
+      await Promise.all(tareas);
+      alert('¡Plan de Nutrición y Entrenamiento guardados con éxito!');
       await this.volverAlPanel();
     } catch (error: any) {
-      console.error('❌ ERROR DETALLADO DE SUPABASE:', error);
-      alert(`Error al guardar: ${error?.message || 'Error desconocido'}`);
+      alert(`Error al guardar: ${error.message || 'Error desconocido'}`);
     } finally {
       this.isSavingPlan = false;
       this.cdr.detectChanges();
     }
   }
 
-  // Getters para Nutrición
+  // Getters y helpers de Nutrición
   get comidas() { return this.planForm.get('comidas') as FormArray; }
-  alimentosDeComida(comidaIndex: number) { return this.comidas.at(comidaIndex).get('alimentos_comida') as FormArray; }
+  alimentosDeComida(idx: number) { return this.comidas.at(idx).get('alimentos_comida') as FormArray; }
 
   agregarComida() {
     this.comidas.push(this.fb.group({ nombre: ['', Validators.required], nota_comida: [''], alimentos_comida: this.fb.array([]) }));
     this.cdr.detectChanges();
   }
 
-  agregarAlimento(comidaIndex: number) {
-    this.alimentosDeComida(comidaIndex).push(this.fb.group({ descripcion: ['', Validators.required], calorias: [0], proteinas: [0], carbos: [0], grasas: [0] }));
+  agregarAlimento(idx: number) {
+    this.alimentosDeComida(idx).push(this.fb.group({ descripcion: ['', Validators.required], calorias: [0], proteinas: [0], carbos: [0], grasas: [0] }));
     this.cdr.detectChanges();
   }
 
-  // 🟢 GETTERS Y MÉTODOS PARA EL MÓDULO DE ENTRENAMIENTO REACtIVO
+  // Getters y helpers de Entrenamiento (Refactorizados con 'ejercicios')
   get diasEntrenamiento() { return this.planForm.get('dias_entrenamiento') as FormArray; }
-  ejerciciosDeDia(diaIndex: number) { return this.diasEntrenamiento.at(diaIndex).get('dias_ejercicios') as FormArray; }
+  ejerciciosDeDia(idx: number) { return this.diasEntrenamiento.at(idx).get('ejercicios') as FormArray; }
+
+  selectTrainingEditorDay(index: number) {
+    this.activeTrainingEditorDay = index;
+    this.cdr.detectChanges();
+  }
 
   agregarDia() {
-    this.diasEntrenamiento.push(this.fb.group({
-      titulo: ['', Validators.required],
-      dias_ejercicios: this.fb.array([])
-    }));
+    this.diasEntrenamiento.push(this.fb.group({ titulo: ['', Validators.required], ejercicios: this.fb.array([]) }));
+    this.activeTrainingEditorDay = this.diasEntrenamiento.length - 1;
     this.cdr.detectChanges();
   }
 
-  agregarEjercicio(diaIndex: number) {
-    this.ejerciciosDeDia(diaIndex).push(this.fb.group({
-      ejercicio: ['', Validators.required],
-      series: [4, [Validators.required, Validators.min(1)]],
-      reps: ['10-12', Validators.required]
-    }));
+  agregarEjercicio(idx: number) {
+    this.ejerciciosDeDia(idx).push(this.fb.group({ ejercicio: ['', Validators.required], series: [4, [Validators.required, Validators.min(1)]], reps: ['10-12', Validators.required] }));
     this.cdr.detectChanges();
   }
 
-  eliminarDia(i: number) { this.diasEntrenamiento.removeAt(i); this.cdr.detectChanges(); }
+  eliminarDia(i: number) {
+    this.diasEntrenamiento.removeAt(i);
+    this.activeTrainingEditorDay = Math.max(0, Math.min(this.activeTrainingEditorDay, this.diasEntrenamiento.length - 1));
+    this.cdr.detectChanges();
+  }
   eliminarEjercicio(i: number, j: number) { this.ejerciciosDeDia(i).removeAt(j); this.cdr.detectChanges(); }
 
   async toggleEstado(paciente: any, event: Event) {
     event.stopPropagation();
-    const estadoAnterior = paciente.estado_aprobacion;
-    const nuevoEstado = paciente.estado_aprobacion === 'aprobado' ? 'pendiente' : 'aprobado';
-    paciente.estado_aprobacion = nuevoEstado;
-    this.cdr.detectChanges();
-
+    const original = paciente.estado_aprobacion;
+    paciente.estado_aprobacion = original === 'aprobado' ? 'pendiente' : 'aprobado';
     try {
-      await this.authService.actualizarEstadoPaciente(paciente.id, nuevoEstado);
-    } catch (error) {
-      paciente.estado_aprobacion = estadoAnterior;
-      this.cdr.detectChanges();
-      console.error('Error al actualizar estado:', error);
+      await this.authService.actualizarEstadoPaciente(paciente.id, paciente.estado_aprobacion);
+    } catch {
+      paciente.estado_aprobacion = original;
     }
+    this.cdr.detectChanges();
   }
 
   async volverAlPanel() {
@@ -288,58 +321,50 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   eliminarAlimento(i: number, j: number) { this.alimentosDeComida(i).removeAt(j); this.cdr.detectChanges(); }
 
   tieneComidasConAlimentos(): boolean {
-    return this.comidas.controls.some((comidaControl, index) => {
-      const nombre = String(comidaControl.get('nombre')?.value ?? '').trim();
-      const alimentos = this.alimentosDeComida(index);
-      return nombre.length > 0 && alimentos.length > 0;
+    return this.comidas.controls.some((c, i) => c.get('nombre')?.value && this.alimentosDeComida(i).length > 0);
+  }
+
+  tieneRutinaConEjercicios(): boolean {
+    return this.diasEntrenamiento.controls.some((dia, i) => {
+      const titulo = String(dia.get('titulo')?.value ?? '').trim();
+      const tieneEjercicios = this.ejerciciosDeDia(i).controls.some((ej) => String(ej.get('ejercicio')?.value ?? '').trim().length > 0);
+      return titulo.length > 0 || tieneEjercicios;
     });
   }
 
   calcularCaloriasBase(paciente: any): number | string {
-    if (!paciente?.peso_kg || !paciente?.altura_cm || !paciente?.edad || !paciente?.genero) {
-      return 'Datos clinicos pendientes';
-    }
+    if (!paciente?.peso_kg || !paciente?.altura_cm || !paciente?.edad || !paciente?.genero) return 'Datos pendientes';
     const peso = parseFloat(paciente.peso_kg);
     const altura = parseFloat(paciente.altura_cm);
     const edad = parseInt(paciente.edad, 10);
-    let tmb = (paciente.genero === 'Hombre')
+    let tmb = (paciente.genero === 'Hombre') 
       ? (10 * peso + 6.25 * altura - 5 * edad + 5)
       : (10 * peso + 6.25 * altura - 5 * edad - 161);
     return Math.round(tmb);
   }
 
-  getPacienteIniciales(paciente: any): string {
-    const nombre = paciente?.nombre_completo || paciente?.email || 'Paciente';
-    return nombre.split(' ').filter(Boolean).slice(0, 2).map((p: string) => p[0]).join('').toUpperCase();
+  getPacienteIniciales(p: any): string {
+    const n = p?.nombre_completo || p?.email || 'P';
+    return n.split(' ').filter(Boolean).slice(0, 2).map((x: any) => x[0]).join('').toUpperCase();
   }
 
-  getPacienteObjetivo(paciente: any): string {
-    return paciente?.peso_objetivo || paciente?.objetivo || 'Objetivo pendiente';
-  }
+  getPacienteObjetivo(p: any) { return p?.peso_objetivo || p?.objetivo || 'Pendiente'; }
 
-  formatRespuesta(value: any): string {
-    if (!value) return 'Sin respuesta';
-    if (typeof value === 'object') {
-      const entries = Object.entries(value)
-        .filter(([, val]) => val === true || (typeof val === 'string' && val.trim().length > 0))
-        .map(([key, val]) => val === true ? this.getRespuestaLabel(key) : `${this.getRespuestaLabel(key)}: ${val}`);
-      return entries.length > 0 ? entries.join(', ') : 'Sin datos';
+  formatRespuesta(val: any): string {
+    if (!val) return 'Sin respuesta';
+    if (typeof val === 'object') {
+      const e = Object.entries(val).filter(([, v]) => v === true || (typeof v === 'string' && v.trim().length > 0))
+        .map(([k, v]) => v === true ? this.getRespuestaLabel(k) : `${this.getRespuestaLabel(k)}: ${v}`);
+      return e.length > 0 ? e.join(', ') : 'Sin datos';
     }
-    return String(value);
+    return String(val);
   }
 
   getRespuestaLabel(key: any): string {
-    const normalizedKey = String(key);
-    return this.formLabels[normalizedKey] ?? this.humanizeKey(normalizedKey);
+    return this.formLabels[String(key)] ?? String(key).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  private humanizeKey(key: string) {
-    return key.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-  }
-
-  private getErrorMessage(error: any, fallback: string): string {
-    return error?.message ? `${fallback} ${error.message}` : fallback;
-  }
+  private getErrorMessage(e: any, f: string) { return e?.message ? `${f} ${e.message}` : f; }
 
   private withTimeout<T>(request: Promise<T>, message: string, timeoutMs = 10000): Promise<T> {
     return Promise.race([

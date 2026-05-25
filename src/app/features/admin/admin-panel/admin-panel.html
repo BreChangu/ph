@@ -2,7 +2,7 @@
   <ng-container *ngIf="vistaActual === 'lista'">
     <header class="admin-header dashboard-heading">
       <div class="header-titles">
-        <span class="eyebrow">Panel de Administración</span>
+        <span class="eyebrow">Panel de Administracion</span>
         <h2>Directorio de Pacientes</h2>
       </div>
       <div class="header-actions">
@@ -22,7 +22,7 @@
         <strong>{{ pacientesActivos }}</strong>
       </article>
       <article class="kpi-card highlight">
-        <span>En Revisión</span>
+        <span>En Revision</span>
         <strong>{{ pendientesRevision }}</strong>
       </article>
     </section>
@@ -46,7 +46,7 @@
             <p>{{ paciente.email || 'Sin correo registrado' }}</p>
           </div>
           <span class="status-indicator" [class.active]="paciente.estado_aprobacion === 'aprobado'">
-            {{ paciente.estado_aprobacion === 'aprobado' ? 'Activo' : 'Revisión' }}
+            {{ paciente.estado_aprobacion === 'aprobado' ? 'Activo' : 'Revision' }}
           </span>
         </header>
 
@@ -84,9 +84,9 @@
     <header class="admin-header editor-heading">
       <div class="header-titles">
         <button class="btn-back" type="button" (click)="volverAlPanel()">← Volver al directorio</button>
-        <span class="eyebrow">Gestión de Objetivos</span>
+        <span class="eyebrow">Gestion de Objetivos</span>
         <h2 class="editor-title">{{ pacienteSeleccionado?.nombre_completo || 'Sin nombre' }}</h2>
-        <span class="badge badge-tmb" *ngIf="calcularCaloriasBase(pacienteSeleccionado) !== 'Datos clinicos pendientes'">
+        <span class="badge badge-tmb" *ngIf="calcularCaloriasBase(pacienteSeleccionado) !== 'Datos pendientes'">
           TMB Sugerida: {{ calcularCaloriasBase(pacienteSeleccionado) }} kcal
         </span>
       </div>
@@ -97,12 +97,12 @@
       </div>
     </header>
 
-    <nav class="panel-tabs" aria-label="Navegación del expediente">
+    <nav class="panel-tabs" aria-label="Navegacion del expediente">
       <button type="button" [class.active]="seccionEditor === 'evaluacion'" (click)="setSeccionEditor('evaluacion')">
-        1. Evaluación Clínica
+        1. Evaluacion Clinica
       </button>
       <button type="button" [class.active]="seccionEditor === 'nutrition'" (click)="setSeccionEditor('nutrition')">
-        2. Plan de Alimentación
+        2. Plan de Alimentacion
       </button>
       <button type="button" [class.active]="seccionEditor === 'training'" (click)="setSeccionEditor('training')">
         3. Rutina de Ejercicios
@@ -113,6 +113,14 @@
       Abriendo expediente del paciente...
     </div>
 
+    <div *ngIf="!isLoadingExpediente && planEditorError" class="state-banner error">
+      {{ planEditorError }}
+    </div>
+
+    <div *ngIf="!isLoadingExpediente && expedienteError && seccionEditor === 'evaluacion'" class="state-banner error">
+      {{ expedienteError }}
+    </div>
+
     <div class="form-layout clinical-section" *ngIf="!isLoadingExpediente && seccionEditor === 'evaluacion' && !expedienteError">
       <section class="clinical-card">
         <h3 class="section-label">Entrevista Inicial de Onboarding</h3>
@@ -121,7 +129,7 @@
           <div class="input-grid clinical-grid">
             <div class="info-block">
               <label>Objetivo Principal</label>
-              <p>{{ expedienteClinico.respuestas_completas?.objective || 'No especificado' }}</p>
+              <p>{{ expedienteClinico.respuestas_completas?.objetivo || expedienteClinico.respuestas_completas?.objective || 'No especificado' }}</p>
             </div>
             <div class="info-block">
               <label>Meta de Peso</label>
@@ -132,11 +140,11 @@
               <p>{{ expedienteClinico.respuestas_completas?.cintura_cm ? expedienteClinico.respuestas_completas?.cintura_cm + ' cm' : 'No medida' }}</p>
             </div>
             <div class="info-block">
-              <label>Condiciones Médicas / Lesiones</label>
+              <label>Condiciones Medicas / Lesiones</label>
               <p>{{ expedienteClinico.respuestas_completas?.enfermedades || 'Ninguna' }} / {{ expedienteClinico.respuestas_completas?.lesiones || 'Ninguna' }}</p>
             </div>
             <div class="info-block full-width">
-              <label>Hábitos: Ejemplo de un día normal</label>
+              <label>Habitos: Ejemplo de un dia normal</label>
               <p>{{ expedienteClinico.respuestas_completas?.ejemplo_dia || 'No detallado' }}</p>
             </div>
           </div>
@@ -150,46 +158,28 @@
               </div>
             </div>
           </div>
-
-          <div class="gallery-section" *ngIf="expedienteClinico.fotos_progreso">
-            <h4>Evidencia Fotográfica</h4>
-            <div class="photo-gallery">
-              <div *ngIf="expedienteClinico.fotos_progreso?.frente" class="photo-item">
-                <span class="photo-label">Frente</span>
-                <img [src]="expedienteClinico.fotos_progreso.frente" class="clinical-photo" alt="Frente">
-              </div>
-              <div *ngIf="expedienteClinico.fotos_progreso?.perfil" class="photo-item">
-                <span class="photo-label">Perfil</span>
-                <img [src]="expedienteClinico.fotos_progreso.perfil" class="clinical-photo" alt="Perfil">
-              </div>
-              <div *ngIf="expedienteClinico.fotos_progreso?.espalda" class="photo-item">
-                <span class="photo-label">Espalda</span>
-                <img [src]="expedienteClinico.fotos_progreso.espalda" class="clinical-photo" alt="Espalda">
-              </div>
-            </div>
-          </div>
         </div>
 
         <div *ngIf="!expedienteClinico" class="empty-clinical-state">
-          <p>Este paciente aún no ha completado su entrevista de Onboarding.</p>
+          <p>Este paciente aun no ha completado su entrevista de Onboarding.</p>
         </div>
       </section>
     </div>
 
-    <form [formGroup]="planForm" class="form-layout" *ngIf="!isLoadingExpediente && seccionEditor === 'nutrition' && !planEditorError">
+    <form [formGroup]="planForm" class="form-layout" *ngIf="!isLoadingExpediente && seccionEditor === 'nutrition'">
       <section class="clinical-card">
-        <h3 class="section-label">Configuración Energética General</h3>
+        <h3 class="section-label">Configuracion Energetica General</h3>
         <div class="input-grid">
           <div class="input-group">
-            <label>Meta Calórica (Kcal)</label>
+            <label>Meta Calorica (Kcal)</label>
             <input type="number" formControlName="calorias_totales" placeholder="Ej. 2100">
           </div>
           <div class="input-group">
-            <label>Suplementación Estratégica</label>
+            <label>Suplementacion Estrategica</label>
             <input type="text" formControlName="suplementacion" placeholder="Ej. 5g Creatina, Whey Protein">
           </div>
           <div class="input-group">
-            <label>Protocolos o Medicación</label>
+            <label>Protocolos o Medicacion</label>
             <input type="text" formControlName="medicacion" placeholder="Ej. Ayuno 16/8">
           </div>
         </div>
@@ -210,7 +200,7 @@
 
           <div formArrayName="alimentos_comida" class="foods-wrapper">
             <div class="food-labels" *ngIf="alimentosDeComida(i).length > 0">
-              <span>Descripción del Alimento</span>
+              <span>Descripcion del Alimento</span>
               <span>Kcal</span>
               <span>Prot (g)</span>
               <span>Carb (g)</span>
@@ -224,10 +214,10 @@
               <input type="number" formControlName="proteinas" placeholder="0">
               <input type="number" formControlName="carbos" placeholder="0">
               <input type="number" formControlName="grasas" placeholder="0">
-              <button type="button" class="btn-delete-row" (click)="eliminarAlimento(i, j)">✕</button>
+              <button type="button" class="btn-delete-row" (click)="eliminarAlimento(i, j)">x</button>
             </div>
           </div>
-          <button type="button" class="btn-add-secondary" (click)="agregarAlimento(i)">+ Añadir Ingrediente</button>
+          <button type="button" class="btn-add-secondary" (click)="agregarAlimento(i)">+ Anadir Ingrediente</button>
         </div>
       </div>
 
@@ -237,46 +227,69 @@
     </form>
 
     <form [formGroup]="planForm" class="form-layout" *ngIf="!isLoadingExpediente && seccionEditor === 'training'">
-      <section class="clinical-card">
-        <h3 class="section-label">Indicaciones Generales de Carga</h3>
-        <div class="input-group">
-          <label>Notas de Entrenamiento (Cardio, Descansos, RPE)</label>
-          <textarea formControlName="notas_entrenamiento" rows="3" placeholder="Ej. Mantener descansos de 90 segundos. Cardio en ayunas 30 min..."></textarea>
-        </div>
-      </section>
+      <section class="training-editor-shell">
+        <aside class="training-side-panel">
+          <span class="eyebrow">Rutina semanal</span>
+          <h3>{{ diasEntrenamiento.length || 0 }} dias configurados</h3>
+          <p>Organiza cada sesion por dia, agrega ejercicios y define series/repeticiones.</p>
 
-      <div class="divider"></div>
-
-      <div formArrayName="dias_entrenamiento" class="meals-container">
-        <div *ngFor="let dia of diasEntrenamiento.controls; let i = index" [formGroupName]="i" class="meal-editor-card">
-          <header class="meal-header">
-            <input type="text" class="meal-title-input" formControlName="titulo" placeholder="TÍTULO DEL DÍA (Ej. Día 1: Pierna Enfoque Cuádriceps)">
-            <button type="button" class="btn-icon-delete" (click)="eliminarDia(i)">Remover Día</button>
-          </header>
-
-          <div formArrayName="dias_ejercicios" class="foods-wrapper">
-            <div class="food-labels training-labels" *ngIf="ejerciciosDeDia(i).length > 0">
-              <span>Nombre del Ejercicio / Variante</span>
-              <span>Series</span>
-              <span>Repeticiones / RPE</span>
-              <span></span>
-            </div>
-
-            <div *ngFor="let ej of ejerciciosDeDia(i).controls; let j = index" [formGroupName]="j" class="food-row training-row">
-              <input type="text" formControlName="ejercicio" placeholder="Ej. Sentadilla Libre con Barra">
-              <input type="number" formControlName="series" placeholder="4">
-              <input type="text" formControlName="reps" placeholder="10-12 o Al Fallo">
-              <button type="button" class="btn-delete-row" (click)="eliminarEjercicio(i, j)">✕</button>
-            </div>
+          <div class="input-group">
+            <label>Notas generales</label>
+            <textarea formControlName="notas_entrenamiento" rows="5" placeholder="Cardio, descansos, RPE, progresion de cargas..."></textarea>
           </div>
 
-          <button type="button" class="btn-add-secondary" (click)="agregarEjercicio(i)">+ Añadir Ejercicio</button>
-        </div>
-      </div>
+          <button type="button" class="btn-add-primary full-width" (click)="agregarDia()">+ Agregar Dia</button>
+        </aside>
 
-      <div class="action-footer text-center mt-2">
-        <button type="button" class="btn-add-primary" (click)="agregarDia()">+ Agregar Nuevo Día de Entrenamiento</button>
-      </div>
+        <section class="training-builder">
+          <nav class="training-day-editor-nav" *ngIf="diasEntrenamiento.length > 0">
+            <button type="button"
+                    *ngFor="let dia of diasEntrenamiento.controls; let i = index"
+                    [class.active]="activeTrainingEditorDay === i"
+                    (click)="selectTrainingEditorDay(i)">
+              <span>Dia {{ i + 1 }}</span>
+              <strong>{{ dia.get('titulo')?.value || 'Sin titulo' }}</strong>
+              <small>{{ ejerciciosDeDia(i).length }} ejercicios</small>
+            </button>
+          </nav>
+
+          <div class="state-banner" *ngIf="diasEntrenamiento.length === 0">
+            Aun no hay dias de entrenamiento. Agrega un dia para empezar la rutina.
+          </div>
+
+          <div formArrayName="dias_entrenamiento" *ngIf="diasEntrenamiento.length > 0">
+            <article class="training-day-editor-card" [formGroupName]="activeTrainingEditorDay">
+              <header class="training-card-header">
+                <div>
+                  <span class="eyebrow">Sesion {{ activeTrainingEditorDay + 1 }}</span>
+                  <input type="text" formControlName="titulo" placeholder="Ej. Dia 1: Pierna enfoque cuadriceps">
+                </div>
+                <button type="button" class="btn-icon-delete" (click)="eliminarDia(activeTrainingEditorDay)">Remover Dia</button>
+              </header>
+
+              <div formArrayName="ejercicios" class="training-exercise-editor">
+                <div class="training-exercise-head" *ngIf="ejerciciosDeDia(activeTrainingEditorDay).length > 0">
+                  <span>Ejercicio / Variante</span>
+                  <span>Series</span>
+                  <span>Reps / RPE</span>
+                  <span></span>
+                </div>
+
+                <div *ngFor="let ej of ejerciciosDeDia(activeTrainingEditorDay).controls; let j = index" [formGroupName]="j" class="training-exercise-row">
+                  <input type="text" formControlName="ejercicio" placeholder="Ej. Sentadilla libre con barra">
+                  <input type="number" formControlName="series" placeholder="4">
+                  <input type="text" formControlName="reps" placeholder="10-12">
+                  <button type="button" class="btn-delete-row" (click)="eliminarEjercicio(activeTrainingEditorDay, j)">x</button>
+                </div>
+              </div>
+
+              <div class="training-card-actions">
+                <button type="button" class="btn-add-secondary" (click)="agregarEjercicio(activeTrainingEditorDay)">+ Anadir Ejercicio</button>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
     </form>
   </ng-container>
 </div>

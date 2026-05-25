@@ -697,6 +697,189 @@ textarea {
 }
 
 /* ==========================================
+   EDITOR DE ENTRENAMIENTO
+   ========================================== */
+.training-editor-shell {
+  display: grid;
+  grid-template-columns: minmax(17rem, 0.7fr) minmax(0, 1.6fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.training-side-panel,
+.training-day-editor-card {
+  background: #ffffff;
+  border: 1px solid rgba($brand-black, 0.12);
+}
+
+.training-side-panel {
+  position: sticky;
+  top: 1.5rem;
+  padding: 1.5rem;
+
+  h3 {
+    margin: 0.4rem 0 0.75rem;
+    color: $brand-black;
+    font-family: $font-h2;
+    font-size: 1.25rem;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+
+  p {
+    color: $brand-gray;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin: 0 0 1.5rem;
+  }
+
+  .input-group {
+    margin-bottom: 1rem;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.training-builder {
+  min-width: 0;
+}
+
+.training-day-editor-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  button {
+    min-height: 4.8rem;
+    border: 1px solid rgba($brand-black, 0.12);
+    background: #ffffff;
+    color: $brand-gray;
+    cursor: pointer;
+    padding: 0.75rem;
+    text-align: left;
+    transition: all 0.2s ease;
+
+    span,
+    small {
+      display: block;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+    }
+
+    strong {
+      display: block;
+      color: $brand-black;
+      font-family: $font-h2;
+      font-size: 0.8rem;
+      line-height: 1.2;
+      margin: 0.2rem 0;
+      text-transform: uppercase;
+    }
+
+    &.active {
+      background: $brand-black;
+      border-color: $brand-black;
+      color: $brand-white;
+
+      strong {
+        color: $brand-white;
+      }
+    }
+
+    &:hover:not(.active) {
+      border-color: $brand-red;
+      color: $brand-red;
+    }
+  }
+}
+
+.training-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-bottom: 2px solid $brand-red;
+
+  > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  input {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid rgba($brand-black, 0.18);
+    background: transparent;
+    color: $brand-black;
+    font-family: $font-h2;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    padding: 0.5rem 0;
+
+    &:focus {
+      border-color: $brand-red;
+      outline: none;
+    }
+  }
+}
+
+.training-exercise-editor {
+  padding: 1rem 1.5rem 1.5rem;
+  overflow-x: auto;
+}
+
+.training-exercise-head,
+.training-exercise-row {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) 6rem 10rem 3rem;
+  gap: 1rem;
+  align-items: center;
+  min-width: 42rem;
+}
+
+.training-exercise-head {
+  color: $brand-gray;
+  font-family: $font-h2;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  border-bottom: 2px solid rgba($brand-black, 0.12);
+  padding-bottom: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.training-exercise-row {
+  border-bottom: 1px solid rgba($brand-black, 0.08);
+  padding: 0.45rem 0;
+
+  input {
+    height: 2.8rem;
+    border: 1px solid rgba($brand-black, 0.15);
+    background: #ffffff;
+    color: $brand-black;
+    padding: 0 0.85rem;
+    font-family: $font-main;
+    font-size: 0.9rem;
+
+    &:focus {
+      border-color: $brand-red;
+      outline: none;
+    }
+
+    &[type="number"] {
+      text-align: center;
+    }
+  }
+}
+
+.training-card-actions {
+  padding: 0 1.5rem 1.5rem;
+}
+
+/* ==========================================
    MEDIA QUERIES
    ========================================== */
 @media (max-width: 900px) {
@@ -704,6 +887,8 @@ textarea {
   .admin-header { flex-direction: column; align-items: flex-start; }
   .header-actions { width: 100%; .btn-primary { width: 100%; } }
   .admin-kpis { grid-template-columns: 1fr; }
+  .training-editor-shell { grid-template-columns: 1fr; }
+  .training-side-panel { position: static; }
   .clinical-card { padding: 1.5rem; }
   .meal-editor-card { padding: 1.5rem 1rem; }
 }

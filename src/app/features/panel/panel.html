@@ -85,34 +85,78 @@
     <section class="panel-section" *ngIf="activeSection === 'training'">
       <header class="section-title">
         <h1>Programa de Entrenamiento</h1>
-        <p>Tu rutina semanal estructurada para hipertrofia y fuerza.</p>
+        <p>Tu semana de entrenamiento organizada por sesiones, cargas y notas de seguimiento.</p>
       </header>
 
       <ng-container *ngIf="entrenamientoSemanal && entrenamientoSemanal.length > 0">
-        <div class="training-days-nav">
-          <button type="button" class="btn-primary" 
-                  *ngFor="let dia of entrenamientoSemanal; let i = index"
-                  [class.active]="activeTrainingDay === i"
-                  (click)="selectTrainingDay(i)">
-            {{ dia.titulo }}
-          </button>
-        </div>
+        <div class="training-workspace">
+          <div class="training-overview">
+            <article class="training-info-panel">
+              <span class="panel-eyebrow">Cardio semanal</span>
+              <h2>Base de acondicionamiento</h2>
+              <ul>
+                <li *ngFor="let item of cardioGuidelines">{{ item }}</li>
+              </ul>
+            </article>
 
-        <article class="meal-card" *ngIf="entrenamientoSemanal[activeTrainingDay]">
-          <h2>{{ entrenamientoSemanal[activeTrainingDay].titulo }}</h2>
-          <div class="food-table">
-            <div class="food-row food-head">
-              <span>Ejercicio</span>
-              <span>Series</span>
-              <span>Reps</span>
-            </div>
-            <div class="food-row" *ngFor="let ej of entrenamientoSemanal[activeTrainingDay].ejercicios">
-              <span class="food-desc">{{ ej.ejercicio }}</span>
-              <span>{{ ej.series }}</span>
-              <span>{{ ej.reps }}</span>
-            </div>
+            <article class="training-info-panel">
+              <span class="panel-eyebrow">Indicaciones</span>
+              <h2>Antes de entrenar</h2>
+              <ul>
+                <li *ngFor="let item of trainingGuidelines">{{ item }}</li>
+              </ul>
+            </article>
+
+            <article class="training-info-panel training-diary">
+              <span class="panel-eyebrow">Diario</span>
+              <h2>Notas de la sesión</h2>
+              <textarea [(ngModel)]="trainingDiaryNote" rows="4" placeholder="¿Cómo estuvo el entrenamiento?"></textarea>
+              <button class="btn-primary compact" type="button" (click)="guardarNotaEntrenamiento()">Guardar Nota</button>
+              <p class="form-message" *ngIf="trainingDiaryMessage">{{ trainingDiaryMessage }}</p>
+            </article>
           </div>
-        </article>
+
+          <nav class="training-day-strip" aria-label="Días de entrenamiento">
+            <button type="button"
+                    *ngFor="let dia of entrenamientoSemanal; let i = index"
+                    [class.active]="activeTrainingDay === i"
+                    (click)="selectTrainingDay(i)">
+              <span>Día {{ i + 1 }}</span>
+              <strong>{{ getTrainingShortTitle(dia.titulo) }}</strong>
+              <small>{{ dia.ejercicios.length }} ejercicios</small>
+            </button>
+          </nav>
+
+          <article class="training-session-card" *ngIf="entrenamientoSemanal[activeTrainingDay] as diaActivo">
+            <header class="session-header">
+              <div>
+                <span class="panel-eyebrow">Sesión {{ activeTrainingDay + 1 }} de {{ entrenamientoSemanal.length }}</span>
+                <h2>{{ diaActivo.titulo }}</h2>
+              </div>
+              <div class="session-nav">
+                <button type="button" (click)="previousTrainingDay()" [disabled]="activeTrainingDay === 0">Anterior</button>
+                <button type="button" (click)="nextTrainingDay()" [disabled]="activeTrainingDay === entrenamientoSemanal.length - 1">Siguiente</button>
+              </div>
+            </header>
+
+            <div class="exercise-table">
+              <div class="exercise-row exercise-head">
+                <span>#</span>
+                <span>Ejercicio</span>
+                <span>Series</span>
+                <span>Reps</span>
+                <span>Carga</span>
+              </div>
+              <div class="exercise-row" *ngFor="let ej of diaActivo.ejercicios; let i = index">
+                <span class="exercise-index">{{ i + 1 }}</span>
+                <span class="exercise-name">{{ ej.ejercicio }}</span>
+                <span>{{ ej.series }}</span>
+                <span>{{ ej.reps }}</span>
+                <input type="number" min="0" placeholder="0">
+              </div>
+            </div>
+          </article>
+        </div>
       </ng-container>
 
       <div class="state-banner" *ngIf="!entrenamientoSemanal || entrenamientoSemanal.length === 0">
@@ -122,25 +166,65 @@
 
     <section class="panel-section" *ngIf="activeSection === 'measurements'">
       <header class="section-title">
-        <h1>Registro de Medidas</h1>
-        <p>Actualiza tus circunferencias para medir tu progreso real.</p>
+        <h1>Circunferencias</h1>
+        <p>Controla tus circunferencias para comparar progreso con datos consistentes.</p>
       </header>
 
-      <article class="measurement-card">
-        <h2 class="card-header-dark">Circunferencias (cm)</h2>
-        <div class="measure-grid">
-          <div class="input-group" *ngFor="let item of measurements">
-            <label>{{ item }}</label>
-            <input type="number" step="0.1" (input)="onMeasurementInput(item, $event)" placeholder="0.0">
+      <div class="measurements-workspace">
+        <article class="measurement-guide-panel">
+          <header>
+            <span class="panel-eyebrow">Procedimiento</span>
+            <h2>Antes de medir</h2>
+          </header>
+
+          <div class="tool-kit">
+            <div>
+              <strong>1 flexómetro</strong>
+              <span>Para diámetros y referencias.</span>
+            </div>
+            <div>
+              <strong>1 cinta métrica suave</strong>
+              <span>Para circunferencias en centímetros.</span>
+            </div>
           </div>
-        </div>
-        <div class="action-footer p-1">
-          <button class="btn-primary w-100" (click)="guardarMedidas()" [disabled]="isSavingMeasurements">
-            {{ isSavingMeasurements ? 'Guardando...' : 'Guardar Medidas' }}
-          </button>
-          <p class="form-message" *ngIf="measurementMessage">{{ measurementMessage }}</p>
-        </div>
-      </article>
+
+          <ol class="procedure-list">
+            <li *ngFor="let item of measurementProcedure">{{ item }}</li>
+          </ol>
+        </article>
+
+        <article class="measurement-entry-panel">
+          <header class="measurement-entry-header">
+            <div>
+              <span class="panel-eyebrow">Registro actual</span>
+              <h2>Circunferencias (cm)</h2>
+            </div>
+            <span class="entry-date">{{ fechaHoy }}</span>
+          </header>
+
+          <div class="measure-capture-grid">
+            <label class="measure-field" *ngFor="let item of measurementDefinitions">
+              <span>{{ item.key }}</span>
+              <strong>{{ item.label }}</strong>
+              <input type="number" step="0.1" [(ngModel)]="measurementValues[item.key]" placeholder="0.0">
+              <small>{{ item.hint }}</small>
+            </label>
+          </div>
+
+          <div class="measurement-legend">
+            <span *ngFor="let item of measurementDefinitions">
+              <strong>{{ item.key }}</strong> {{ item.label }}
+            </span>
+          </div>
+
+          <div class="action-footer p-1">
+            <button class="btn-primary w-100" (click)="guardarMedidas()" [disabled]="isSavingMeasurements">
+              {{ isSavingMeasurements ? 'Guardando...' : 'Guardar Medidas' }}
+            </button>
+            <p class="form-message" *ngIf="measurementMessage">{{ measurementMessage }}</p>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section class="panel-section" *ngIf="activeSection === 'photos'">

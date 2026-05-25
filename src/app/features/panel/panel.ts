@@ -9,6 +9,11 @@ import { PlanNutricionalService } from '../../core/services/plan-nutricional/pla
 
 type PanelSection = 'nutrition' | 'training' | 'measurements' | 'photos' | 'testimonio';
 type PhotoKind = 'frente' | 'perfil' | 'espalda';
+type MeasurementDefinition = {
+  key: string;
+  label: string;
+  hint: string;
+};
 
 @Component({
   selector: 'app-panel',
@@ -115,14 +120,45 @@ export class PanelComponent implements OnInit, OnDestroy {
       ],
     },
   ];
+  trainingDiaryNote = '';
+  trainingDiaryMessage = '';
+
+  cardioGuidelines = [
+    'Realiza 5 sesiones por semana de 30 minutos.',
+    'Mantén una intensidad que te permita sostener el ritmo.',
+    'Registra tus sesiones al terminar para dar seguimiento al plan.',
+  ];
+
+  trainingGuidelines = [
+    'Toma de 2 a 4 litros de agua al día.',
+    'Escucha a tu cuerpo y cuida la técnica antes de subir cargas.',
+    'Si una molestia persiste, repórtala antes de continuar.',
+  ];
 
   // ==========================================
   // VARIABLES DE MEDIDAS Y FOTOS
   // ==========================================
-  measurements = ['BIR', 'BDR', 'BIC', 'BDC', 'Torax', 'Cintura', 'Gluteo', 'Muslo', 'PI', 'PD'];
+  measurementDefinitions: MeasurementDefinition[] = [
+    { key: 'BIR', label: 'Brazo izq. relajado', hint: 'Punto medio entre acromion y radio.' },
+    { key: 'BDR', label: 'Brazo der. relajado', hint: 'Misma altura que el brazo izquierdo.' },
+    { key: 'BIC', label: 'Brazo izq. contraído', hint: 'Brazo flexionado, cinta alrededor del bíceps.' },
+    { key: 'BDC', label: 'Brazo der. contraído', hint: 'Repite el mismo punto de medición.' },
+    { key: 'Torax', label: 'Tórax', hint: 'Cinta a la altura promedio del pecho.' },
+    { key: 'Cintura', label: 'Cintura', hint: 'Punto más estrecho del abdomen.' },
+    { key: 'Gluteo', label: 'Glúteo', hint: 'Mayor circunferencia de la cadera.' },
+    { key: 'Muslo', label: 'Muslo medio', hint: 'A mitad entre pliegue glúteo y rodilla.' },
+    { key: 'PI', label: 'Pantorrilla izq.', hint: 'Máximo perímetro de pantorrilla.' },
+    { key: 'PD', label: 'Pantorrilla der.', hint: 'Mismo punto que la pantorrilla izquierda.' },
+  ];
+  measurements = this.measurementDefinitions.map((item) => item.key);
   measurementValues: Record<string, number | null> = {};
   measurementMessage = '';
   isSavingMeasurements = false;
+  measurementProcedure = [
+    'Usa cinta métrica suave y mide siempre en el mismo horario.',
+    'Mantén la cinta firme, sin apretar la piel.',
+    'Si puedes, pide ayuda para mantener la postura y repetir el mismo punto.',
+  ];
   
   photoFiles: Partial<Record<PhotoKind, File>> = {};
   photoMessage = '';
@@ -184,6 +220,28 @@ export class PanelComponent implements OnInit, OnDestroy {
 
   selectTrainingDay(index: number) { 
     this.activeTrainingDay = index; 
+  }
+
+  previousTrainingDay() {
+    if (this.activeTrainingDay > 0) {
+      this.activeTrainingDay -= 1;
+    }
+  }
+
+  nextTrainingDay() {
+    if (this.activeTrainingDay < this.entrenamientoSemanal.length - 1) {
+      this.activeTrainingDay += 1;
+    }
+  }
+
+  getTrainingShortTitle(title: string): string {
+    return title.replace(/^Dia\s+\d+:\s*/i, '');
+  }
+
+  guardarNotaEntrenamiento() {
+    this.trainingDiaryMessage = this.trainingDiaryNote.trim()
+      ? 'Nota guardada para tu seguimiento.'
+      : 'Agrega una nota antes de guardar.';
   }
 
   async logout() {
