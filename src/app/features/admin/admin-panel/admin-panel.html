@@ -3,81 +3,185 @@
     <header class="admin-header dashboard-heading">
       <div class="header-titles">
         <span class="eyebrow">Panel de Administracion</span>
-        <h2>Directorio de Pacientes</h2>
+        <h2>{{ adminSection === 'patients' ? 'Directorio de Pacientes' : 'Editor de Blog' }}</h2>
       </div>
       <div class="header-actions">
-        <button class="btn-primary" type="button" (click)="cargarPacientes()" [disabled]="isLoadingPacientes">
+        <button class="btn-primary" type="button" *ngIf="adminSection === 'patients'" (click)="cargarPacientes()" [disabled]="isLoadingPacientes">
           {{ isLoadingPacientes ? 'Sincronizando...' : 'Actualizar Datos' }}
+        </button>
+        <button class="btn-primary" type="button" *ngIf="adminSection === 'blog'" (click)="nuevoBlogPost()">
+          Nuevo Articulo
         </button>
       </div>
     </header>
 
-    <section class="admin-kpis" aria-label="Resumen de pacientes">
-      <article class="kpi-card">
-        <span>Total Registrados</span>
-        <strong>{{ totalPacientes }}</strong>
-      </article>
-      <article class="kpi-card">
-        <span>Pacientes Activos</span>
-        <strong>{{ pacientesActivos }}</strong>
-      </article>
-      <article class="kpi-card highlight">
-        <span>En Revision</span>
-        <strong>{{ pendientesRevision }}</strong>
-      </article>
-    </section>
+    <nav class="admin-switch" aria-label="Secciones del panel de administracion">
+      <button type="button" [class.active]="adminSection === 'patients'" (click)="setAdminSection('patients')">
+        Pacientes
+      </button>
+      <button type="button" [class.active]="adminSection === 'blog'" (click)="setAdminSection('blog')">
+        Blog
+      </button>
+    </nav>
 
-    <div class="dashboard-grid">
-      <div *ngIf="isLoadingPacientes && pacientes.length === 0" class="state-banner">
-        Sincronizando base de datos...
-      </div>
-      <div *ngIf="!isLoadingPacientes && pacientesError" class="state-banner error">
-        {{ pacientesError }}
-      </div>
-      <div *ngIf="!isLoadingPacientes && !pacientesError && pacientes.length === 0" class="state-banner">
-        No hay pacientes registrados en el sistema.
-      </div>
+    <ng-container *ngIf="adminSection === 'patients'">
+      <section class="admin-kpis" aria-label="Resumen de pacientes">
+        <article class="kpi-card">
+          <span>Total Registrados</span>
+          <strong>{{ totalPacientes }}</strong>
+        </article>
+        <article class="kpi-card">
+          <span>Pacientes Activos</span>
+          <strong>{{ pacientesActivos }}</strong>
+        </article>
+        <article class="kpi-card highlight">
+          <span>En Revision</span>
+          <strong>{{ pendientesRevision }}</strong>
+        </article>
+      </section>
 
-      <article class="patient-card" *ngFor="let paciente of pacientes" (click)="abrirExpediente(paciente)">
-        <header class="patient-info">
-          <div class="patient-avatar">{{ getPacienteIniciales(paciente) }}</div>
-          <div class="patient-meta-text">
-            <h3>{{ paciente.nombre_completo || 'Paciente Nuevo' }}</h3>
-            <p>{{ paciente.email || 'Sin correo registrado' }}</p>
+      <div class="dashboard-grid">
+        <div *ngIf="isLoadingPacientes && pacientes.length === 0" class="state-banner">
+          Sincronizando base de datos...
+        </div>
+        <div *ngIf="!isLoadingPacientes && pacientesError" class="state-banner error">
+          {{ pacientesError }}
+        </div>
+        <div *ngIf="!isLoadingPacientes && !pacientesError && pacientes.length === 0" class="state-banner">
+          No hay pacientes registrados en el sistema.
+        </div>
+
+        <article class="patient-card" *ngFor="let paciente of pacientes" (click)="abrirExpediente(paciente)">
+          <header class="patient-info">
+            <div class="patient-avatar">{{ getPacienteIniciales(paciente) }}</div>
+            <div class="patient-meta-text">
+              <h3>{{ paciente.nombre_completo || 'Paciente Nuevo' }}</h3>
+              <p>{{ paciente.email || 'Sin correo registrado' }}</p>
+            </div>
+            <span class="status-indicator" [class.active]="paciente.estado_aprobacion === 'aprobado'">
+              {{ paciente.estado_aprobacion === 'aprobado' ? 'Activo' : 'Revision' }}
+            </span>
+          </header>
+
+          <div class="patient-details">
+            <div class="detail-item">
+              <span>Ingreso</span>
+              <strong>{{ paciente.created_at | date:'dd MMM yyyy' }}</strong>
+            </div>
+            <div class="detail-item">
+              <span>Peso Inicial</span>
+              <strong>{{ paciente.peso_kg ? paciente.peso_kg + ' kg' : '--' }}</strong>
+            </div>
+            <div class="detail-item">
+              <span>Objetivo</span>
+              <strong>{{ getPacienteObjetivo(paciente) }}</strong>
+            </div>
           </div>
-          <span class="status-indicator" [class.active]="paciente.estado_aprobacion === 'aprobado'">
-            {{ paciente.estado_aprobacion === 'aprobado' ? 'Activo' : 'Revision' }}
-          </span>
+
+          <footer class="patient-footer">
+            <button type="button" class="btn-text danger" *ngIf="paciente.estado_aprobacion === 'aprobado'" (click)="toggleEstado(paciente, $event)">
+              Suspender
+            </button>
+            <button type="button" class="btn-text success" *ngIf="paciente.estado_aprobacion === 'pendiente'" (click)="toggleEstado(paciente, $event)">
+              Aprobar
+            </button>
+            <button type="button" class="btn-text neutral" (click)="abrirExpediente(paciente); $event.stopPropagation()">
+              Editar Plan
+            </button>
+          </footer>
+        </article>
+      </div>
+    </ng-container>
+
+    <section class="blog-admin-layout" *ngIf="adminSection === 'blog'">
+      <aside class="blog-admin-list">
+        <div class="blog-list-header">
+          <span class="eyebrow">Biblioteca</span>
+          <strong>{{ blogPosts.length }} articulos</strong>
+        </div>
+
+        <div *ngIf="isLoadingBlog" class="state-banner compact">Cargando articulos...</div>
+        <div *ngIf="blogError" class="state-banner error compact">{{ blogError }}</div>
+
+        <article class="blog-admin-item"
+                 *ngFor="let post of blogPosts"
+                 [class.active]="blogForm.value.id === post.id"
+                 (click)="editarBlogPost(post)">
+          <div>
+            <span class="status-indicator" [class.active]="post.published">
+              {{ post.published ? 'Publicado' : 'Borrador' }}
+            </span>
+            <h3>{{ post.title || 'Articulo sin titulo' }}</h3>
+            <p>{{ post.category }} · {{ post.readTime }}</p>
+          </div>
+          <button type="button" class="btn-text danger" (click)="eliminarBlogPost(post); $event.stopPropagation()">Eliminar</button>
+        </article>
+      </aside>
+
+      <form [formGroup]="blogForm" class="blog-editor-card">
+        <header class="blog-editor-header">
+          <div>
+            <span class="eyebrow">Sala Editorial</span>
+            <h3>{{ selectedBlogPost ? 'Editar articulo' : 'Nuevo articulo' }}</h3>
+          </div>
+          <div class="blog-editor-actions">
+            <button type="button" class="btn-add-secondary" (click)="guardarBlogPost(false)" [disabled]="isSavingBlog">
+              Guardar Borrador
+            </button>
+            <button type="button" class="btn-primary" (click)="guardarBlogPost(true)" [disabled]="isSavingBlog">
+              {{ isSavingBlog ? 'Guardando...' : 'Publicar' }}
+            </button>
+          </div>
         </header>
 
-        <div class="patient-details">
-          <div class="detail-item">
-            <span>Ingreso</span>
-            <strong>{{ paciente.created_at | date:'dd MMM yyyy' }}</strong>
+        <div class="state-banner compact" *ngIf="blogMessage">{{ blogMessage }}</div>
+
+        <div class="input-grid">
+          <div class="input-group full-width">
+            <label>Titulo</label>
+            <input type="text" formControlName="title" placeholder="Ej. Como progresar cargas sin lesionarte">
           </div>
-          <div class="detail-item">
-            <span>Peso Inicial</span>
-            <strong>{{ paciente.peso_kg ? paciente.peso_kg + ' kg' : '--' }}</strong>
+          <div class="input-group">
+            <label>Categoria</label>
+            <input type="text" formControlName="category" placeholder="Nutricion, Entrenamiento, Mindset">
           </div>
-          <div class="detail-item">
-            <span>Objetivo</span>
-            <strong>{{ getPacienteObjetivo(paciente) }}</strong>
+          <div class="input-group">
+            <label>Tiempo de lectura</label>
+            <input type="text" formControlName="readTime" placeholder="4 min">
+          </div>
+          <div class="input-group">
+            <label>Autor</label>
+            <input type="text" formControlName="author" placeholder="Pablo Herrera">
+          </div>
+          <div class="input-group">
+            <label>Imagen de portada URL</label>
+            <input type="text" formControlName="coverImage" placeholder="/images/blog-inmune.webp">
+          </div>
+          <div class="input-group full-width">
+            <label>Resumen para tarjeta</label>
+            <textarea formControlName="excerpt" rows="3" placeholder="Escribe una introduccion breve y potente para el listado del blog."></textarea>
+          </div>
+          <div class="input-group full-width">
+            <label>Articulo completo</label>
+            <textarea formControlName="content" rows="14" placeholder="Escribe el articulo. Puedes usar parrafos separados por lineas en blanco o HTML basico."></textarea>
           </div>
         </div>
 
-        <footer class="patient-footer">
-          <button type="button" class="btn-text danger" *ngIf="paciente.estado_aprobacion === 'aprobado'" (click)="toggleEstado(paciente, $event)">
-            Suspender
+        <div class="blog-editor-options">
+          <label>
+            <input type="checkbox" formControlName="published">
+            Visible en blog
+          </label>
+          <label>
+            <input type="checkbox" formControlName="featured">
+            Destacado
+          </label>
+          <button type="button" class="btn-add-secondary" *ngIf="selectedBlogPost" (click)="toggleBlogPublication(selectedBlogPost)">
+            {{ selectedBlogPost.published ? 'Ocultar articulo' : 'Publicar articulo' }}
           </button>
-          <button type="button" class="btn-text success" *ngIf="paciente.estado_aprobacion === 'pendiente'" (click)="toggleEstado(paciente, $event)">
-            Aprobar
-          </button>
-          <button type="button" class="btn-text neutral" (click)="abrirExpediente(paciente); $event.stopPropagation()">
-            Editar Plan
-          </button>
-        </footer>
-      </article>
-    </div>
+        </div>
+      </form>
+    </section>
   </ng-container>
 
   <ng-container *ngIf="vistaActual === 'editor'">
@@ -106,6 +210,9 @@
       </button>
       <button type="button" [class.active]="seccionEditor === 'training'" (click)="setSeccionEditor('training')">
         3. Rutina de Ejercicios
+      </button>
+      <button type="button" [class.active]="seccionEditor === 'tecnica'" (click)="setSeccionEditor('tecnica')">
+        4. Revisión de Técnica
       </button>
     </nav>
 
@@ -291,5 +398,44 @@
         </section>
       </section>
     </form>
+
+    <div class="form-layout clinical-section" *ngIf="!isLoadingExpediente && seccionEditor === 'tecnica'">
+      <section class="clinical-card">
+        <h3 class="section-label">Laboratorio de Biomecánica</h3>
+        
+        <div *ngIf="videosTecnica.length === 0" class="state-banner">
+          Este paciente no ha subido material en video para revisión.
+        </div>
+
+        <div class="video-review-grid" *ngIf="videosTecnica.length > 0">
+          <article class="video-review-card" *ngFor="let video of videosTecnica">
+            <header class="video-header">
+              <h4>{{ video.ejercicio }}</h4>
+              <span class="status-indicator" [class.active]="video.estado === 'Revisado'">
+                {{ video.estado }}
+              </span>
+            </header>
+            
+            <div class="video-player-container">
+              <video [src]="video.video_url" controls preload="metadata"></video>
+            </div>
+            
+            <div class="video-info">
+              <p><strong>Nota del atleta:</strong> {{ video.nota_paciente || 'Sin comentarios adicionales.' }}</p>
+              <small>Subido el: {{ video.created_at | date:'dd MMM yyyy, HH:mm' }}</small>
+            </div>
+            
+            <div class="video-feedback-form">
+              <label>Correcciones y Feedback</label>
+              <textarea [(ngModel)]="video.feedback_coach" rows="4" placeholder="Ej. Profundidad excelente, pero evita que las rodillas colapsen hacia adentro al subir..."></textarea>
+              <button class="btn-primary mt-1" type="button" (click)="enviarFeedback(video)" [disabled]="isSavingFeedback">
+                {{ video.estado === 'Revisado' ? 'Actualizar Corrección' : 'Marcar como Revisado' }}
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
   </ng-container>
 </div>

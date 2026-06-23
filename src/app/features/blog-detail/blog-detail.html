@@ -1,1 +1,26 @@
-<p>blog-detail works!</p>
+<main class="blog-detail-page">
+  <div class="state-banner" *ngIf="isLoading">Cargando articulo...</div>
+
+  <article class="article-shell" *ngIf="!isLoading && post">
+    <a class="back-link" routerLink="/blog">Volver al blog</a>
+
+    <header class="article-header">
+      <span class="article-category">{{ post.category }}</span>
+      <h1>{{ post.title }}</h1>
+      <p>{{ post.excerpt }}</p>
+      <div class="article-meta">
+        <span>{{ post.date | date:'mediumDate' }}</span>
+        <span>{{ post.readTime }}</span>
+        <span *ngIf="post.author">{{ post.author }}</span>
+      </div>
+    </header>
+
+    <img class="article-cover" [src]="post.coverImage" [alt]="post.title">
+
+    <section class="article-content" [innerHTML]="post.content"></section>
+  </article>
+
+  <div class="state-banner error" *ngIf="!isLoading && !post">
+    No encontramos este articulo. Puede estar oculto o haber sido eliminado.
+  </div>
+</main>

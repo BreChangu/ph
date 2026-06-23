@@ -4,10 +4,9 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { AuthService } from '../../core/supabase/auth';
-// 🟢 1. IMPORTAMOS TU NUEVO SERVICIO DE LUJO
 import { PlanNutricionalService } from '../../core/services/plan-nutricional/plan-nutricional.service';
 
-type PanelSection = 'nutrition' | 'training' | 'measurements' | 'photos' | 'testimonio';
+type PanelSection = 'nutrition' | 'training' | 'measurements' | 'photos' | 'testimonio' | 'tecnica';
 type PhotoKind = 'frente' | 'perfil' | 'espalda';
 type MeasurementDefinition = {
   key: string;
@@ -136,6 +135,20 @@ export class PanelComponent implements OnInit, OnDestroy {
   ];
 
   // ==========================================
+  // VARIABLES DE TÉCNICA (NUEVO)
+  // ==========================================
+  videoFile: File | null = null;
+  ejercicioTecnica = '';
+  notaTecnica = '';
+  isUploadingVideo = false;
+  tecnicaMessage = '';
+  
+  historialVideos = [
+    { ejercicio: 'Sentadilla Libre', fecha: '12/06/2026', estado: 'Revisado', feedback: 'Mejora la profundidad, el peso está bien controlado.' },
+    { ejercicio: 'Peso Muerto', fecha: '14/06/2026', estado: 'Pendiente', feedback: null }
+  ];
+
+  // ==========================================
   // VARIABLES DE MEDIDAS Y FOTOS
   // ==========================================
   measurementDefinitions: MeasurementDefinition[] = [
@@ -175,7 +188,7 @@ export class PanelComponent implements OnInit, OnDestroy {
 
   constructor(
     public authService: AuthService,
-    public planNutricionalService: PlanNutricionalService, // 🟢 2. LO INYECTAMOS AQUÍ
+    public planNutricionalService: PlanNutricionalService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
@@ -207,7 +220,6 @@ export class PanelComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // 🟢 3. USAMOS EL NUEVO SERVICIO PARA CERRAR EL CANAL
     this.planChannels.forEach((channel) => this.planNutricionalService.unsubscribeChannel(channel));
   }
 
@@ -246,7 +258,6 @@ export class PanelComponent implements OnInit, OnDestroy {
 
   async logout() {
     try {
-      // 🟢 4. USAMOS EL NUEVO SERVICIO PARA CERRAR EL CANAL
       this.planChannels.forEach((c) => this.planNutricionalService.unsubscribeChannel(c));
       await this.authService.signOut();
     } finally {
@@ -257,41 +268,39 @@ export class PanelComponent implements OnInit, OnDestroy {
   // ==========================================
   // MÉTODOS DE LA DIETA
   // ==========================================
- async cargarPlanPaciente() {
-  if (!this.pacienteId) {
-    console.error('❌ ERROR: No hay pacienteId definido en el panel.');
-    return;
-  }
-
-  this.isLoadingPlan = true;
-  console.log('🔍 BUSCANDO PLAN PARA EL ID:', this.pacienteId);
-
-  try {
-    this.planPaciente = await this.planNutricionalService.getPlanPaciente(this.pacienteId);
-    
-    // ESTO ES LO MÁS IMPORTANTE:
-    console.log('✅ RESPUESTA DE SUPABASE:', this.planPaciente);
-    
-    if (this.planPaciente) {
-      console.log('🍴 COMIDAS ENCONTRADAS:', this.planPaciente.comidas?.length || 0);
-      if (this.planPaciente.comidas?.length > 0) {
-        console.log('🍎 PRIMERA COMIDA:', this.planPaciente.comidas[0]);
-        console.log('🥩 ALIMENTOS EN PRIMERA COMIDA:', this.planPaciente.comidas[0].alimentos_comida);
-      }
-    } else {
-      console.warn('⚠️ ADVERTENCIA: Supabase devolvió null para este ID.');
+  async cargarPlanPaciente() {
+    if (!this.pacienteId) {
+      console.error('❌ ERROR: No hay pacienteId definido en el panel.');
+      return;
     }
 
-  } catch (error) {
-    console.error('❌ ERROR AL CARGAR PLAN:', error);
-  } finally {
-    this.isLoadingPlan = false;
-    this.cdr.detectChanges();
+    this.isLoadingPlan = true;
+    console.log('🔍 BUSCANDO PLAN PARA EL ID:', this.pacienteId);
+
+    try {
+      this.planPaciente = await this.planNutricionalService.getPlanPaciente(this.pacienteId);
+      
+      console.log('✅ RESPUESTA DE SUPABASE:', this.planPaciente);
+      
+      if (this.planPaciente) {
+        console.log('🍴 COMIDAS ENCONTRADAS:', this.planPaciente.comidas?.length || 0);
+        if (this.planPaciente.comidas?.length > 0) {
+          console.log('🍎 PRIMERA COMIDA:', this.planPaciente.comidas[0]);
+          console.log('🥩 ALIMENTOS EN PRIMERA COMIDA:', this.planPaciente.comidas[0].alimentos_comida);
+        }
+      } else {
+        console.warn('⚠️ ADVERTENCIA: Supabase devolvió null para este ID.');
+      }
+
+    } catch (error) {
+      console.error('❌ ERROR AL CARGAR PLAN:', error);
+    } finally {
+      this.isLoadingPlan = false;
+      this.cdr.detectChanges();
+    }
   }
-}
 
   private activarRealtime(id: string) {
-    // 🟢 6. USAMOS EL NUEVO SERVICIO PARA ESCUCHAR CAMBIOS
     const channel = this.planNutricionalService.subscribePlanPaciente(id, () => {
       this.cargarPlanPaciente();
     });
@@ -299,7 +308,54 @@ export class PanelComponent implements OnInit, OnDestroy {
   }
 
   // ==========================================
-  // MÉTODOS DE MEDIDAS Y FOTOS (Siguen con authService por ahora)
+  // MÉTODOS DE TÉCNICA (NUEVO)
+  // ==========================================
+  onVideoSelected(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+      if (file.size > 50 * 1024 * 1024) {
+        this.tecnicaMessage = 'El video excede el límite de 50MB. Por favor comprime o recorta tu clip.';
+        this.videoFile = null;
+        return;
+      }
+      if (!file.type.startsWith('video/')) {
+        this.tecnicaMessage = 'Formato inválido. Sube un archivo de video (MP4, MOV).';
+        this.videoFile = null;
+        return;
+      }
+      this.videoFile = file;
+      this.tecnicaMessage = '';
+    }
+  }
+
+  async subirVideoTecnica() {
+    if (!this.pacienteId || !this.videoFile || !this.ejercicioTecnica.trim()) {
+      this.tecnicaMessage = 'Selecciona un video y especifica el ejercicio.';
+      return;
+    }
+
+    this.isUploadingVideo = true;
+    this.tecnicaMessage = '';
+
+    try {
+      // Llamadas a tu backend / Supabase
+      // const videoUrl = await this.authService.subirVideo(this.pacienteId, this.videoFile);
+      // await this.authService.guardarRegistroTecnica(this.pacienteId, this.ejercicioTecnica, this.notaTecnica, videoUrl);
+      
+      this.tecnicaMessage = 'Video subido correctamente. Tu coach lo revisará pronto.';
+      this.videoFile = null;
+      this.ejercicioTecnica = '';
+      this.notaTecnica = '';
+    } catch (error) {
+      this.tecnicaMessage = 'Error al subir el video. Intenta nuevamente.';
+    } finally {
+      this.isUploadingVideo = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // ==========================================
+  // MÉTODOS DE MEDIDAS Y FOTOS
   // ==========================================
   onMeasurementInput(item: string, event: Event) {
     const val = (event.target as HTMLInputElement).value;
@@ -369,7 +425,7 @@ export class PanelComponent implements OnInit, OnDestroy {
   }
 
   // ==========================================
-  // MÉTODOS DE TESTIMONIOS (Siguen con authService por ahora)
+  // MÉTODOS DE TESTIMONIOS
   // ==========================================
   onTestimonioFileSelected(tipo: 'antes' | 'despues', event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];

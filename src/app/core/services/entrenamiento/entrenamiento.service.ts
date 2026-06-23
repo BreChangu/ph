@@ -13,6 +13,9 @@ export class EntrenamientoService {
     this.supabase = inject(AuthService).supabase;
   }
 
+  // ==========================================
+  // RUTINAS DE ENTRENAMIENTO
+  // ==========================================
   async getRutinaPaciente(pacienteId: string): Promise<any> {
     const { data, error } = await this.withTimeout(
       this.supabase
@@ -112,6 +115,44 @@ export class EntrenamientoService {
     }
   }
 
+  // ==========================================
+  // REVISIÓN DE TÉCNICA (NUEVO)
+  // ==========================================
+  async getRevisionesTecnica(pacienteId: string): Promise<any[]> {
+    const { data, error } = await this.withTimeout(
+      this.supabase
+        .from('revisiones_tecnica')
+        .select('*')
+        .eq('paciente_id', pacienteId)
+        .order('created_at', { ascending: false }),
+      'La consulta de los videos de técnica tardo demasiado.'
+    );
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async actualizarFeedbackTecnica(videoId: string, feedback: string): Promise<any> {
+    const { data, error } = await this.withTimeout(
+      this.supabase
+        .from('revisiones_tecnica')
+        .update({ 
+          feedback_coach: feedback, 
+          estado: 'Revisado',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', videoId)
+        .select(),
+      'El guardado del feedback tardo demasiado.'
+    );
+
+    if (error) throw error;
+    return data;
+  }
+
+  // ==========================================
+  // UTILIDADES
+  // ==========================================
   private withTimeout<T>(request: PromiseLike<T>, message: string): Promise<T> {
     return Promise.race([
       Promise.resolve(request),

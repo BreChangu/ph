@@ -1,0 +1,130 @@
+@use '../../../styles/variables' as *;
+
+.blog-detail-page {
+  min-height: 100vh;
+  background: $brand-black;
+  color: $brand-white;
+  padding: clamp(3rem, 7vw, 6rem) 1.5rem;
+}
+
+.article-shell {
+  width: min(100%, 980px);
+  margin: 0 auto;
+}
+
+.back-link {
+  color: $brand-gray;
+  font-family: $font-h2;
+  font-size: 0.8rem;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+
+  &:hover {
+    color: $brand-red;
+  }
+}
+
+.article-header {
+  margin: 3rem 0 2rem;
+
+  h1 {
+    margin: 0.7rem 0 1rem;
+    color: $brand-white;
+    font-family: $font-h2;
+    font-size: clamp(2.4rem, 7vw, 5rem);
+    line-height: 0.95;
+    text-transform: uppercase;
+  }
+
+  p {
+    max-width: 760px;
+    margin: 0;
+    color: $brand-gray;
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    line-height: 1.6;
+  }
+}
+
+.article-category {
+  display: inline-flex;
+  background: $brand-red;
+  color: $brand-white;
+  padding: 0.55rem 1rem;
+  font-family: $font-h2;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  color: $brand-gray;
+  font-family: $font-h2;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+
+  span:not(:last-child)::after {
+    content: '/';
+    color: $brand-red;
+    margin-left: 0.75rem;
+  }
+}
+
+.article-cover {
+  width: 100%;
+  max-height: 34rem;
+  object-fit: cover;
+  border: 1px solid rgba($brand-white, 0.14);
+  background: rgba($brand-white, 0.04);
+}
+
+.article-content {
+  background: $brand-white;
+  color: $brand-black;
+  margin-top: 2rem;
+  padding: clamp(2rem, 6vw, 4rem);
+  font-size: 1.05rem;
+  line-height: 1.85;
+
+  ::ng-deep h2,
+  ::ng-deep h3 {
+    font-family: $font-h2;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin: 2.5rem 0 1rem;
+  }
+
+  ::ng-deep p {
+    margin: 0 0 1.2rem;
+  }
+
+  ::ng-deep ul,
+  ::ng-deep ol {
+    margin: 0 0 1.4rem 1.2rem;
+  }
+
+  ::ng-deep strong {
+    font-family: $font-h2;
+  }
+}
+
+.state-banner {
+  width: min(100%, 880px);
+  margin: 0 auto;
+  border: 1px solid rgba($brand-white, 0.16);
+  background: rgba($brand-white, 0.04);
+  color: $brand-gray;
+  padding: 2rem;
+  text-align: center;
+  font-family: $font-h2;
+  text-transform: uppercase;
+
+  &.error {
+    border-color: rgba($brand-red, 0.55);
+    color: $brand-red;
+  }
+}

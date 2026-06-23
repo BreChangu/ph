@@ -140,6 +140,11 @@
     background: rgba($brand-red, 0.04);
     color: $brand-red;
   }
+
+  &.compact {
+    padding: 1rem;
+    font-size: 0.75rem;
+  }
 }
 
 .patient-card {
@@ -579,7 +584,283 @@
 .mt-2 { margin-top: 2rem; }
 .text-center { text-align: center; }
 
+/* ==========================================
+   SECCIONES DEL ADMIN
+   ========================================== */
+.admin-switch {
+  display: inline-flex;
+  border: 1px solid rgba($brand-black, 0.16);
+  background: #ffffff;
+  margin: -1.5rem 0 2.5rem;
 
+  button {
+    min-width: 10rem;
+    height: 3rem;
+    border: 0;
+    border-right: 1px solid rgba($brand-black, 0.12);
+    background: transparent;
+    color: $brand-gray;
+    font-family: $font-h2;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+
+    &:last-child { border-right: 0; }
+
+    &.active {
+      background: $brand-black;
+      color: $brand-white;
+    }
+  }
+}
+
+/* ==========================================
+   ADMIN BLOG
+   ========================================== */
+.blog-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.75fr) minmax(0, 1.6fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.blog-admin-list,
+.blog-editor-card {
+  background: #ffffff;
+  border: 1px solid rgba($brand-black, 0.12);
+}
+
+.blog-admin-list {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  max-height: 72vh;
+  overflow: auto;
+}
+
+.blog-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba($brand-black, 0.1);
+  padding: 0.5rem 0 1rem;
+
+  strong {
+    font-family: $font-h2;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    color: $brand-gray;
+  }
+}
+
+.blog-admin-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  border: 1px solid rgba($brand-black, 0.1);
+  border-left: 3px solid transparent;
+  padding: 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+
+  &:hover,
+  &.active {
+    border-color: rgba($brand-red, 0.45);
+    border-left-color: $brand-red;
+    background: rgba($brand-red, 0.035);
+  }
+
+  h3 {
+    margin: 0.7rem 0 0.3rem;
+    color: $brand-black;
+    font-family: $font-h2;
+    font-size: 0.98rem;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  p {
+    color: $brand-gray;
+    margin: 0;
+    font-size: 0.82rem;
+  }
+
+  .btn-text {
+    align-self: start;
+    background: transparent;
+    border: 0;
+    color: $brand-red;
+    font-family: $font-h2;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+}
+
+.blog-editor-card {
+  padding: 2rem;
+}
+
+.blog-editor-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: flex-start;
+  border-bottom: 2px solid rgba($brand-black, 0.1);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+
+  h3 {
+    margin: 0.4rem 0 0;
+    color: $brand-black;
+    font-family: $font-h1;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+}
+
+.blog-editor-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.blog-editor-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-top: 1px solid rgba($brand-black, 0.1);
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $brand-black;
+    font-family: $font-h2;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: $brand-red;
+  }
+}
+
+//Revision tecnica 
+/* ==========================================
+   REVISIÓN DE TÉCNICA (ADMIN)
+   ========================================== */
+.video-review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.video-review-card {
+  border: 1px solid rgba($brand-black, 0.15);
+  background: #ffffff;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  .video-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba($brand-black, 0.1);
+    padding-bottom: 0.75rem;
+
+    h4 {
+      margin: 0;
+      font-family: $font-h2;
+      font-size: 1rem;
+      text-transform: uppercase;
+      color: $brand-black;
+    }
+  }
+
+  .video-player-container {
+    width: 100%;
+    background: #111111;
+    border-radius: 2px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  .video-info {
+    font-size: 0.9rem;
+    color: $brand-gray;
+    line-height: 1.5;
+
+    strong { 
+      color: $brand-black; 
+      font-family: $font-h2; 
+      font-size: 0.8rem; 
+      text-transform: uppercase; 
+    }
+    
+    small { 
+      display: block; 
+      margin-top: 0.5rem; 
+      color: rgba($brand-gray, 0.7); 
+      font-family: $font-main;
+      font-size: 0.75rem; 
+    }
+  }
+
+  .video-feedback-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: auto; /* Empuja el formulario al fondo si la tarjeta crece */
+
+    label {
+      font-family: $font-h2;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: $brand-red;
+      letter-spacing: 0.5px;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 1rem;
+      border: 1px solid rgba($brand-black, 0.2);
+      font-family: $font-main;
+      font-size: 0.95rem;
+      resize: vertical;
+      background: transparent;
+
+      &:focus {
+        border-color: $brand-red;
+        outline: none;
+      }
+    }
+  }
+}
+
+.mt-1 { margin-top: 1rem; }
 
 // ==============================================================================
 // MENÚ DE PESTAÑAS (SUB-NAVEGACIÓN)
@@ -889,6 +1170,9 @@ textarea {
   .admin-kpis { grid-template-columns: 1fr; }
   .training-editor-shell { grid-template-columns: 1fr; }
   .training-side-panel { position: static; }
+  .blog-admin-layout { grid-template-columns: 1fr; }
+  .blog-admin-list { max-height: none; }
+  .blog-editor-header { flex-direction: column; }
   .clinical-card { padding: 1.5rem; }
   .meal-editor-card { padding: 1.5rem 1rem; }
 }
@@ -900,4 +1184,10 @@ textarea {
   .patient-details { grid-template-columns: 1fr; text-align: center; gap: 1.5rem; }
   .patient-footer { justify-content: center; }
   .foods-wrapper { overflow-x: auto; padding-bottom: 1rem; }
+  .admin-switch { display: grid; width: 100%; }
+  .admin-switch button { width: 100%; }
+  .blog-editor-card { padding: 1.25rem; }
+  .blog-editor-actions { width: 100%; }
+  .blog-editor-actions .btn-primary,
+  .blog-editor-actions .btn-add-secondary { width: 100%; }
 }

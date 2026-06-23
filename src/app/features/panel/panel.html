@@ -13,6 +13,9 @@
     <button type="button" [class.active]="activeSection === 'training'" (click)="setSection('training')">
       Entrenamiento
     </button>
+    <button type="button" [class.active]="activeSection === 'tecnica'" (click)="setSection('tecnica')">
+      Técnica
+    </button>
     <button type="button" [class.active]="activeSection === 'measurements'" (click)="setSection('measurements')">
       Medidas
     </button>
@@ -33,6 +36,7 @@
       </div>
     </div>
 
+    <!-- SECCIÓN DE ALIMENTACIÓN -->
     <section class="panel-section" *ngIf="activeSection === 'nutrition'">
       <header class="section-title">
         <h1>Plan de Alimentación</h1>
@@ -82,6 +86,7 @@
       </div>
     </section>
 
+    <!-- SECCIÓN DE ENTRENAMIENTO -->
     <section class="panel-section" *ngIf="activeSection === 'training'">
       <header class="section-title">
         <h1>Programa de Entrenamiento</h1>
@@ -164,6 +169,67 @@
       </div>
     </section>
 
+    <!-- SECCIÓN DE REVISIÓN DE TÉCNICA -->
+    <section class="panel-section" *ngIf="activeSection === 'tecnica'">
+      <header class="section-title">
+        <h1>Revisión de Técnica</h1>
+        <p>Sube clips cortos de tus series pesadas para recibir correcciones posturales y biomecánicas.</p>
+      </header>
+
+      <div class="measurements-workspace">
+        <article class="measurement-card">
+          <h2 class="card-header-dark">Nuevo Análisis</h2>
+          <div class="card-body-padded">
+            <div class="input-group">
+              <label>Ejercicio a revisar</label>
+              <input type="text" [(ngModel)]="ejercicioTecnica" placeholder="Ej. Sentadilla libre, Press de banca">
+            </div>
+
+            <div class="input-group" style="margin-top: 1.5rem;">
+              <label>Archivo de Video (Máx 50MB)</label>
+              <label class="video-dropzone" [class.has-file]="videoFile">
+                <span *ngIf="!videoFile">Seleccionar o arrastrar video</span>
+                <span *ngIf="videoFile">{{ videoFile.name }}</span>
+                <input type="file" accept="video/mp4,video/quicktime" (change)="onVideoSelected($event)" style="display: none;">
+              </label>
+            </div>
+
+            <div class="input-group" style="margin-top: 1.5rem;">
+              <label>Notas adicionales (opcional)</label>
+              <textarea [(ngModel)]="notaTecnica" rows="3" placeholder="Ej. Sentí una molestia en la zona lumbar al subir."></textarea>
+            </div>
+
+            <div class="action-footer" style="margin-top: 2rem;">
+              <button class="btn-primary w-100" (click)="subirVideoTecnica()" [disabled]="isUploadingVideo || !videoFile || !ejercicioTecnica">
+                {{ isUploadingVideo ? 'Procesando video...' : 'Enviar para revisión' }}
+              </button>
+              <p class="form-message" *ngIf="tecnicaMessage">{{ tecnicaMessage }}</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="measurement-guide-panel">
+          <header>
+            <span class="panel-eyebrow">Historial</span>
+            <h2>Feedback del Coach</h2>
+          </header>
+          
+          <div class="feedback-list">
+            <div class="feedback-item" *ngFor="let item of historialVideos">
+              <div class="feedback-header">
+                <strong>{{ item.ejercicio }}</strong>
+                <span class="status-badge" [class.reviewed]="item.estado === 'Revisado'">{{ item.estado }}</span>
+              </div>
+              <small class="feedback-date">{{ item.fecha }}</small>
+              <p class="feedback-text" *ngIf="item.feedback">{{ item.feedback }}</p>
+              <p class="feedback-text empty" *ngIf="!item.feedback">Esperando revisión...</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- SECCIÓN DE MEDIDAS -->
     <section class="panel-section" *ngIf="activeSection === 'measurements'">
       <header class="section-title">
         <h1>Circunferencias</h1>
@@ -227,6 +293,7 @@
       </div>
     </section>
 
+    <!-- SECCIÓN DE FOTOS -->
     <section class="panel-section" *ngIf="activeSection === 'photos'">
       <header class="section-title">
         <h1>Reporte Visual</h1>
@@ -258,6 +325,7 @@
       </article>
     </section>
 
+    <!-- SECCIÓN DE TESTIMONIO -->
     <section class="panel-section" *ngIf="activeSection === 'testimonio'">
       <header class="section-title">
         <h1>Tu Historia</h1>

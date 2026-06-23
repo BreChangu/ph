@@ -43,6 +43,7 @@
   width: 50%;
   position: relative;
   box-sizing: border-box;
+  margin-top: 2.5rem;
 
   img {
     width: 100%;
@@ -282,6 +283,98 @@
   }
 }
 
+
+
+// ==========================================
+// MODIFICADORES DE ALINEACIÓN (Para UX/Lecturabilidad)
+// ==========================================
+.split-text.align-left {
+  align-items: flex-start;
+  text-align: left;
+
+  .subtitle {
+    text-align: left;
+    margin: 0 0 2rem 0; // Ajustamos el margen inferior
+    
+    p {
+      color: rgba($brand-white, 0.7); // Gris sofisticado
+      
+      strong {
+        color: $brand-white; // Resalta "pH Team"
+        font-weight: 700;
+      }
+    }
+  }
+
+  .main-title {
+    // Reducimos ligeramente el tamaño máximo para que el texto tan largo no abrume
+    font-size: clamp(28px, 3.5vw, 48px); 
+  }
+}
+
+// ==========================================
+// LISTA DE CARACTERÍSTICAS (Puntos Clave)
+// ==========================================
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 3rem 0; // Separación antes del botón
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; // Espacio entre cada punto
+  width: 100%;
+  max-width: 65ch;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem; // Separación entre el emoji y el texto
+  }
+
+ .feature-number {
+  font-family: $font-h1; // Usa la fuente de tus títulos para darle carácter
+  font-size: 1.25rem;
+  color: $brand-red; // El acento de color guía el ojo
+  font-weight: 400;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+  margin-top: 2px; // Alineación óptica con la primera línea de texto
+  
+  // Agregamos un punto o línea decorativa opcional
+  &::after {
+    content: '.';
+    color: $brand-white;
+  }
+}
+
+  .feature-text {
+    margin: 0;
+    font-family: $font-main;
+    font-size: 1rem;
+    color: rgba($brand-white, 0.7); // Alto contraste visual: Cuerpo en gris
+    line-height: 1.6;
+    text-wrap: pretty;
+
+    strong {
+      color: $brand-white; // Alto contraste visual: Títulos en blanco puro
+      font-weight: 700;
+      font-family: $font-h2; // Usamos tu fuente secundaria para más impacto
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: block; // Manda el texto descriptivo a la línea de abajo
+      margin-bottom: 0.25rem;
+    }
+  }
+}
+
+// Ajuste móvil para el botón largo
+@media (max-width: 600px) {
+  .btn-reservar {
+    font-size: 14px; // El texto del botón es muy largo, lo achicamos en móvil
+    padding: 16px 24px;
+    width: 100%; // Botón a todo el ancho para mejor área de tap
+  }
+}
 // ==========================================
 // MEDIA QUERIES (MÓVIL: APILADO Y COHERENTE)
 // ==========================================
