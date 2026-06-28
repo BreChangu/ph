@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 // 🟢 FIX: Importamos el cadenero (la FUNCIÓN), no el servicio.
 // Asegúrate de que la ruta coincida con donde guardaste tu auth.guard.ts
 import { authGuard } from './core/guards/auth-guard';
+import path from 'path';
 
 export const routes: Routes = [
   {
@@ -26,10 +27,18 @@ export const routes: Routes = [
         path: 'blog',
         loadComponent: () => import('./features/blog/blog').then((m) => m.BlogComponent),
       },
-      {
-        path: 'suplementos',
-        loadComponent: () => import('./features/suplementos/suplementos').then((m) => m.Suplementos),
+    {
+      path: 'suplementos',
+      loadComponent: () => import('./features/suplementos/suplementos').then((m) => m.Suplementos),
+    },
+   {
+        path: 'aviso-de-privacidad',
+        loadComponent: () => import('./features/legal/aviso-privacidad/aviso-privacidad').then((m) => m.AvisoPrivacidad),
       },
+{
+path: 'terminos-condiciones',
+loadComponent: () => import('./features/legal/terminos-condiciones/terminos-condiciones').then((m) => m.TerminosCondiciones),
+},
       {
         path: 'blog/:id',
         loadComponent: () => import('./features/blog-detail/blog-detail').then((m) => m.BlogDetail),
