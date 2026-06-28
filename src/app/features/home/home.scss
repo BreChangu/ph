@@ -127,120 +127,122 @@
     font-size: 1.15em; 
   }
 }
-
-//SEGUNDA SECCIÓN
-// TÍTULO PRINCIPAL (Blanco, imponente pero balanceado)
-.section-heading {
-  font-family: $font-h1;
-  font-size: clamp(28px, 4vw, 40px); // Un poco más compacto que antes
-  color: $brand-white;
-  text-transform: uppercase;
-  line-height: 1.15; 
-  margin-bottom: 1rem; // Acercamos el título secundario
-  letter-spacing: 0.02em; 
-  text-wrap: balance;      
-  max-width: 26ch; // Limita el ancho para que el balance se vea "diseñado"
-}
-
-// 🟢 NUEVA CLASE: TÍTULO SECUNDARIO ROJO (Reduced hierarchy)
-// Aquí está la solución a tu petición de hacerlo "más bonito".
-.section-subheading {
-  font-family: $font-h2; // Swapping to H2 font for distinct break
-  font-size: 1rem;       // Mucho más pequeño, como user requested
-  color: $brand-red;
-  text-transform: uppercase;
-  letter-spacing: 0.1em; // Aumentamos el tracking para que se vea premium y exclusivo
-  margin-top: 0;
-  margin-bottom: 3rem;   // Gran pausa antes del cuerpo de texto
-  text-wrap: balance;
-  max-width: 45ch;
-  line-height: 1.4;
-}
-
-// CUERPO DE TEXTO (Readable and compact)
-.section-body {
-  font-family: $font-main;
-  font-size: 1rem;        // Un poco más pequeño (antes 1.1rem) para ganar espacio
-  color: $brand-gray;
-  line-height: 1.7;       
-  margin-bottom: 1.2rem; // Espaciado compacto entre párrafos
-  max-width: 50ch;        // 🟢 FIX CRÍTICO: Las pantallas muestran que es muy ancho. 
-                          // Esto limita el ancho para que sea cómodo de leer.
-  text-wrap: pretty;
-  font-weight: 400;
-  opacity: 0.9;
-}
-
-// SLOGAN Y CTA (Arreglando la colisión inferior)
-.slogan {
-  font-family: $font-h2;
-  font-size: 14px;
-  color: $brand-white;
-  text-transform: uppercase;
-  letter-spacing: 4px; // Tracking agresivo para look premium
-  // 🟢 FIX CRÍTICO: margin inferior (2rem) para separar el botón de WhatsApp
-  margin: 3rem 0 2rem 0; 
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-
-  &::before {
-    content: '';
-    width: 30px;
-    height: 1px;
-    background: $brand-red;
-  }
-}
-
-// --- BOTONES ---
+//BOTÓN RESERVAR 
+// --- BOTÓN HERO (Primera Sección) ---
 .btn-reservar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  background-color: $brand-black;
+  background-color: transparent; 
   color: $brand-white;
   padding: 16px 40px;
   font-family: $font-h2;
   font-size: 18px;
-  text-decoration: none;
+  text-decoration: none; // Esto quita el subrayado morado/azul
   text-transform: uppercase;
   letter-spacing: 2px;
   border: 1px solid $brand-white;
   transition: all 0.3s ease;
   box-sizing: border-box;
   max-width: 100%;
+  margin-top: 1.5rem;
 
+  // 🟢 ESTO ARREGLA EL ÍCONO GIGANTE
   .chevron-icon {
     width: 24px;
     height: 24px;
-    color: $brand-red;
+    color: $brand-red; // Regresa el color rojo al ícono
     transition: transform 0.3s ease;
     flex-shrink: 0;
   }
 
+  // 🟢 EFECTO HOVER
   &:hover {
     background-color: $brand-white;
     color: $brand-black;
-    border-color: $brand-black;
-    .chevron-icon { transform: translateX(5px); }
+    border-color: $brand-white;
+    
+    // Anima la flechita hacia la derecha
+    .chevron-icon { 
+      transform: translateX(5px); 
+    }
   }
 }
 
-.btn-whatsapp {
-  background-color: transparent;
-  color: $brand-white;
-  padding: 14px 32px;
-  font-family: $font-h2;
-  font-size: 14px;
+
+//SEGUNDA SECCIÓN
+// TÍTULO PRINCIPAL (Blanco, imponente pero balanceado)
+//SEGUNDA SECCIÓN
+// Aprovechamos la clase text-content que ya tienes para alinear todo a la izquierda
+// Esto le da un aspecto de revista editorial mucho más limpio.
+.split-text.text-content {
+  align-items: flex-start;
+  text-align: left;
+}
+
+// 🟢 TÍTULO SECUNDARIO (Invertir en la maquinaria...)
+.section-subheading {
+  font-family: $font-h2; 
+  font-size: 1rem;       
+  color: $brand-gray; // Lo pasamos a gris para que no compita con el rojo principal
   text-transform: uppercase;
+  letter-spacing: 0.1em; 
+  margin-top: 0;
+  margin-bottom: 1.5rem;  
+  text-wrap: balance;
+  max-width: 45ch;
+  line-height: 1.4;
+}
+
+// 🟢 TÍTULO PRINCIPAL (Targeteamos tus clases main-hook y text-red)
+.main-hook {
+  font-family: $font-h1;
+  font-size: clamp(28px, 4vw, 40px); 
+  text-transform: uppercase;
+  line-height: 1.15; 
+  margin-bottom: 2rem; 
+  letter-spacing: 0.02em; 
+  text-wrap: balance;      
+  max-width: 26ch; 
+
+  &.text-red {
+    color: $brand-red; // Aplica tu rojo brutalista
+  }
+}
+
+// 🟢 CUERPO DE TEXTO (Justificado y con mejor lectura)
+.section-body {
+  font-family: $font-main;
+  font-size: 1rem;        
+  color: rgba($brand-white, 0.85); // Un blanco ligeramente suavizado
+  line-height: 1.75;      
+  margin-bottom: 2.5rem; 
+  max-width: 55ch;        
+  text-align: justify;    // Texto justificado como lo pediste
+  font-weight: 400;
+}
+
+// 🟢 BOTÓN (Secuestramos la clase btn-primary para matar el azul por defecto)
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent; // Estética minimalista (botón fantasma)
+  color: $brand-white;
+  padding: 16px 40px;
+  font-family: $font-h2;
+  font-size: 16px;
   text-decoration: none;
-  border: 1px solid $brand-red;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border: 1px solid $brand-red; // Borde rojo vibrante
   transition: all 0.3s ease;
-  box-sizing: border-box;
-  max-width: 100%;
-  text-align: center;
-  &:hover { background-color: $brand-red; }
+
+  &:hover {
+    background-color: $brand-red; // Se llena de rojo al pasar el mouse
+    color: $brand-white;
+  }
 }
 
 // --- TESTIMONIOS ---
