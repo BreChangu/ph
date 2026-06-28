@@ -60,10 +60,10 @@
   align-items: center;
   box-sizing: border-box;
 }
-
+//Sección de titulo primera foto hero
 .main-title {
   font-family: $font-h1;
-  font-size: clamp(36px, 6vw, 68px); 
+  font-size: clamp(36px, 6vw, 3.5rem); 
   color: $brand-white;
   text-transform: uppercase;
   line-height: 1.05;
@@ -79,7 +79,7 @@
 .subtitle {
   font-family: $font-main;
   // 🛑 FIX LECTURA: Aumentamos a 18px y damos más opacidad al blanco para mayor contraste
-  font-size: 18px; 
+  font-size: 1.2rem; 
   color: rgba($brand-white, 0.85); 
   line-height: 1.8;
   margin-bottom: 40px;
@@ -476,10 +476,12 @@
   width: fit-content;
   color: $brand-red;
   font-family: $font-h2;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 2px;
 }
+
+
 
 .precision-lab-section {
   display: grid;
@@ -498,10 +500,12 @@
   padding: clamp(4rem, 7vw, 7rem) clamp(1.5rem, 7vw, 6rem);
   color: $brand-white;
 
+  //sección de segundo titulo en la parte de laboratorio de precisión
+
   h2 {
     margin: 0;
     font-family: $font-h1;
-    font-size: clamp(3rem, 7vw, 6.5rem);
+    font-size: clamp(3rem, 7vw, 4.5rem);
     font-weight: 400;
     text-transform: uppercase;
     line-height: 0.92;
@@ -512,7 +516,7 @@
   }
 
   > p {
-    max-width: 42rem;
+    max-width: 32rem;
     margin: 0;
     color: rgba($brand-white, 0.78);
     font-family: $font-main;

@@ -10,9 +10,9 @@
         <span class="text-red">Forjamos resultados.</span>
       </h1>
       <p class="subtitle">
-        Olvidate de los planes genericos que abandonas al mes. Aqui aplicamos ciencia para
-        construir un sistema funcional, medible y sostenible. La decision de salir de tu zona de
-        confort y transformar tu cuerpo es tuya.
+        Olvidate de los planes genericos que abandonas al mes. Aqui aplicamos ciencia para construir
+        un sistema funcional, medible y sostenible. La decision de salir de tu zona de confort y
+        transformar tu cuerpo es tuya.
       </p>
 
       <div class="header-action">
@@ -39,7 +39,7 @@
   <div class="grid-container">
     <div class="stacked-service-card card-01">
       <div class="card-visual">
-        <img src="/images/dieta-gym.jpg" alt="Nutricion funcional Pablo Herrera">
+        <img src="/images/dieta-gym.jpg" alt="Nutricion funcional Pablo Herrera" />
       </div>
       <div class="card-text-block">
         <div class="watermark-number">01</div>
@@ -48,14 +48,15 @@
           <h3 class="card-title">Nutricion</h3>
         </div>
         <p class="card-body">
-          Sistemas que optimizan tu metabolismo y salud hormonal, construidos para sostener tus resultados.
+          Sistemas que optimizan tu metabolismo y salud hormonal, construidos para sostener tus
+          resultados.
         </p>
       </div>
     </div>
 
     <div class="stacked-service-card card-02">
       <div class="card-visual">
-        <img src="/images/entrenamiento.webp" alt="Entrenamiento de fuerza Pablo Herrera">
+        <img src="/images/entrenamiento.webp" alt="Entrenamiento de fuerza Pablo Herrera" />
       </div>
       <div class="card-text-block">
         <div class="watermark-number">02</div>
@@ -64,14 +65,15 @@
           <h3 class="card-title">Entrenamiento</h3>
         </div>
         <p class="card-body">
-          Estrategias disenadas para maximizar tu potencial, elevar tu fuerza real y redefinir tu composicion corporal.
+          Estrategias disenadas para maximizar tu potencial, elevar tu fuerza real y redefinir tu
+          composicion corporal.
         </p>
       </div>
     </div>
 
     <div class="stacked-service-card card-03">
       <div class="card-visual">
-        <img src="/images/monitor.webp" alt="Monitorizacion InBody Pablo Herrera">
+        <img src="/images/monitor.webp" alt="Monitorizacion InBody Pablo Herrera" />
       </div>
       <div class="card-text-block">
         <div class="watermark-number">03</div>
@@ -80,14 +82,15 @@
           <h3 class="card-title">Monitorizacion</h3>
         </div>
         <p class="card-body">
-          Evaluamos y analizamos tu estado actual de forma mensual para ajustar tu plan con precision.
+          Evaluamos y analizamos tu estado actual de forma mensual para ajustar tu plan con
+          precision.
         </p>
       </div>
     </div>
 
     <div class="stacked-service-card card-04">
       <div class="card-visual">
-        <img src="/images/mindset.jpg" alt="Mindset coaching Pablo Herrera">
+        <img src="/images/mindset.jpg" alt="Mindset coaching Pablo Herrera" />
       </div>
       <div class="card-text-block">
         <div class="watermark-number">04</div>
@@ -111,9 +114,9 @@
       <span>Evolucion real.</span>
     </h2>
     <p>
-      Antes de ajustar calorias, entrenamiento o estrategia, medimos tu punto real de partida.
-      La evaluacion InBody nos ayuda a entender composicion corporal, masa muscular, grasa y
-      progreso medible para tomar mejores decisiones.
+      Antes de ajustar calorias, entrenamiento o estrategia, medimos tu punto real de partida. La
+      evaluacion InBody nos ayuda a entender composicion corporal, masa muscular, grasa y progreso
+      medible para tomar mejores decisiones.
     </p>
 
     <div class="precision-metrics" aria-label="Beneficios de la evaluacion">
@@ -133,7 +136,16 @@
 
     <a href="#contacto" class="btn-primary-solid">
       Reserva tu evaluacion
-      <svg class="chevron-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square">
+      <svg
+        class="chevron-icon"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="square"
+      >
         <polyline points="13 6 19 12 13 18"></polyline>
         <polyline points="6 6 12 12 6 18"></polyline>
       </svg>
@@ -155,13 +167,19 @@
     <span class="section-kicker">Planes y paquetes</span>
     <h2>Elige el punto de entrada correcto</h2>
     <p>
-      Cada paquete puede cambiar segun disponibilidad y objetivo. El coach puede actualizar estos
-      bloques desde el panel de administracion.
+      Entrenamiento diseñado a tu medida.
+      <br />
+      Elige la base con la que quieres arrancar y deja que nuestro equipo ajuste cada detalle
+      conforme evolucionas en tu proceso.
     </p>
   </div>
 
   <div class="packages-grid" *ngIf="servicePackages.length; else noPackages">
-    <article class="package-card" *ngFor="let item of servicePackages" [class.featured]="item.featured">
+    <article
+      class="package-card"
+      *ngFor="let item of servicePackages"
+      [class.featured]="item.featured"
+    >
       <div class="package-image">
         <img [src]="item.imageUrl" [alt]="item.title" loading="lazy" />
         <span>{{ item.badge }}</span>
@@ -179,8 +197,6 @@
   </div>
 
   <ng-template #noPackages>
-    <div class="packages-empty">
-      Aun no hay paquetes publicados.
-    </div>
+    <div class="packages-empty">Aun no hay paquetes publicados.</div>
   </ng-template>
 </section>

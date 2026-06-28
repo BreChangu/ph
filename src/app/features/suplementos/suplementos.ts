@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 
 type Supplement = {
   name: string;
@@ -31,6 +31,9 @@ export class Suplementos implements OnInit, OnDestroy {
   activeHero = 0;
   activeProduct = 0;
   isAutoPaused = false;
+
+  // 1. INYECTAMOS EL DETECTOR DE CAMBIOS DE ANGULAR AQUÍ
+  constructor(private cdr: ChangeDetectorRef) {}
 
   supplements: Supplement[] = [
     {
@@ -175,11 +178,17 @@ export class Suplementos implements OnInit, OnDestroy {
 
   private startAutoScroll() {
     this.heroTimer = setInterval(() => {
-      if (!this.isAutoPaused) this.activeHero = this.normalizeIndex(this.activeHero + 1, this.heroSlides.length);
-    }, 5200);
+      this.activeHero = this.normalizeIndex(this.activeHero + 1, this.heroSlides.length);
+      // 2. OBLIGAMOS A ANGULAR A REPINTAR LA PANTALLA CADA VEZ QUE CAMBIA
+      this.cdr.markForCheck(); 
+    }, 5000); 
 
     this.productTimer = setInterval(() => {
-      if (!this.isAutoPaused) this.activeProduct = this.normalizeIndex(this.activeProduct + 1, this.supplements.length);
+      if (!this.isAutoPaused) {
+        this.activeProduct = this.normalizeIndex(this.activeProduct + 1, this.supplements.length);
+        // 3. OBLIGAMOS A ANGULAR A REPINTAR EL CARRUSEL
+        this.cdr.markForCheck();
+      }
     }, 3600);
   }
 

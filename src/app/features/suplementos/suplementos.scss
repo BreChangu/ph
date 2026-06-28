@@ -47,6 +47,17 @@
   grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.75fr);
   gap: clamp(2rem, 5vw, 5rem);
   align-items: center;
+  animation: cinematicFade 0.6s ease-out forwards;
+}
+@keyframes cinematicFade {
+  0% {
+    opacity: 0.5;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-copy {
