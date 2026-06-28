@@ -27,6 +27,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/blog/blog').then((m) => m.BlogComponent),
       },
       {
+        path: 'suplementos',
+        loadComponent: () => import('./features/suplementos/suplementos').then((m) => m.Suplementos),
+      },
+      {
         path: 'blog/:id',
         loadComponent: () => import('./features/blog-detail/blog-detail').then((m) => m.BlogDetail),
       },

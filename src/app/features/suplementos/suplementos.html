@@ -1,0 +1,120 @@
+<main class="supplements-page">
+  <section class="supplement-hero" (mouseenter)="isAutoPaused = true" (mouseleave)="isAutoPaused = false">
+    <button class="hero-control previous" type="button" aria-label="Suplemento anterior" (click)="previousHero()">
+      <span aria-hidden="true">‹</span>
+    </button>
+
+    <article class="hero-slide" *ngIf="activeSlide as slide">
+      <div class="hero-copy">
+        <span class="eyebrow">{{ slide.eyebrow }}</span>
+        <h1>{{ slide.title }}</h1>
+        <p>{{ slide.copy }}</p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="#contacto">
+            Cotizar ahora
+          </a>
+          <span>{{ slide.feature }}</span>
+        </div>
+      </div>
+
+      <div class="hero-product" [class]="slide.product.form">
+        <span class="product-badge">{{ slide.product.highlight }}</span>
+        <div class="product-render" aria-hidden="true">
+          <span class="cap"></span>
+          <span class="label">
+            <strong>PH</strong>
+            <small>{{ slide.product.category }}</small>
+          </span>
+        </div>
+        <div class="hero-product-meta">
+          <strong>{{ slide.product.name }}</strong>
+          <span>{{ slide.product.tag }}</span>
+        </div>
+      </div>
+    </article>
+
+    <button class="hero-control next" type="button" aria-label="Siguiente suplemento" (click)="nextHero()">
+      <span aria-hidden="true">›</span>
+    </button>
+
+    <div class="hero-progress" aria-label="Slides destacados">
+      <button type="button"
+              *ngFor="let slide of heroSlides; let i = index"
+              [class.active]="activeHero === i"
+              [attr.aria-label]="'Ir al destacado ' + (i + 1)"
+              (click)="setHero(i)">
+      </button>
+    </div>
+  </section>
+
+  <section class="supplement-intro">
+    <span class="eyebrow">Catalogo curado</span>
+    <h2>Suplementos populares para cotizacion</h2>
+    <p>
+      Seleccionamos categorias frecuentes en entrenamiento de fuerza, recomposicion corporal y rendimiento.
+      La disponibilidad, presentacion y precio se confirman al momento de cotizar.
+    </p>
+  </section>
+
+  <section class="product-carousel" aria-label="Suplementos destacados">
+    <div class="carousel-head">
+      <div>
+        <span class="eyebrow">Featured stack</span>
+        <h2>Mas solicitados</h2>
+      </div>
+      <div class="carousel-controls">
+        <button type="button" aria-label="Producto anterior" (click)="previousProduct()">‹</button>
+        <button type="button" aria-label="Producto siguiente" (click)="nextProduct()">›</button>
+      </div>
+    </div>
+
+    <div class="product-track" (mouseenter)="isAutoPaused = true" (mouseleave)="isAutoPaused = false">
+      <article class="supplement-card"
+               *ngFor="let item of visibleSupplements; trackBy: trackByName"
+               [class]="item.form">
+        <div class="card-media">
+          <span class="product-badge">{{ item.highlight }}</span>
+          <div class="product-render" aria-hidden="true">
+            <span class="cap"></span>
+            <span class="label">
+              <strong>PH</strong>
+              <small>{{ item.category }}</small>
+            </span>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <span class="category">{{ item.category }}</span>
+          <h3>{{ item.name }}</h3>
+          <div class="stars" aria-label="Categoria popular">
+            <span *ngFor="let star of getStars(item.rating)">★</span>
+          </div>
+          <p>{{ item.description }}</p>
+          <div class="card-footer">
+            <strong>{{ item.tag }}</strong>
+            <a href="#contacto">
+              {{ item.quote }}
+            </a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="carousel-dots" aria-label="Posicion del carrusel">
+      <button type="button"
+              *ngFor="let item of supplements; let i = index"
+              [class.active]="activeProduct === i"
+              [attr.aria-label]="'Ver ' + item.name"
+              (click)="setProduct(i)">
+      </button>
+    </div>
+  </section>
+
+  <section class="supplement-note">
+    <strong>Nota de uso responsable</strong>
+    <p>
+      Los suplementos no sustituyen un plan de alimentacion ni una evaluacion profesional. Antes de usar estimulantes,
+      pre entrenos o productos nuevos, revisa tolerancia, historial clinico y objetivos.
+    </p>
+  </section>
+</main>
