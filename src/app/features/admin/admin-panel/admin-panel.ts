@@ -7,6 +7,8 @@ import { PlanNutricionalService } from '../../../core/services/plan-nutricional/
 import { EntrenamientoService } from '../../../core/services/entrenamiento/entrenamiento.service';
 import { BlogService } from '../../../core/services/blog';
 import { BlogPost } from '../../../core/models/blog-post.model';
+import { ServicePackage } from '../../../core/models/service-package.model';
+import { ServicePackagesService } from '../../../core/services/service-packages';
 
 @Component({
   selector: 'app-admin-panel',
@@ -21,30 +23,38 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   private planNutricionalService = inject(PlanNutricionalService);
   private entrenamientoService = inject(EntrenamientoService);
   private blogService = inject(BlogService);
+  private servicePackagesService = inject(ServicePackagesService);
   private cdr = inject(ChangeDetectorRef);
 
   vistaActual: 'lista' | 'editor' = 'lista';
-  adminSection: 'patients' | 'blog' = 'patients';
+  adminSection: 'patients' | 'blog' | 'packages' = 'patients';
   seccionEditor: 'evaluacion' | 'nutrition' | 'training' | 'tecnica' = 'evaluacion';
   activeTrainingEditorDay = 0;
   pacienteSeleccionado: any = null;
   pacientes: any[] = [];
   planForm!: FormGroup;
   blogForm!: FormGroup;
+  packageForm!: FormGroup;
   isLoadingPacientes = false;
   isLoadingExpediente = false;
   isSavingPlan = false;
   isLoadingBlog = false;
   isSavingBlog = false;
+  isLoadingPackages = false;
+  isSavingPackage = false;
   pacientesError = '';
   expedienteError = '';
   planEditorError = '';
   blogError = '';
   blogMessage = '';
+  packageError = '';
+  packageMessage = '';
 
   expedienteClinico: any = null;
   blogPosts: BlogPost[] = [];
   selectedBlogPost: BlogPost | null = null;
+  servicePackages: ServicePackage[] = [];
+  selectedPackage: ServicePackage | null = null;
   private pacientesChannel: RealtimeChannel | null = null;
   
   // Variables para Revisión de Técnica
@@ -94,6 +104,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.initForm();
     this.initBlogForm();
+    this.initPackageForm();
     if (!isPlatformBrowser(this.platformId)) return;
 
     window.setTimeout(() => {
@@ -138,10 +149,31 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     });
   }
 
-  setAdminSection(section: 'patients' | 'blog') {
+  private initPackageForm(servicePackage?: ServicePackage) {
+    const current = servicePackage ?? this.servicePackagesService.createEmptyPackage();
+    this.selectedPackage = servicePackage ?? null;
+    this.packageForm = this.fb.group({
+      id: [current.id],
+      title: [current.title, Validators.required],
+      subtitle: [current.subtitle, Validators.required],
+      description: [current.description, Validators.required],
+      imageUrl: [current.imageUrl],
+      badge: [current.badge],
+      includesText: [(current.includes ?? []).join('\n'), Validators.required],
+      ctaLabel: [current.ctaLabel || 'Cotizar paquete'],
+      featured: [current.featured ?? false],
+      published: [current.published ?? false],
+      sortOrder: [current.sortOrder || 1],
+    });
+  }
+
+  setAdminSection(section: 'patients' | 'blog' | 'packages') {
     this.adminSection = section;
     if (section === 'blog' && this.blogPosts.length === 0) {
       this.cargarBlogPosts();
+    }
+    if (section === 'packages' && this.servicePackages.length === 0) {
+      this.cargarPaquetes();
     }
     this.cdr.detectChanges();
   }
@@ -238,6 +270,90 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
       this.nuevoBlogPost();
     }
     await this.cargarBlogPosts();
+  }
+
+  async cargarPaquetes() {
+    this.isLoadingPackages = true;
+    this.packageError = '';
+    this.packageMessage = '';
+    this.cdr.detectChanges();
+
+    try {
+      this.servicePackages = await this.servicePackagesService.getAdminPackages();
+    } catch (error) {
+      this.packageError = this.getErrorMessage(error, 'No se pudieron cargar los paquetes.');
+    } finally {
+      this.isLoadingPackages = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  nuevoPaquete() {
+    this.packageMessage = '';
+    this.packageError = '';
+    this.initPackageForm();
+    this.cdr.detectChanges();
+  }
+
+  editarPaquete(servicePackage: ServicePackage) {
+    this.packageMessage = '';
+    this.packageError = '';
+    this.initPackageForm(servicePackage);
+    this.cdr.detectChanges();
+  }
+
+  async guardarPaquete(publicar?: boolean) {
+    if (this.packageForm.invalid) {
+      this.packageForm.markAllAsTouched();
+      this.packageError = 'Completa titulo, subtitulo, descripcion y lo que incluye el paquete.';
+      return;
+    }
+
+    this.isSavingPackage = true;
+    this.packageError = '';
+    this.packageMessage = '';
+    this.cdr.detectChanges();
+
+    try {
+      const value = this.packageForm.value;
+      const saved = await this.servicePackagesService.savePackage({
+        id: value.id,
+        title: value.title,
+        subtitle: value.subtitle,
+        description: value.description,
+        imageUrl: value.imageUrl,
+        badge: value.badge,
+        includes: value.includesText,
+        ctaLabel: value.ctaLabel,
+        featured: value.featured,
+        published: typeof publicar === 'boolean' ? publicar : value.published,
+        sortOrder: value.sortOrder,
+      });
+      this.packageMessage = saved.published ? 'Paquete publicado en servicios.' : 'Paquete guardado como borrador.';
+      this.initPackageForm(saved);
+      await this.cargarPaquetes();
+    } catch (error) {
+      this.packageError = this.getErrorMessage(error, 'No se pudo guardar el paquete.');
+    } finally {
+      this.isSavingPackage = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async togglePackagePublication(servicePackage: ServicePackage) {
+    await this.servicePackagesService.savePackage({ ...servicePackage, published: !servicePackage.published });
+    await this.cargarPaquetes();
+  }
+
+  async eliminarPaquete(servicePackage: ServicePackage) {
+    const confirmed = globalThis.confirm?.(`Eliminar "${servicePackage.title}" de paquetes?`);
+    if (!confirmed) return;
+
+    await this.servicePackagesService.deletePackage(servicePackage.id);
+    if (this.packageForm?.value?.id === servicePackage.id) {
+      this.nuevoPaquete();
+    }
+    await this.cargarPaquetes();
   }
 
   async abrirExpediente(paciente: any) {

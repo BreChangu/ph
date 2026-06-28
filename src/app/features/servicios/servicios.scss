@@ -469,6 +469,349 @@
 }
 
 // ==========================================
+// 4. LABORATORIO DE PRECISION
+// ==========================================
+.section-kicker {
+  display: inline-flex;
+  width: fit-content;
+  color: $brand-red;
+  font-family: $font-h2;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.precision-lab-section {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  min-height: 46rem;
+  background: $brand-black;
+  border-top: 1px solid rgba($brand-white, 0.1);
+  overflow: hidden;
+}
+
+.precision-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.8rem;
+  padding: clamp(4rem, 7vw, 7rem) clamp(1.5rem, 7vw, 6rem);
+  color: $brand-white;
+
+  h2 {
+    margin: 0;
+    font-family: $font-h1;
+    font-size: clamp(3rem, 7vw, 6.5rem);
+    font-weight: 400;
+    text-transform: uppercase;
+    line-height: 0.92;
+
+    span {
+      color: $brand-red;
+    }
+  }
+
+  > p {
+    max-width: 42rem;
+    margin: 0;
+    color: rgba($brand-white, 0.78);
+    font-family: $font-main;
+    font-size: clamp(1rem, 1.7vw, 1.2rem);
+    line-height: 1.9;
+  }
+}
+
+.precision-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0.8rem 0;
+
+  article {
+    border: 1px solid rgba($brand-white, 0.14);
+    background: rgba($brand-white, 0.035);
+    padding: 1.2rem;
+  }
+
+  strong {
+    display: block;
+    color: $brand-red;
+    font-family: $font-h2;
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
+  }
+
+  span {
+    display: block;
+    color: $brand-white;
+    font-family: $font-h2;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+}
+
+.precision-visual {
+  position: relative;
+  min-height: 44rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: clamp(2rem, 4vw, 4rem);
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(90deg, rgba($brand-black, 0.92) 0%, rgba($brand-black, 0.15) 48%, rgba($brand-black, 0.74) 100%),
+      linear-gradient(180deg, rgba($brand-black, 0.1) 0%, rgba($brand-black, 0.82) 100%);
+  }
+
+  img {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(0.75) contrast(1.1) brightness(0.62);
+  }
+}
+
+.precision-panel {
+  width: min(100%, 33rem);
+  border: 1px solid rgba($brand-white, 0.18);
+  background: rgba($brand-black, 0.78);
+  padding: clamp(1.6rem, 3vw, 2.5rem);
+  backdrop-filter: blur(10px);
+
+  span {
+    color: $brand-red;
+    font-family: $font-h2;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  strong {
+    display: block;
+    margin: 0.75rem 0;
+    color: $brand-white;
+    font-family: $font-h2;
+    font-size: clamp(1.7rem, 4vw, 3rem);
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  p {
+    margin: 0;
+    color: rgba($brand-white, 0.75);
+    font-family: $font-main;
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+}
+
+// ==========================================
+// 5. PAQUETES DINAMICOS
+// ==========================================
+.packages-section {
+  background: $brand-white;
+  color: $brand-black;
+  padding: clamp(4rem, 8vw, 7rem) clamp(1.25rem, 5vw, 4rem);
+}
+
+.packages-heading {
+  width: min(100%, 72rem);
+  margin: 0 auto 3rem;
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(18rem, 0.55fr);
+  gap: 2rem;
+  align-items: end;
+  border-bottom: 2px solid rgba($brand-black, 0.1);
+  padding-bottom: 2rem;
+
+  .section-kicker {
+    grid-column: 1 / -1;
+  }
+
+  h2 {
+    margin: 0;
+    font-family: $font-h1;
+    font-size: clamp(2.6rem, 6vw, 5.5rem);
+    font-weight: 400;
+    text-transform: uppercase;
+    line-height: 0.95;
+  }
+
+  p {
+    margin: 0;
+    color: $brand-gray;
+    font-family: $font-main;
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+}
+
+.packages-grid {
+  width: min(100%, 72rem);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.package-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: #ffffff;
+  border: 1px solid rgba($brand-black, 0.12);
+  min-height: 100%;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-6px);
+    border-color: rgba($brand-red, 0.55);
+    box-shadow: 0 24px 50px rgba($brand-black, 0.08);
+  }
+
+  &.featured {
+    border-color: $brand-red;
+
+    .package-image span {
+      background: $brand-red;
+      color: $brand-white;
+    }
+  }
+}
+
+.package-image {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: $brand-black;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(0.4) contrast(1.08) brightness(0.82);
+    transition: transform 0.5s ease;
+  }
+
+  span {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    background: $brand-black;
+    color: $brand-white;
+    padding: 0.55rem 0.8rem;
+    font-family: $font-h2;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+}
+
+.package-card:hover .package-image img {
+  transform: scale(1.05);
+}
+
+.package-content {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+
+  .package-subtitle {
+    margin: 0 0 0.65rem;
+    color: $brand-red;
+    font-family: $font-h2;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  h3 {
+    margin: 0;
+    color: $brand-black;
+    font-family: $font-h2;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .package-description {
+    color: $brand-gray;
+    line-height: 1.7;
+    margin: 1rem 0 1.2rem;
+  }
+
+  ul {
+    display: grid;
+    gap: 0.65rem;
+    margin: 0 0 1.6rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    position: relative;
+    padding-left: 1.1rem;
+    color: $brand-black;
+    font-family: $font-main;
+    font-size: 0.92rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.62rem;
+      width: 0.45rem;
+      height: 0.45rem;
+      background: $brand-red;
+    }
+  }
+
+  a {
+    display: inline-flex;
+    justify-content: center;
+    margin-top: auto;
+    background: $brand-black;
+    color: $brand-white;
+    border: 1px solid $brand-black;
+    padding: 1rem 1.2rem;
+    font-family: $font-h2;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: background 0.3s ease, border-color 0.3s ease;
+
+    &:hover {
+      background: $brand-red;
+      border-color: $brand-red;
+    }
+  }
+}
+
+.packages-empty {
+  width: min(100%, 72rem);
+  margin: 0 auto;
+  border: 1px solid rgba($brand-black, 0.12);
+  background: #ffffff;
+  color: $brand-gray;
+  padding: 2rem;
+  text-align: center;
+  font-family: $font-h2;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+// ==========================================
 // RESPONSIVIDAD (Celulares)
 // ==========================================
 @media (max-width: 900px) {
@@ -515,5 +858,30 @@
     width: 100%;
     padding: 16px 24px;
     font-size: 16px;
+  }
+
+  .precision-lab-section {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .precision-copy {
+    padding: 4rem 1.25rem 2rem;
+  }
+
+  .precision-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .precision-visual {
+    min-height: 28rem;
+  }
+
+  .packages-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .packages-grid {
+    grid-template-columns: 1fr;
   }
 }

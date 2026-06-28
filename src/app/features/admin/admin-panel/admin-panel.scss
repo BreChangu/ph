@@ -403,6 +403,22 @@
       outline: none;
     }
   }
+
+  textarea {
+    min-height: 7rem;
+    border: 1px solid rgba($brand-black, 0.2);
+    background: transparent;
+    padding: 1rem;
+    font-family: $font-main;
+    font-size: 0.95rem;
+    color: $brand-black;
+    resize: vertical;
+
+    &:focus {
+      border-color: $brand-red;
+      outline: none;
+    }
+  }
 }
 
 .divider {
@@ -753,6 +769,132 @@
     width: 1rem;
     height: 1rem;
     accent-color: $brand-red;
+  }
+}
+
+/* ==========================================
+   ADMIN PAQUETES
+   ========================================== */
+.packages-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(20rem, 0.8fr) minmax(0, 1.6fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.packages-admin-list,
+.package-editor-card {
+  background: #ffffff;
+  border: 1px solid rgba($brand-black, 0.12);
+}
+
+.packages-admin-list {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  max-height: 72vh;
+  overflow: auto;
+}
+
+.package-admin-item {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid rgba($brand-black, 0.1);
+  border-left: 3px solid transparent;
+  padding: 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+
+  &:hover,
+  &.active {
+    border-color: rgba($brand-red, 0.45);
+    border-left-color: $brand-red;
+    background: rgba($brand-red, 0.035);
+  }
+
+  img {
+    width: 5rem;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: $brand-black;
+  }
+
+  h3 {
+    margin: 0.7rem 0 0.25rem;
+    color: $brand-black;
+    font-family: $font-h2;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  p {
+    margin: 0;
+    color: $brand-gray;
+    font-size: 0.82rem;
+  }
+
+  .btn-text {
+    align-self: start;
+    background: transparent;
+    border: 0;
+    color: $brand-red;
+    font-family: $font-h2;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+}
+
+.package-editor-card {
+  padding: 2rem;
+}
+
+.package-editor-preview {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: end;
+  border: 1px solid rgba($brand-black, 0.1);
+  background: $brand-white;
+  margin-bottom: 2rem;
+  padding: 1rem;
+
+  img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: $brand-black;
+  }
+
+  span {
+    display: inline-flex;
+    width: fit-content;
+    background: $brand-red;
+    color: $brand-white;
+    padding: 0.45rem 0.7rem;
+    font-family: $font-h2;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  strong {
+    display: block;
+    margin: 0.7rem 0 0.35rem;
+    color: $brand-black;
+    font-family: $font-h2;
+    font-size: clamp(1.4rem, 3vw, 2.2rem);
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  p {
+    margin: 0;
+    color: $brand-gray;
   }
 }
 
@@ -1172,7 +1314,10 @@ textarea {
   .training-side-panel { position: static; }
   .blog-admin-layout { grid-template-columns: 1fr; }
   .blog-admin-list { max-height: none; }
+  .packages-admin-layout { grid-template-columns: 1fr; }
+  .packages-admin-list { max-height: none; }
   .blog-editor-header { flex-direction: column; }
+  .package-editor-preview { grid-template-columns: 1fr; }
   .clinical-card { padding: 1.5rem; }
   .meal-editor-card { padding: 1.5rem 1rem; }
 }
@@ -1190,4 +1335,7 @@ textarea {
   .blog-editor-actions { width: 100%; }
   .blog-editor-actions .btn-primary,
   .blog-editor-actions .btn-add-secondary { width: 100%; }
+  .package-editor-card { padding: 1.25rem; }
+  .package-admin-item { grid-template-columns: 1fr; }
+  .package-admin-item img { width: 100%; aspect-ratio: 16 / 9; }
 }

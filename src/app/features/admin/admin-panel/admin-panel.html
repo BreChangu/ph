@@ -3,7 +3,15 @@
     <header class="admin-header dashboard-heading">
       <div class="header-titles">
         <span class="eyebrow">Panel de Administracion</span>
-        <h2>{{ adminSection === 'patients' ? 'Directorio de Pacientes' : 'Editor de Blog' }}</h2>
+        <h2>
+          {{
+            adminSection === 'patients'
+              ? 'Directorio de Pacientes'
+              : adminSection === 'blog'
+                ? 'Editor de Blog'
+                : 'Editor de Paquetes'
+          }}
+        </h2>
       </div>
       <div class="header-actions">
         <button class="btn-primary" type="button" *ngIf="adminSection === 'patients'" (click)="cargarPacientes()" [disabled]="isLoadingPacientes">
@@ -11,6 +19,9 @@
         </button>
         <button class="btn-primary" type="button" *ngIf="adminSection === 'blog'" (click)="nuevoBlogPost()">
           Nuevo Articulo
+        </button>
+        <button class="btn-primary" type="button" *ngIf="adminSection === 'packages'" (click)="nuevoPaquete()">
+          Nuevo Paquete
         </button>
       </div>
     </header>
@@ -21,6 +32,9 @@
       </button>
       <button type="button" [class.active]="adminSection === 'blog'" (click)="setAdminSection('blog')">
         Blog
+      </button>
+      <button type="button" [class.active]="adminSection === 'packages'" (click)="setAdminSection('packages')">
+        Paquetes
       </button>
     </nav>
 
@@ -178,6 +192,110 @@
           </label>
           <button type="button" class="btn-add-secondary" *ngIf="selectedBlogPost" (click)="toggleBlogPublication(selectedBlogPost)">
             {{ selectedBlogPost.published ? 'Ocultar articulo' : 'Publicar articulo' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="packages-admin-layout" *ngIf="adminSection === 'packages'">
+      <aside class="packages-admin-list">
+        <div class="blog-list-header">
+          <span class="eyebrow">Servicios</span>
+          <strong>{{ servicePackages.length }} paquetes</strong>
+        </div>
+
+        <div *ngIf="isLoadingPackages" class="state-banner compact">Cargando paquetes...</div>
+        <div *ngIf="packageError" class="state-banner error compact">{{ packageError }}</div>
+
+        <article class="package-admin-item"
+                 *ngFor="let item of servicePackages"
+                 [class.active]="packageForm.value.id === item.id"
+                 (click)="editarPaquete(item)">
+          <img [src]="item.imageUrl" [alt]="item.title || 'Paquete'">
+          <div>
+            <span class="status-indicator" [class.active]="item.published">
+              {{ item.published ? 'Publicado' : 'Borrador' }}
+            </span>
+            <h3>{{ item.title || 'Paquete sin titulo' }}</h3>
+            <p>{{ item.subtitle || 'Sin subtitulo' }}</p>
+          </div>
+          <button type="button" class="btn-text danger" (click)="eliminarPaquete(item); $event.stopPropagation()">Eliminar</button>
+        </article>
+      </aside>
+
+      <form [formGroup]="packageForm" class="package-editor-card">
+        <header class="blog-editor-header">
+          <div>
+            <span class="eyebrow">Constructor comercial</span>
+            <h3>{{ selectedPackage ? 'Editar paquete' : 'Nuevo paquete' }}</h3>
+          </div>
+          <div class="blog-editor-actions">
+            <button type="button" class="btn-add-secondary" (click)="guardarPaquete(false)" [disabled]="isSavingPackage">
+              Guardar Borrador
+            </button>
+            <button type="button" class="btn-primary" (click)="guardarPaquete(true)" [disabled]="isSavingPackage">
+              {{ isSavingPackage ? 'Guardando...' : 'Publicar' }}
+            </button>
+          </div>
+        </header>
+
+        <div class="state-banner compact" *ngIf="packageMessage">{{ packageMessage }}</div>
+
+        <div class="package-editor-preview" *ngIf="packageForm.value.imageUrl">
+          <img [src]="packageForm.value.imageUrl" alt="Vista previa del paquete">
+          <div>
+            <span>{{ packageForm.value.badge || 'Paquete' }}</span>
+            <strong>{{ packageForm.value.title || 'Titulo del paquete' }}</strong>
+            <p>{{ packageForm.value.subtitle || 'Subtitulo breve' }}</p>
+          </div>
+        </div>
+
+        <div class="input-grid">
+          <div class="input-group">
+            <label>Titulo</label>
+            <input type="text" formControlName="title" placeholder="Ej. Plan Integral">
+          </div>
+          <div class="input-group">
+            <label>Subtitulo</label>
+            <input type="text" formControlName="subtitle" placeholder="Nutricion + entrenamiento">
+          </div>
+          <div class="input-group">
+            <label>Etiqueta</label>
+            <input type="text" formControlName="badge" placeholder="Mas completo">
+          </div>
+          <div class="input-group">
+            <label>Orden</label>
+            <input type="number" formControlName="sortOrder" min="1">
+          </div>
+          <div class="input-group full-width">
+            <label>Imagen URL</label>
+            <input type="text" formControlName="imageUrl" placeholder="/images/entrenamiento.webp">
+          </div>
+          <div class="input-group full-width">
+            <label>Descripcion</label>
+            <textarea formControlName="description" rows="4" placeholder="Explica para quien es este paquete y que problema resuelve."></textarea>
+          </div>
+          <div class="input-group full-width">
+            <label>Incluye, una linea por punto</label>
+            <textarea formControlName="includesText" rows="5" placeholder="Plan nutricional&#10;Rutina personalizada&#10;Seguimiento de medidas"></textarea>
+          </div>
+          <div class="input-group">
+            <label>Texto del boton</label>
+            <input type="text" formControlName="ctaLabel" placeholder="Cotizar paquete">
+          </div>
+        </div>
+
+        <div class="blog-editor-options">
+          <label>
+            <input type="checkbox" formControlName="published">
+            Visible en servicios
+          </label>
+          <label>
+            <input type="checkbox" formControlName="featured">
+            Destacado
+          </label>
+          <button type="button" class="btn-add-secondary" *ngIf="selectedPackage" (click)="togglePackagePublication(selectedPackage)">
+            {{ selectedPackage.published ? 'Ocultar paquete' : 'Publicar paquete' }}
           </button>
         </div>
       </form>
