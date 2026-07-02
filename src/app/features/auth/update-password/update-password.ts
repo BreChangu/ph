@@ -1,15 +1,16 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+ import { Component, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common'; // 🟢 1. Asegúrate de que esto esté aquí
+import { FormsModule } from '@angular/forms';   // 🟢 2. Esto es para el [(ngModel)]
 import { Router } from '@angular/router';
-import { AuthService } from '../../../core/supabase/auth'; // Revisa tu ruta
+import { AuthService } from '../../../core/supabase/auth';
 
 @Component({
   selector: 'app-update-password',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  // 🟢 3. AQUÍ ESTÁ LA MAGIA QUE QUITA EL ERROR NG8103:
+  imports: [CommonModule, FormsModule], 
   templateUrl: './update-password.html',
-  styleUrls: ['./update-password.scss'] // Reutilizaremos estilos del login
+  styleUrls: ['./update-password.scss']
 })
 export class UpdatePasswordComponent {
   password = '';
@@ -49,7 +50,6 @@ export class UpdatePasswordComponent {
       await this.authService.updatePassword(this.password);
       this.showMessage('¡Contraseña actualizada exitosamente! Redirigiendo...', false);
       
-      // Esperamos 2 segundos para que el usuario lea el éxito y lo mandamos al login
       setTimeout(() => {
         this.router.navigate(['/auth']);
       }, 2000);
