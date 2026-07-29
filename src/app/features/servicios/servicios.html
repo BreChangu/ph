@@ -1,18 +1,22 @@
 <section class="services-hero-stacked">
   <div class="hero-image-container">
-    <img src="/images/ph-home-2.webp" alt="Entrenamiento de fuerza Pablo Herrera" />
+    <img src="/images/Pablo_6.png" alt="Entrenamiento de fuerza Pablo Herrera" />
   </div>
 
   <div class="hero-text-block">
     <div class="text-content-wrapper">
       <h1 class="main-title">
-        No vendemos rutinas.<br />
-        <span class="text-red">Forjamos resultados.</span>
+        LA DISCIPLINA
+<br />
+        <span class="text-red">NO SE IMPROVISA.</span>
       </h1>
-      <p class="subtitle">
-        Olvidate de los planes genericos que abandonas al mes. Aqui aplicamos ciencia para construir
-        un sistema funcional, medible y sostenible. La decision de salir de tu zona de confort y
-        transformar tu cuerpo es tuya.
+<p class="subtitle">
+  Cada kilo perdido,
+Cada músculo ganado,
+Cada cambio físico;
+
+<br>
+Comienza con una estrategia.
       </p>
 
       <div class="header-action">
@@ -153,7 +157,7 @@
   </div>
 
   <div class="precision-visual">
-    <img src="/images/inbody.png" alt="Analisis de composicion corporal InBody Pablo Herrera" />
+    <img src="/images/Pablo_5.png" alt="Analisis de composicion corporal InBody Pablo Herrera" />
     <div class="precision-panel">
       <span>InBody Scan</span>
       <strong>Anatomia en datos</strong>
@@ -188,9 +192,9 @@
         <p class="package-subtitle">{{ item.subtitle }}</p>
         <h3>{{ item.title }}</h3>
         <p class="package-description">{{ item.description }}</p>
-        <ul>
-          <li *ngFor="let include of item.includes">{{ include }}</li>
-        </ul>
+        <button type="button" class="package-detail-trigger" (click)="openPackage(item)">
+          Conoce el plan
+        </button>
         <a href="#contacto">{{ item.ctaLabel || 'Cotizar paquete' }}</a>
       </div>
     </article>
@@ -200,3 +204,34 @@
     <div class="packages-empty">Aun no hay paquetes publicados.</div>
   </ng-template>
 </section>
+
+<div class="package-detail-backdrop" *ngIf="selectedPackage" (click)="closePackage()">
+  <section
+    class="package-detail-modal"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="selectedPackage.title"
+    (click)="$event.stopPropagation()"
+  >
+    <button type="button" class="package-close" (click)="closePackage()" aria-label="Cerrar detalle">×</button>
+    <div class="package-detail-image">
+      <img [src]="selectedPackage.imageUrl" [alt]="selectedPackage.title" />
+      <span>{{ selectedPackage.badge }}</span>
+    </div>
+    <div class="package-detail-content">
+      <p class="package-detail-subtitle">{{ selectedPackage.subtitle }}</p>
+      <h2>{{ selectedPackage.title }}</h2>
+      <p class="package-detail-description">{{ selectedPackage.description }}</p>
+      <section class="package-includes">
+        <div class="package-includes-heading">
+          <span>Disenado para avanzar</span>
+          <h3>Que incluye este plan?</h3>
+        </div>
+        <ul>
+          <li *ngFor="let include of selectedPackage.includes">{{ include }}</li>
+        </ul>
+      </section>
+      <a href="#contacto" (click)="closePackage()">{{ selectedPackage.ctaLabel || 'Cotizar ahora' }}</a>
+    </div>
+  </section>
+</div>

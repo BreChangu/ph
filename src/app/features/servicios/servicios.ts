@@ -13,10 +13,19 @@ export class Servicios implements OnInit {
   private packagesService = inject(ServicePackagesService);
 
   servicePackages: ServicePackage[] = [];
+  selectedPackage: ServicePackage | null = null;
 
   ngOnInit() {
     this.packagesService.getPublishedPackages().subscribe((packages) => {
       this.servicePackages = packages;
     });
+  }
+
+  openPackage(servicePackage: ServicePackage) {
+    this.selectedPackage = servicePackage;
+  }
+
+  closePackage() {
+    this.selectedPackage = null;
   }
 }

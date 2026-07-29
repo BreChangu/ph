@@ -17,6 +17,11 @@ export class ServicePackagesService {
   private readonly tableName = 'service_packages';
   private readonly storageKey = 'ph_service_packages';
   private readonly requestTimeoutMs = 4500;
+  private readonly legacyPackageIds = new Set([
+    'evaluacion-inbody',
+    'plan-integral',
+    'coaching-online',
+  ]);
 
   getPublishedPackages(): Observable<ServicePackage[]> {
     return concat(of(this.getLocalPackages(false)), from(this.getPackages(false)));
@@ -90,7 +95,13 @@ export class ServicePackagesService {
     const remotePackages = await this.tryGetRemotePackages(!includeDrafts);
     if (!remotePackages) return this.getLocalPackages(includeDrafts);
 
-    const merged = this.sortPackages(this.mergePackages([...remotePackages, ...this.readLocalPackages()]));
+    const merged = this.sortPackages(
+      this.mergePackages([
+        ...SERVICE_PACKAGES,
+        ...remotePackages.filter((item) => !this.legacyPackageIds.has(item.id)),
+        ...this.readLocalPackages(),
+      ])
+    );
     return includeDrafts ? merged : merged.filter((item) => item.published !== false);
   }
 
