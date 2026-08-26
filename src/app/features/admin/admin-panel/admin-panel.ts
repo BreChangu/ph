@@ -9,7 +9,7 @@ import { BlogService } from '../../../core/services/blog';
 import { BlogPost } from '../../../core/models/blog-post.model';
 import { ServicePackage } from '../../../core/models/service-package.model';
 import { ServicePackagesService } from '../../../core/services/service-packages';
-
+import {ejerciciosService} from '../../../core/services/ejercicios/ejercicios';
 @Component({
   selector: 'app-admin-panel',
   standalone: true,
