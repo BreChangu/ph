@@ -5,7 +5,7 @@ create table if not exists public.service_packages (
   description text not null default '',
   image_url text not null default '',
   badge text not null default 'Paquete',
-  includes text[] not null default '{}',
+  includes text[] not null default '{}',got
   cta_label text not null default 'Cotizar paquete',
   featured boolean not null default false,
   published boolean not null default false,

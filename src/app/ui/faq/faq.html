@@ -1,0 +1,26 @@
+<section class="faq-section">
+  <div class="faq-container">
+    <div class="faq-header">
+      <span class="eyebrow">Soporte y Claridad</span>
+      <h2>Preguntas Frecuentes</h2>
+      <p>Resolvemos las dudas más comunes sobre envíos, asesoría clínica y uso responsable de nuestro arsenal de suplementación.</p>
+    </div>
+
+    <div class="faq-list">
+      <article class="faq-item" *ngFor="let faq of faqs; let i = index" [class.open]="faq.isOpen">
+        
+        <button class="faq-question" (click)="toggleFaq(i)" [attr.aria-expanded]="faq.isOpen">
+          <h3>{{ faq.question }}</h3>
+          <span class="faq-icon" aria-hidden="true"></span>
+        </button>
+        
+        <div class="faq-answer-wrapper">
+          <div class="faq-answer">
+            <p>{{ faq.answer }}</p>
+          </div>
+        </div>
+        
+      </article>
+    </div>
+  </div>
+</section>

@@ -3,7 +3,6 @@ import { Routes } from '@angular/router';
 // 🟢 FIX: Importamos el cadenero (la FUNCIÓN), no el servicio.
 // Asegúrate de que la ruta coincida con donde guardaste tu auth.guard.ts
 import { authGuard } from './core/guards/auth-guard';
-import path from 'path';
 
 export const routes: Routes = [
   {
@@ -70,7 +69,13 @@ loadComponent: () => import('./features/legal/terminos-condiciones/terminos-cond
           import('./features/auth/update-password/update-password').then(
             (m) => m.UpdatePasswordComponent,
           ),
-      },
+        },
+
+        {
+          path: 'faqs',
+          loadComponent: () =>
+            import('./ui/faq/faq').then((m) => m.FaqComponent),
+        },
     ],
   },
   {
