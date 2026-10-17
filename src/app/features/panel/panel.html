@@ -36,47 +36,93 @@
       </div>
     </div>
 
-    <!-- SECCIÓN DE ALIMENTACIÓN -->
+    <!-- ==========================================
+         SECCIÓN DE ALIMENTACIÓN (CON SUB-CARRUSEL)
+         ========================================== -->
     <section class="panel-section" *ngIf="activeSection === 'nutrition'">
       <header class="section-title">
-        <h1>Plan de Alimentación</h1>
+        <h1 style="font-size: 3rem; text-transform: uppercase;">Plan de Alimentación</h1>
         <p>Tu nutrición estratégica diseñada para el máximo rendimiento.</p>
       </header>
 
       <div class="state-banner" *ngIf="isLoadingPlan && !planPaciente">Sincronizando plan...</div>
-
-      <div class="state-banner error" *ngIf="planError">
-        {{ planError }}
-      </div>
-
+      <div class="state-banner error" *ngIf="planError">{{ planError }}</div>
       <div class="state-banner" *ngIf="!isLoadingPlan && !planError && !planPaciente">
         Tu coach todavía no ha publicado tu plan. Presiona "Actualizar" si acabas de recibir el aviso.
       </div>
 
-      <div class="nutrition-summary" *ngIf="planPaciente">
-        <span><strong>{{ planPaciente.calorias_totales || 0 }}</strong> KCAL</span>
-        <span *ngIf="planPaciente.suplementacion"><strong>Sups:</strong> {{ planPaciente.suplementacion }}</span>
+      <div class="nutrition-summary-top" *ngIf="planPaciente">
+        <div class="summary-box"><strong>{{ planPaciente.calorias_totales || 0 }}</strong> KCAL</div>
+        <div class="summary-box" *ngIf="planPaciente.suplementacion"><strong>SUPS:</strong> {{ planPaciente.suplementacion }}</div>
       </div>
 
       <div class="state-banner" *ngIf="planPaciente && (planPaciente.comidas?.length ?? 0) === 0">
         Tu plan ya está activo, pero todavía no tiene comidas cargadas. Pide a tu coach que agregue al menos una comida con alimentos y lo guarde de nuevo.
       </div>
 
-      <article class="meal-card" *ngFor="let comida of planPaciente?.comidas; let i = index">
-        <h2>{{ comida.nombre || ('Comida ' + (i + 1)) }}</h2>
-        <p class="meal-note" *ngIf="comida.nota_comida">{{ comida.nota_comida }}</p>
-        <div class="food-table">
-          <div class="food-row food-head">
-            <span>Alimento</span><span>Cal</span><span>Prot</span><span>Carb</span><span>Grasa</span>
-          </div>
-          <div class="food-row" *ngFor="let alimento of comida.alimentos_comida || []">
-            <span class="food-desc">{{ alimento.descripcion }}</span>
-            <span>{{ alimento.calorias }}</span>
-            <span>{{ alimento.proteinas }}</span>
-            <span>{{ alimento.carbos }}</span>
-            <span>{{ alimento.grasas }}</span>
-          </div>
+      <!-- TARJETAS DE COMIDA -->
+      <!-- TARJETAS DE COMIDA -->
+      <article class="meal-card active-slide" *ngFor="let comida of planPaciente?.comidas; let i = index">
+        <header class="meal-carousel-header">
+          <h2 style="font-family: 'Oswald', sans-serif; font-style: italic; font-size: 2.2rem; margin: 0; text-transform: uppercase;">
+            {{ comida.nombre || ('COMIDA ' + (i + 1)) }}
+          </h2>
+        </header>
+        
+        <p class="meal-note" *ngIf="comida.nota_comida" style="text-align: center;">{{ comida.nota_comida }}</p>
+
+        <div class="nutrition-info-header">
+           <p><strong>INFORMACIÓN NUTRIMENTAL</strong></p>
         </div>
+
+        <ng-container *ngIf="procesarAlimentosDeComida(comida.alimentos_comida) as agrupados">
+          
+          <div class="food-table">
+            <div class="food-row food-head">
+              <span>Alimento</span><span>Cal</span><span>Prot</span><span>Carb</span><span>Grasa</span>
+            </div>
+            
+            <!-- SECCIÓN 1: CARRUSEL DE OPCIONES INTERCAMBIABLES -->
+            <div class="exchange-carousel" *ngIf="agrupados.opciones.length > 0">
+              <div class="carousel-controls">
+                <button type="button" class="arrow-btn" (click)="prevOption(i)" [disabled]="(activeOptions[i] || 0) === 0">
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#ff442b" stroke-width="2" fill="none"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+
+                <div class="active-option" *ngIf="agrupados.opciones[activeOptions[i] || 0] as opcionActiva">
+                  <span class="food-desc">{{ opcionActiva.descripcion }}</span>
+                  <div class="macros-inline">
+                     <span class="macro-cal">Cal: {{ opcionActiva.calorias }}</span> <span class="divider">|</span>
+                     <span class="macro-prot">Prot: {{ opcionActiva.proteinas }}</span> <span class="divider">|</span>
+                     <span class="macro-carb">Carb: {{ opcionActiva.carbos }}</span> <span class="divider">|</span>
+                     <span class="macro-fat">Grasa: {{ opcionActiva.grasas }}</span>
+                  </div>
+                </div>
+
+                <button type="button" class="arrow-btn" (click)="nextOption(i, agrupados.opciones.length)" [disabled]="(activeOptions[i] || 0) === agrupados.opciones.length - 1">
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#ff442b" stroke-width="2" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- SECCIÓN 2: ALIMENTOS FIJOS -->
+            <div class="food-row" *ngFor="let fijo of agrupados.fijos">
+              <span class="food-desc">{{ fijo.descripcion }}</span>
+              <span class="macro-cal">{{ fijo.calorias }}</span>
+              <span class="macro-prot">{{ fijo.proteinas }}</span>
+              <span class="macro-carb">{{ fijo.carbos }}</span>
+              <span class="macro-fat">{{ fijo.grasas }}</span>
+            </div>
+          </div>
+
+         <!-- Botón de Cumplimiento -->
+          <button class="btn-compliance" 
+                  [class.completed]="comidasCumplidasHoy.includes(i)" 
+                  (click)="marcarComidaCumplida(i)"
+                  [disabled]="isSavingCompliance && !comidasCumplidasHoy.includes(i)">
+            {{ comidasCumplidasHoy.includes(i) ? 'COMIDA COMPLETADA ✅' : '+ CUMPLÍ CON MI COMIDA' }}
+          </button>
+        </ng-container>
       </article>
 
       <div class="action-footer">
@@ -93,25 +139,22 @@
         <p>Tu semana de entrenamiento organizada por sesiones, cargas y notas de seguimiento.</p>
       </header>
 
-      <ng-container *ngIf="entrenamientoSemanal && entrenamientoSemanal.length > 0">
+      <div class="state-banner" *ngIf="isLoadingTraining">Cargando tu rutina...</div>
+      <div class="state-banner error" *ngIf="!isLoadingTraining && trainingError">{{ trainingError }}</div>
+
+      <ng-container *ngIf="!isLoadingTraining && !trainingError && entrenamientoSemanal.length > 0">
         <div class="training-workspace">
           <div class="training-overview">
             <article class="training-info-panel">
               <span class="panel-eyebrow">Cardio semanal</span>
               <h2>Base de acondicionamiento</h2>
-              <ul>
-                <li *ngFor="let item of cardioGuidelines">{{ item }}</li>
-              </ul>
+              <ul><li *ngFor="let item of cardioGuidelines">{{ item }}</li></ul>
             </article>
-
             <article class="training-info-panel">
               <span class="panel-eyebrow">Indicaciones</span>
               <h2>Antes de entrenar</h2>
-              <ul>
-                <li *ngFor="let item of trainingGuidelines">{{ item }}</li>
-              </ul>
+              <ul><li *ngFor="let item of trainingGuidelines">{{ item }}</li></ul>
             </article>
-
             <article class="training-info-panel training-diary">
               <span class="panel-eyebrow">Diario</span>
               <h2>Notas de la sesión</h2>
@@ -122,10 +165,7 @@
           </div>
 
           <nav class="training-day-strip" aria-label="Días de entrenamiento">
-            <button type="button"
-                    *ngFor="let dia of entrenamientoSemanal; let i = index"
-                    [class.active]="activeTrainingDay === i"
-                    (click)="selectTrainingDay(i)">
+            <button type="button" *ngFor="let dia of entrenamientoSemanal; let i = index" [class.active]="activeTrainingDay === i" (click)="selectTrainingDay(i)">
               <span>Día {{ i + 1 }}</span>
               <strong>{{ getTrainingShortTitle(dia.titulo) }}</strong>
               <small>{{ dia.ejercicios.length }} ejercicios</small>
@@ -146,28 +186,54 @@
 
             <div class="exercise-table">
               <div class="exercise-row exercise-head">
-                <span>#</span>
-                <span>Ejercicio</span>
-                <span>Series</span>
-                <span>Reps</span>
-                <span>Carga</span>
+                <span>#</span><span>Ejercicio</span><span>Series</span><span>Reps</span><span>Video</span><span>Carga</span>
               </div>
               <div class="exercise-row" *ngFor="let ej of diaActivo.ejercicios; let i = index">
                 <span class="exercise-index">{{ i + 1 }}</span>
                 <span class="exercise-name">{{ ej.ejercicio }}</span>
                 <span>{{ ej.series }}</span>
                 <span>{{ ej.reps }}</span>
-                <input type="number" min="0" placeholder="0">
+                <button type="button" class="exercise-video-trigger" *ngIf="ej.video_url" (click)="openExerciseVideo(ej)">Ver video</button>
+                <span class="exercise-video-empty" *ngIf="!ej.video_url">Sin video</span>
+                <span class="exercise-load" [class.is-empty]="!ej.carga_objetivo">{{ ej.carga_objetivo || 'Por definir' }}</span>
               </div>
             </div>
           </article>
         </div>
       </ng-container>
 
-      <div class="state-banner" *ngIf="!entrenamientoSemanal || entrenamientoSemanal.length === 0">
+      <div class="state-banner" *ngIf="!isLoadingTraining && !trainingError && entrenamientoSemanal.length === 0">
         Tu coach está diseñando tu rutina de entrenamiento.
       </div>
     </section>
+
+    <!-- MODAL DE VIDEO CORREGIDO (YOUTUBE / INSTAGRAM) -->
+    <div class="exercise-video-modal-backdrop" *ngIf="selectedExerciseVideo" (click)="closeExerciseVideo()">
+      <section class="exercise-video-modal" role="dialog" aria-modal="true" [attr.aria-label]="'Video de ' + selectedExerciseVideo.title" (click)="$event.stopPropagation()">
+        <header>
+          <div>
+            <span class="panel-eyebrow">Guía de ejecución</span>
+            <h2>{{ selectedExerciseVideo.title }}</h2>
+          </div>
+          <button type="button" class="exercise-video-close" (click)="closeExerciseVideo()" aria-label="Cerrar video">×</button>
+        </header>
+        
+        <div class="exercise-video-frame">
+          <ng-container *ngIf="!selectedExerciseVideo.isExternal">
+            <iframe *ngIf="selectedExerciseVideo.embedUrl" [src]="selectedExerciseVideo.embedUrl" [title]="'Video de ' + selectedExerciseVideo.title" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            <video *ngIf="selectedExerciseVideo.directUrl && !selectedExerciseVideo.embedUrl" [src]="selectedExerciseVideo.directUrl" controls playsinline></video>
+          </ng-container>
+          <div *ngIf="selectedExerciseVideo.isExternal" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 200px; padding: 2rem; background: #f8f8f8; text-align: center;">
+            <p style="margin-bottom: 1.5rem; color: #666; font-size: 0.95rem;">
+              El video de este ejercicio se encuentra en Instagram u otra plataforma externa.
+            </p>
+            <a [href]="selectedExerciseVideo.directUrl" target="_blank" rel="noopener noreferrer" class="btn-primary" style="text-decoration: none; padding: 0.8rem 1.5rem;">
+              Abrir video en la App
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <!-- SECCIÓN DE REVISIÓN DE TÉCNICA -->
     <section class="panel-section" *ngIf="activeSection === 'tecnica'">
@@ -184,7 +250,6 @@
               <label>Ejercicio a revisar</label>
               <input type="text" [(ngModel)]="ejercicioTecnica" placeholder="Ej. Sentadilla libre, Press de banca">
             </div>
-
             <div class="input-group" style="margin-top: 1.5rem;">
               <label>Archivo de Video (Máx 50MB)</label>
               <label class="video-dropzone" [class.has-file]="videoFile">
@@ -193,12 +258,10 @@
                 <input type="file" accept="video/mp4,video/quicktime" (change)="onVideoSelected($event)" style="display: none;">
               </label>
             </div>
-
             <div class="input-group" style="margin-top: 1.5rem;">
               <label>Notas adicionales (opcional)</label>
               <textarea [(ngModel)]="notaTecnica" rows="3" placeholder="Ej. Sentí una molestia en la zona lumbar al subir."></textarea>
             </div>
-
             <div class="action-footer" style="margin-top: 2rem;">
               <button class="btn-primary w-100" (click)="subirVideoTecnica()" [disabled]="isUploadingVideo || !videoFile || !ejercicioTecnica">
                 {{ isUploadingVideo ? 'Procesando video...' : 'Enviar para revisión' }}
@@ -213,7 +276,6 @@
             <span class="panel-eyebrow">Historial</span>
             <h2>Feedback del Coach</h2>
           </header>
-          
           <div class="feedback-list">
             <div class="feedback-item" *ngFor="let item of historialVideos">
               <div class="feedback-header">
@@ -242,7 +304,6 @@
             <span class="panel-eyebrow">Procedimiento</span>
             <h2>Antes de medir</h2>
           </header>
-
           <div class="tool-kit">
             <div>
               <strong>1 flexómetro</strong>
@@ -253,7 +314,6 @@
               <span>Para circunferencias en centímetros.</span>
             </div>
           </div>
-
           <ol class="procedure-list">
             <li *ngFor="let item of measurementProcedure">{{ item }}</li>
           </ol>
@@ -267,7 +327,6 @@
             </div>
             <span class="entry-date">{{ fechaHoy }}</span>
           </header>
-
           <div class="measure-capture-grid">
             <label class="measure-field" *ngFor="let item of measurementDefinitions">
               <span>{{ item.key }}</span>
@@ -276,13 +335,11 @@
               <small>{{ item.hint }}</small>
             </label>
           </div>
-
           <div class="measurement-legend">
             <span *ngFor="let item of measurementDefinitions">
               <strong>{{ item.key }}</strong> {{ item.label }}
             </span>
           </div>
-
           <div class="action-footer p-1">
             <button class="btn-primary w-100" (click)="guardarMedidas()" [disabled]="isSavingMeasurements">
               {{ isSavingMeasurements ? 'Guardando...' : 'Guardar Medidas' }}
@@ -339,7 +396,6 @@
             <label>Testimonio</label>
             <textarea [(ngModel)]="testimonioTexto" rows="5" placeholder="¿Cómo ha sido tu transformación?"></textarea>
           </div>
-
           <div class="testimonio-photo-grid">
             <label class="photo-slot">
               <span class="photo-preview preview-short">Foto Inicio</span>
@@ -350,7 +406,6 @@
               <input type="file" (change)="onTestimonioFileSelected('despues', $event)" style="display: none;">
             </label>
           </div>
-
           <div class="action-footer" style="margin-top: 2rem;">
             <button class="btn-primary w-100" (click)="enviarTestimonio()" [disabled]="isSavingTestimonio">
               {{ isSavingTestimonio ? 'Enviando...' : 'Publicar mi testimonio' }}

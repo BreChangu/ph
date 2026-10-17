@@ -209,6 +209,62 @@ export class PlanNutricionalService {
     this.supabase.removeChannel(channel);
   }
 
+  // ==========================================
+  // REGISTRO DE CUMPLIMIENTO DIARIO (NUEVO)
+  // ==========================================
+  
+  // Guardar que el paciente cumplió con una comida específica hoy
+  async registrarCumplimientoComida(pacienteId: string, comidaIndex: number): Promise<void> {
+    const hoy = new Date().toISOString().split('T')[0];
+
+    try {
+      const { data: existente } = await this.supabase
+        .from('cumplimiento_comidas')
+        .select('id')
+        .eq('paciente_id', pacienteId)
+        .eq('fecha', hoy)
+        .eq('comida_index', comidaIndex)
+        .single();
+
+      if (!existente) {
+        const { error } = await this.supabase
+          .from('cumplimiento_comidas')
+          .insert([
+            {
+              paciente_id: pacienteId,
+              fecha: hoy,
+              comida_index: comidaIndex,
+              cumplida: true
+            }
+          ]);
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error al registrar cumplimiento:', error);
+      throw error;
+    }
+  }
+
+  // Obtener los índices de las comidas que el paciente ya cumplió hoy
+  async obtenerCumplimientoDeHoy(pacienteId: string): Promise<number[]> {
+    const hoy = new Date().toISOString().split('T')[0];
+    try {
+      const { data, error } = await this.supabase
+        .from('cumplimiento_comidas')
+        .select('comida_index')
+        .eq('paciente_id', pacienteId)
+        .eq('fecha', hoy);
+
+      if (error) throw error;
+      
+      return data ? data.map(registro => registro.comida_index) : [];
+    } catch (error) {
+      console.error('Error obteniendo cumplimiento:', error);
+      return [];
+    }
+  }
+
   private withTimeout<T>(request: PromiseLike<T>, message: string): Promise<T> {
     return Promise.race([
       Promise.resolve(request),

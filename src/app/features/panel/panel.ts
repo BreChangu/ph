@@ -2,9 +2,12 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, Inject, PLATFORM_ID } 
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { AuthService } from '../../core/supabase/auth';
 import { PlanNutricionalService } from '../../core/services/plan-nutricional/plan-nutricional.service';
+import { EntrenamientoService } from '../../core/services/entrenamiento/entrenamiento.service';
+import { DiaEntrenamiento, Ejercicio } from '../../core/models/entrenamiento.models';
 
 type PanelSection = 'nutrition' | 'training' | 'measurements' | 'photos' | 'testimonio' | 'tecnica';
 type PhotoKind = 'frente' | 'perfil' | 'espalda';
@@ -36,6 +39,14 @@ export class PanelComponent implements OnInit, OnDestroy {
   isLoadingPlan = false;
   planError = '';
   planPaciente: any = null;
+  
+  // Controla qué opción intercambiable se está viendo en cada comida.
+  activeOptions: Record<number, number> = {};
+
+  // VARIABLES DE COMIDAS CUMPLIDAS
+  // Array para saber qué comidas (por su índice) ya marcó como cumplidas HOY
+  comidasCumplidasHoy: number[] = [];
+  isSavingCompliance = false; // Para evitar doble clic
 
   // ==========================================
   // VARIABLES DE ENTRENAMIENTO
@@ -48,77 +59,13 @@ export class PanelComponent implements OnInit, OnDestroy {
     day: 'numeric',
   });
 
-  entrenamientoSemanal = [
-    {
-      titulo: 'Dia 1: Dorsales',
-      ejercicios: [
-        { ejercicio: 'Remo horizontal con barra agarre prono', series: 4, reps: '5' },
-        { ejercicio: 'Jalon en polea alta con triangulo', series: 3, reps: '8' },
-        { ejercicio: 'Remo horizontal a un solo brazo con mancuerna', series: 3, reps: '8' },
-        { ejercicio: 'Jalon en polea alta a dos manos brazos extendidos', series: 3, reps: '12' },
-        { ejercicio: 'Elevacion de pantorrilla en prensa horizontal', series: 5, reps: '8' },
-      ],
-    },
-    {
-      titulo: 'Dia 2: Pierna',
-      ejercicios: [
-        { ejercicio: 'Sentadilla hack o prensa', series: 4, reps: '10' },
-        { ejercicio: 'Peso muerto rumano', series: 4, reps: '8' },
-        { ejercicio: 'Curl femoral acostado', series: 3, reps: '12' },
-        { ejercicio: 'Extension de cuadriceps', series: 3, reps: '15' },
-        { ejercicio: 'Gemelo de pie', series: 5, reps: '12' },
-      ],
-    },
-    {
-      titulo: 'Dia 3: Pecho y hombro',
-      ejercicios: [
-        { ejercicio: 'Press inclinado con mancuernas', series: 4, reps: '8' },
-        { ejercicio: 'Press plano en maquina', series: 3, reps: '10' },
-        { ejercicio: 'Aperturas en polea', series: 3, reps: '12' },
-        { ejercicio: 'Press militar', series: 3, reps: '8' },
-        { ejercicio: 'Elevaciones laterales', series: 4, reps: '15' },
-      ],
-    },
-    {
-      titulo: 'Dia 4: Brazos',
-      ejercicios: [
-        { ejercicio: 'Curl biceps barra Z', series: 4, reps: '10' },
-        { ejercicio: 'Extension triceps cuerda', series: 4, reps: '10' },
-        { ejercicio: 'Curl martillo', series: 3, reps: '12' },
-        { ejercicio: 'Press frances', series: 3, reps: '12' },
-        { ejercicio: 'Antebrazo en polea', series: 3, reps: '15' },
-      ],
-    },
-    {
-      titulo: 'Dia 5: Gluteo y femoral',
-      ejercicios: [
-        { ejercicio: 'Hip thrust', series: 4, reps: '8' },
-        { ejercicio: 'Peso muerto sumo', series: 4, reps: '8' },
-        { ejercicio: 'Abduccion en maquina', series: 4, reps: '15' },
-        { ejercicio: 'Curl femoral sentado', series: 3, reps: '12' },
-        { ejercicio: 'Desplante caminando', series: 3, reps: '12' },
-      ],
-    },
-    {
-      titulo: 'Dia 6: Full body metabolico',
-      ejercicios: [
-        { ejercicio: 'Dominadas asistidas', series: 3, reps: '8' },
-        { ejercicio: 'Press banca', series: 3, reps: '8' },
-        { ejercicio: 'Prensa', series: 3, reps: '12' },
-        { ejercicio: 'Remo cable', series: 3, reps: '12' },
-        { ejercicio: 'Caminadora inclinada', series: 1, reps: '20 min' },
-      ],
-    },
-    {
-      titulo: 'Dia 7: Recuperacion',
-      ejercicios: [
-        { ejercicio: 'Cardio zona 2', series: 1, reps: '30 min' },
-        { ejercicio: 'Movilidad cadera', series: 3, reps: '10' },
-        { ejercicio: 'Movilidad toracica', series: 3, reps: '10' },
-        { ejercicio: 'Estiramiento guiado', series: 1, reps: '15 min' },
-      ],
-    },
-  ];
+  entrenamientoSemanal: DiaEntrenamiento[] = [];
+  isLoadingTraining = false;
+  trainingError = '';
+  
+  // VARIABLE CORREGIDA PARA EL MODAL DE VIDEO
+  selectedExerciseVideo: { title: string; embedUrl?: SafeResourceUrl; directUrl?: string; isExternal?: boolean } | null = null;
+  
   trainingDiaryNote = '';
   trainingDiaryMessage = '';
 
@@ -127,7 +74,7 @@ export class PanelComponent implements OnInit, OnDestroy {
     'Mantén una intensidad que te permita sostener el ritmo.',
     'Registra tus sesiones al terminar para dar seguimiento al plan.',
   ];
-
+  
   trainingGuidelines = [
     'Toma de 2 a 4 litros de agua al día.',
     'Escucha a tu cuerpo y cuida la técnica antes de subir cargas.',
@@ -135,7 +82,7 @@ export class PanelComponent implements OnInit, OnDestroy {
   ];
 
   // ==========================================
-  // VARIABLES DE TÉCNICA (NUEVO)
+  // VARIABLES DE TÉCNICA
   // ==========================================
   videoFile: File | null = null;
   ejercicioTecnica = '';
@@ -189,6 +136,8 @@ export class PanelComponent implements OnInit, OnDestroy {
   constructor(
     public authService: AuthService,
     public planNutricionalService: PlanNutricionalService,
+    private entrenamientoService: EntrenamientoService,
+    private sanitizer: DomSanitizer,
     private router: Router,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
@@ -212,6 +161,7 @@ export class PanelComponent implements OnInit, OnDestroy {
         this.userName = perfil?.nombre_completo?.split(' ')[0] || 'Paciente';
 
         this.cargarPlanPaciente();
+        this.cargarRutinaPaciente();
         this.activarRealtime(pacienteId);
       } catch (error) {
         console.error('Error inicializando el panel:', error);
@@ -266,7 +216,7 @@ export class PanelComponent implements OnInit, OnDestroy {
   }
 
   // ==========================================
-  // MÉTODOS DE LA DIETA
+  // MÉTODOS DE LA DIETA Y CUMPLIMIENTO
   // ==========================================
   async cargarPlanPaciente() {
     if (!this.pacienteId) {
@@ -275,29 +225,172 @@ export class PanelComponent implements OnInit, OnDestroy {
     }
 
     this.isLoadingPlan = true;
-    console.log('🔍 BUSCANDO PLAN PARA EL ID:', this.pacienteId);
 
     try {
-      this.planPaciente = await this.planNutricionalService.getPlanPaciente(this.pacienteId);
+      // Cargamos el plan Y el cumplimiento de hoy en paralelo
+      const [plan, cumplimiento] = await Promise.all([
+        this.planNutricionalService.getPlanPaciente(this.pacienteId),
+        this.planNutricionalService.obtenerCumplimientoDeHoy(this.pacienteId)
+      ]);
       
-      console.log('✅ RESPUESTA DE SUPABASE:', this.planPaciente);
-      
-      if (this.planPaciente) {
-        console.log('🍴 COMIDAS ENCONTRADAS:', this.planPaciente.comidas?.length || 0);
-        if (this.planPaciente.comidas?.length > 0) {
-          console.log('🍎 PRIMERA COMIDA:', this.planPaciente.comidas[0]);
-          console.log('🥩 ALIMENTOS EN PRIMERA COMIDA:', this.planPaciente.comidas[0].alimentos_comida);
-        }
-      } else {
-        console.warn('⚠️ ADVERTENCIA: Supabase devolvió null para este ID.');
-      }
-
+      this.planPaciente = plan;
+      this.comidasCumplidasHoy = cumplimiento || [];
     } catch (error) {
-      console.error('❌ ERROR AL CARGAR PLAN:', error);
+      console.error('❌ ERROR AL CARGAR PLAN O CUMPLIMIENTO:', error);
     } finally {
       this.isLoadingPlan = false;
       this.cdr.detectChanges();
     }
+  }
+
+  async marcarComidaCumplida(comidaIndex: number) {
+    if (this.comidasCumplidasHoy.includes(comidaIndex) || this.isSavingCompliance || !this.pacienteId) {
+      return; 
+    }
+
+    this.isSavingCompliance = true;
+    
+    // UI Optimista: Actualizamos la pantalla instantáneamente
+    this.comidasCumplidasHoy.push(comidaIndex);
+    this.cdr.detectChanges();
+
+    try {
+      // Guardamos en Supabase
+      await this.planNutricionalService.registrarCumplimientoComida(this.pacienteId, comidaIndex);
+    } catch (error) {
+      // Si falla, revertimos
+      this.comidasCumplidasHoy = this.comidasCumplidasHoy.filter(i => i !== comidaIndex);
+      console.error('Fallo al guardar el cumplimiento', error);
+    } finally {
+      this.isSavingCompliance = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // ==========================================
+  // LÓGICA DE INTERCAMBIOS DE ALIMENTOS
+  // ==========================================
+  procesarAlimentosDeComida(alimentos: any[]) {
+    if (!alimentos || !Array.isArray(alimentos)) return { opciones: [], fijos: [] };
+
+    const opciones: any[] = [];
+    const fijos: any[] = [];
+
+    alimentos.forEach(alimento => {
+      // Normalizamos el objeto para asegurar que todo sea válido
+      const current = {
+        descripcion: String(alimento.descripcion || ''),
+        calorias: parseFloat(alimento.calorias) || 0,
+        proteinas: parseFloat(alimento.proteinas) || 0,
+        carbos: parseFloat(alimento.carbos) || 0,
+        grasas: parseFloat(alimento.grasas) || 0
+      };
+
+      const optionMarker = /^\s*\[?\s*opci[oó]n\s*\]?\s*:?\s*/i;
+      
+      // Las alternativas heredadas se guardan con el marcador [Opcion].
+      // Lo usamos sólo como metadato y nunca lo mostramos al paciente.
+      if (optionMarker.test(current.descripcion)) {
+        current.descripcion = current.descripcion.replace(optionMarker, '').trim();
+        opciones.push(current);
+      } else {
+        fijos.push(current);
+      }
+    });
+
+    return { opciones, fijos };
+  }
+
+  nextOption(mealIndex: number, totalOpciones: number) {
+    const actual = this.activeOptions[mealIndex] || 0;
+    if (actual < totalOpciones - 1) {
+      this.activeOptions[mealIndex] = actual + 1;
+      this.cdr.detectChanges();
+    }
+  }
+
+  prevOption(mealIndex: number) {
+    const actual = this.activeOptions[mealIndex] || 0;
+    if (actual > 0) {
+      this.activeOptions[mealIndex] = actual - 1;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // ==========================================
+  // MÉTODOS DE ENTRENAMIENTO
+  // ==========================================
+  async cargarRutinaPaciente() {
+    if (!this.pacienteId) return;
+
+    this.isLoadingTraining = true;
+    this.trainingError = '';
+
+    try {
+      const rutina = await this.entrenamientoService.getRutinaPaciente(this.pacienteId);
+      this.entrenamientoSemanal = rutina?.dias_entrenamiento ?? [];
+      this.activeTrainingDay = 0;
+    } catch (error) {
+      console.error('Error al cargar la rutina:', error);
+      this.entrenamientoSemanal = [];
+      this.trainingError = 'No fue posible cargar tu rutina. Intenta actualizar la página.';
+    } finally {
+      this.isLoadingTraining = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  openExerciseVideo(exercise: Ejercicio) {
+    const source = this.resolveExerciseVideo(exercise.video_url);
+    if (!source) return;
+
+    this.selectedExerciseVideo = {
+      title: exercise.ejercicio,
+      isExternal: source.isExternal, 
+      directUrl: source.directUrl,   
+      embedUrl: source.embedUrl      
+        ? this.sanitizer.bypassSecurityTrustResourceUrl(source.embedUrl) 
+        : undefined
+    };
+  }
+  
+  closeExerciseVideo() {
+    this.selectedExerciseVideo = null;
+  }
+
+  private resolveExerciseVideo(value?: string | null): { embedUrl?: string; directUrl?: string; isExternal?: boolean } | null {
+    const input = String(value ?? '').trim();
+    if (!input) return null;
+
+    let url: URL;
+    try {
+      url = new URL(input);
+    } catch {
+      return null;
+    }
+
+    if (url.protocol !== 'https:') return null;
+
+    const host = url.hostname.replace(/^www\./, '').toLowerCase();
+    
+    // YOUTUBE
+    if (host === 'youtu.be' || host === 'youtube.com' || host === 'm.youtube.com') {
+      let id = '';
+      if (host === 'youtu.be') {
+        id = url.pathname.split('/').filter(Boolean)[0];
+      } else {
+        id = url.pathname.match(/^\/embed\/([^/]+)/)?.[1] || url.searchParams.get('v') || '';
+      }
+      return id ? { embedUrl: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0` } : null;
+    }
+
+    // ARCHIVOS DIRECTOS O SUPABASE
+    if (/\.(mp4|webm|ogg)$/i.test(url.pathname) || host.includes('supabase')) {
+      return { directUrl: url.toString() };
+    }
+
+    // INSTAGRAM, FB, TIKTOK
+    return { directUrl: url.toString(), isExternal: true };
   }
 
   private activarRealtime(id: string) {
@@ -308,7 +401,7 @@ export class PanelComponent implements OnInit, OnDestroy {
   }
 
   // ==========================================
-  // MÉTODOS DE TÉCNICA (NUEVO)
+  // MÉTODOS DE TÉCNICA
   // ==========================================
   onVideoSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -338,10 +431,6 @@ export class PanelComponent implements OnInit, OnDestroy {
     this.tecnicaMessage = '';
 
     try {
-      // Llamadas a tu backend / Supabase
-      // const videoUrl = await this.authService.subirVideo(this.pacienteId, this.videoFile);
-      // await this.authService.guardarRegistroTecnica(this.pacienteId, this.ejercicioTecnica, this.notaTecnica, videoUrl);
-      
       this.tecnicaMessage = 'Video subido correctamente. Tu coach lo revisará pronto.';
       this.videoFile = null;
       this.ejercicioTecnica = '';

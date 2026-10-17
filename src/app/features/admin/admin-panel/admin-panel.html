@@ -9,7 +9,9 @@
               ? 'Directorio de Pacientes'
               : adminSection === 'blog'
                 ? 'Editor de Blog'
-                : 'Editor de Paquetes'
+                : adminSection === 'packages'
+                  ? 'Editor de Paquetes'
+                  : 'Gestión de Catálogos'
           }}
         </h2>
       </div>
@@ -35,6 +37,9 @@
       </button>
       <button type="button" [class.active]="adminSection === 'packages'" (click)="setAdminSection('packages')">
         Paquetes
+      </button>
+      <button type="button" [class.active]="adminSection === 'catalogs'" (click)="setAdminSection('catalogs')">
+        Catálogos
       </button>
     </nav>
 
@@ -300,6 +305,58 @@
         </div>
       </form>
     </section>
+
+    <!-- SECCIÓN DE CATÁLOGOS -->
+    <section class="blog-admin-layout" *ngIf="adminSection === 'catalogs'">
+      <aside class="blog-admin-list">
+        <div class="blog-list-header">
+          <span class="eyebrow">Catálogos</span>
+          <strong>Gestión Rápida</strong>
+        </div>
+        <div class="state-banner compact">
+          Base de datos inteligente para autocompletado. Tienes {{ catalogoAlimentos.length }} alimentos y {{ catalogoEjercicios.length }} ejercicios registrados localmente.
+        </div>
+      </aside>
+
+      <form [formGroup]="catalogoForm" class="blog-editor-card">
+        <header class="blog-editor-header">
+          <div>
+            <span class="eyebrow">Base de Datos</span>
+            <h3>Agregar al Catálogo</h3>
+          </div>
+          <div class="blog-editor-actions">
+            <button type="button" class="btn-primary" (click)="guardarItemCatalogo()" [disabled]="isSavingCatalogo">
+              {{ isSavingCatalogo ? 'Guardando...' : '+ Agregar' }}
+            </button>
+          </div>
+        </header>
+
+        <div class="state-banner compact" *ngIf="catalogoMessage" [class.error]="catalogoMessage.includes('Error')">
+          {{ catalogoMessage }}
+        </div>
+
+        <div class="input-grid">
+          <div class="input-group">
+            <label>Tipo de registro</label>
+            <select formControlName="tipo" style="height: 3.2rem; border: 1px solid rgba(0,0,0,0.2); background: transparent; padding: 0 1rem; font-family: inherit; font-size: 0.95rem; outline: none; border-radius: 0; appearance: none; -webkit-appearance: none;">
+              <option value="alimento">Alimento / Suplemento</option>
+              <option value="ejercicio">Ejercicio / Variante</option>
+            </select>
+          </div>
+          
+          <div class="input-group">
+            <label>Categoría (Opcional)</label>
+            <input type="text" formControlName="categoria" placeholder="Ej. Aves, Pecho, Pierna...">
+          </div>
+
+          <div class="input-group full-width">
+            <label>Nombre exacto a mostrar</label>
+            <input type="text" formControlName="nombre" placeholder="Ej. Salmón fresco o Press inclinado" (keydown.enter)="guardarItemCatalogo(); $event.preventDefault()">
+          </div>
+        </div>
+      </form>
+    </section>
+
   </ng-container>
 
   <ng-container *ngIf="vistaActual === 'editor'">
@@ -391,6 +448,7 @@
       </section>
     </div>
 
+    <!-- 👉 AQUÍ INICIA EL CONSTRUCTOR DE DIETAS CON LOS NUEVOS BOTONES Y LÓGICA DE BANDERAS -->
     <form [formGroup]="planForm" class="form-layout" *ngIf="!isLoadingExpediente && seccionEditor === 'nutrition'">
       <section class="clinical-card">
         <h3 class="section-label">Configuracion Energetica General</h3>
@@ -423,9 +481,9 @@
             <input type="text" class="meal-note-input" formControlName="nota_comida" placeholder="Indicaciones opcionales">
           </div>
 
-          <div formArrayName="alimentos_comida" class="foods-wrapper">
+       <div formArrayName="alimentos_comida" class="foods-wrapper">
             <div class="food-labels" *ngIf="alimentosDeComida(i).length > 0">
-              <span>Descripcion del Alimento</span>
+              <span>Descripción del Alimento</span>
               <span>Kcal</span>
               <span>Prot (g)</span>
               <span>Carb (g)</span>
@@ -433,8 +491,21 @@
               <span></span>
             </div>
 
-            <div *ngFor="let alimento of alimentosDeComida(i).controls; let j = index" [formGroupName]="j" class="food-row">
-              <input type="text" formControlName="descripcion" placeholder="Ej. 150g Pechuga de Pollo">
+            <div *ngFor="let alimento of alimentosDeComida(i).controls; let j = index" [formGroupName]="j" 
+                 class="food-row" [class.is-option-row]="alimento.value.esOpcion">
+              
+              <div class="food-input-wrapper">
+                 <span class="option-badge" *ngIf="alimento.value.esOpcion">
+                   ⇄ Opción
+                 </span>
+                 <input type="text" formControlName="descripcion" list="lista-alimentos" placeholder="Ej. 150g Pechuga de Pollo"
+                        [class.has-badge]="alimento.value.esOpcion">
+              </div>
+
+              <datalist id="lista-alimentos">
+                <option *ngFor="let catAlimento of catalogoAlimentos" [value]="catAlimento.nombre"></option>
+              </datalist>
+              
               <input type="number" formControlName="calorias" placeholder="0">
               <input type="number" formControlName="proteinas" placeholder="0">
               <input type="number" formControlName="carbos" placeholder="0">
@@ -442,7 +513,17 @@
               <button type="button" class="btn-delete-row" (click)="eliminarAlimento(i, j)">x</button>
             </div>
           </div>
-          <button type="button" class="btn-add-secondary" (click)="agregarAlimento(i)">+ Anadir Ingrediente</button>
+          
+          <div class="meal-actions-row">
+            <button type="button" class="btn-add-option" (click)="agregarOpcionIntercambiable(i)">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M17 1l4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="M7 23l-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+              + Añadir Alternativa (Carrusel)
+            </button>
+            <button type="button" class="btn-add-fixed" (click)="agregarAlimentoFijo(i)">
+              + Añadir Ingrediente Fijo
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -497,13 +578,22 @@
                   <span>Ejercicio / Variante</span>
                   <span>Series</span>
                   <span>Reps / RPE</span>
+                  <span>Carga objetivo</span>
+                  <span>Video de referencia</span>
                   <span></span>
                 </div>
 
                 <div *ngFor="let ej of ejerciciosDeDia(activeTrainingEditorDay).controls; let j = index" [formGroupName]="j" class="training-exercise-row">
-                  <input type="text" formControlName="ejercicio" placeholder="Ej. Sentadilla libre con barra">
+                  
+                  <input type="text" formControlName="ejercicio" list="lista-ejercicios" placeholder="Ej. Sentadilla libre con barra">
+                  <datalist id="lista-ejercicios">
+                    <option *ngFor="let catEj of catalogoEjercicios" [value]="catEj.nombre"></option>
+                  </datalist>
+                  
                   <input type="number" formControlName="series" placeholder="4">
                   <input type="text" formControlName="reps" placeholder="10-12">
+                  <input type="text" formControlName="carga_objetivo" placeholder="Ej. 105 kg o 45 lb">
+                  <input type="url" formControlName="video_url" placeholder="https://youtube.com/...">
                   <button type="button" class="btn-delete-row" (click)="eliminarEjercicio(activeTrainingEditorDay, j)">x</button>
                 </div>
               </div>

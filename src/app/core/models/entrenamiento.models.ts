@@ -4,6 +4,8 @@ export interface Ejercicio {
   ejercicio: string;
   series: number;
   reps: string;
+  carga_objetivo?: string | null;
+  video_url?: string | null;
   orden?: number;
 }
 

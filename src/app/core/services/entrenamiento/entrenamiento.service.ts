@@ -100,6 +100,8 @@ export class EntrenamientoService {
           ejercicio: ej.ejercicio,
           series: Number(ej.series) || 1,
           reps: ej.reps,
+          ...(String(ej.carga_objetivo ?? '').trim() ? { carga_objetivo: String(ej.carga_objetivo).trim() } : {}),
+          ...(String(ej.video_url ?? '').trim() ? { video_url: String(ej.video_url).trim() } : {}),
           orden: idx
         }));
 

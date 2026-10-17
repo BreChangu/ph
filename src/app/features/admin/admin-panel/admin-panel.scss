@@ -405,6 +405,8 @@
   }
 
   textarea {
+    width: 100%;
+    box-sizing: border-box; /* ESTA LÍNEA ES LA MAGIA DEL DESBORDE */
     min-height: 7rem;
     border: 1px solid rgba($brand-black, 0.2);
     background: transparent;
@@ -513,8 +515,87 @@
   }
 }
 
+/* ESTILOS NUEVOS PARA LOS BOTONES DE OPCIONES EN EL ADMIN */
+.meal-actions-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba($brand-black, 0.1);
+
+  button {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 2.8rem;
+    font-family: $font-h2;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-add-fixed {
+    background: transparent;
+    border: 1px dashed rgba($brand-black, 0.3);
+    color: $brand-gray;
+
+    &:hover {
+      border-color: $brand-black;
+      color: $brand-black;
+    }
+  }
+
+  .btn-add-option {
+    background: rgba($brand-red, 0.05);
+    border: 1px solid rgba($brand-red, 0.3);
+    color: $brand-red;
+
+    &:hover {
+      background: $brand-red;
+      color: $brand-white;
+    }
+  }
+}
+
+.food-row.is-option-row {
+  background: rgba($brand-red, 0.02);
+  border-left: 3px solid $brand-red;
+  padding-left: 0.5rem;
+  border-radius: 4px;
+}
+
+.food-input-wrapper {
+  position: relative;
+  width: 100%;
+
+  .option-badge {
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: $brand-red;
+    color: white;
+    font-family: $font-h2;
+    font-size: 0.6rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 2px;
+    text-transform: uppercase;
+    pointer-events: none; 
+  }
+
+  input.has-badge {
+    padding-left: 4.5rem; 
+    border-color: rgba($brand-red, 0.3);
+  }
+}
+
+
 /* ==========================================
-   BOTONES Y ACCIONES
+   BOTONES Y ACCIONES GENERALES
    ========================================== */
 .btn-primary, .btn-add-primary, .btn-add-secondary {
   display: inline-flex;
@@ -632,7 +713,7 @@
 }
 
 /* ==========================================
-   ADMIN BLOG
+   ADMIN BLOG Y CATALOGOS (REUTILIZA ESTILOS)
    ========================================== */
 .blog-admin-layout {
   display: grid;
@@ -898,7 +979,6 @@
   }
 }
 
-//Revision tecnica 
 /* ==========================================
    REVISIÓN DE TÉCNICA (ADMIN)
    ========================================== */
@@ -975,7 +1055,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    margin-top: auto; /* Empuja el formulario al fondo si la tarjeta crece */
+    margin-top: auto;
 
     label {
       font-family: $font-h2;
@@ -983,21 +1063,6 @@
       text-transform: uppercase;
       color: $brand-red;
       letter-spacing: 0.5px;
-    }
-
-    textarea {
-      width: 100%;
-      padding: 1rem;
-      border: 1px solid rgba($brand-black, 0.2);
-      font-family: $font-main;
-      font-size: 0.95rem;
-      resize: vertical;
-      background: transparent;
-
-      &:focus {
-        border-color: $brand-red;
-        outline: none;
-      }
     }
   }
 }
@@ -1030,7 +1095,7 @@
     }
 
     &.active {
-      color: #ff0000; // El color rojo acento de tu marca pHTeam
+      color: #ff0000; 
 
       &::after {
         content: '';
@@ -1051,7 +1116,6 @@
 // ==============================================================================
 .training-labels {
   display: grid;
-  // Distribución equilibrada: 3fr para el nombre largo, 80px series, 150px reps, 40px acción
   grid-template-columns: 3fr 100px 180px 40px;
   gap: 1rem;
   padding: 0.5rem 1rem;
@@ -1100,22 +1164,6 @@
     &:hover {
       color: #ef4444;
     }
-  }
-}
-
-// Estilo extra para el área de texto general de entrenamiento
-textarea {
-  width: 100%;
-  padding: 0.85rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  resize: vertical;
-
-  &:focus {
-    border-color: #ff0000;
-    outline: none;
   }
 }
 
@@ -1258,10 +1306,10 @@ textarea {
 .training-exercise-head,
 .training-exercise-row {
   display: grid;
-  grid-template-columns: minmax(16rem, 1fr) 6rem 10rem 3rem;
+  grid-template-columns: minmax(15rem, 1fr) 5rem 8rem minmax(10rem, 0.75fr) minmax(14rem, 1fr) 3rem;
   gap: 1rem;
   align-items: center;
-  min-width: 42rem;
+  min-width: 63rem;
 }
 
 .training-exercise-head {
@@ -1320,6 +1368,7 @@ textarea {
   .package-editor-preview { grid-template-columns: 1fr; }
   .clinical-card { padding: 1.5rem; }
   .meal-editor-card { padding: 1.5rem 1rem; }
+  .meal-actions-row { flex-direction: column; }
 }
 
 @media (max-width: 520px) {

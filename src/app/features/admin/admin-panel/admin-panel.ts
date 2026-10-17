@@ -9,7 +9,7 @@ import { BlogService } from '../../../core/services/blog';
 import { BlogPost } from '../../../core/models/blog-post.model';
 import { ServicePackage } from '../../../core/models/service-package.model';
 import { ServicePackagesService } from '../../../core/services/service-packages';
-import { EjerciciosService, EjercicioCatalogo } from '../../../core/services/ejercicios/ejercicios';
+
 @Component({
   selector: 'app-admin-panel',
   standalone: true,
@@ -19,7 +19,7 @@ import { EjerciciosService, EjercicioCatalogo } from '../../../core/services/eje
 })
 export class AdminPanelComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
+  public authService = inject(AuthService); 
   private planNutricionalService = inject(PlanNutricionalService);
   private entrenamientoService = inject(EntrenamientoService);
   private blogService = inject(BlogService);
@@ -27,7 +27,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
 
   vistaActual: 'lista' | 'editor' = 'lista';
-  adminSection: 'patients' | 'blog' | 'packages' = 'patients';
+  adminSection: 'patients' | 'blog' | 'packages' | 'catalogs' = 'patients';
   seccionEditor: 'evaluacion' | 'nutrition' | 'training' | 'tecnica' = 'evaluacion';
   activeTrainingEditorDay = 0;
   pacienteSeleccionado: any = null;
@@ -60,6 +60,13 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   // Variables para Revisión de Técnica
   videosTecnica: any[] = [];
   isSavingFeedback = false;
+
+  // Variables de Catálogos
+  catalogoEjercicios: any[] = [];
+  catalogoAlimentos: any[] = [];
+  catalogoForm!: FormGroup;
+  isSavingCatalogo = false;
+  catalogoMessage = '';
 
   formLabels: Record<string, string> = {
     nombre_completo: 'Nombre completo',
@@ -105,7 +112,10 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     this.initForm();
     this.initBlogForm();
     this.initPackageForm();
+    this.initCatalogoForm();
     if (!isPlatformBrowser(this.platformId)) return;
+
+    this.cargarCatalogos();
 
     window.setTimeout(() => {
       this.cargarPacientes();
@@ -167,20 +177,79 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     });
   }
 
-  setAdminSection(section: 'patients' | 'blog' | 'packages') {
+  private initCatalogoForm() {
+    this.catalogoForm = this.fb.group({
+      tipo: ['alimento', Validators.required],
+      categoria: [''],
+      nombre: ['', Validators.required]
+    });
+  }
+
+  setAdminSection(section: 'patients' | 'blog' | 'packages' | 'catalogs') {
     this.adminSection = section;
-    if (section === 'blog' && this.blogPosts.length === 0) {
-      this.cargarBlogPosts();
-    }
-    if (section === 'packages' && this.servicePackages.length === 0) {
-      this.cargarPaquetes();
-    }
+    if (section === 'blog' && this.blogPosts.length === 0) this.cargarBlogPosts();
+    if (section === 'packages' && this.servicePackages.length === 0) this.cargarPaquetes();
+    if (section === 'catalogs' && this.catalogoAlimentos.length === 0) this.cargarCatalogos();
     this.cdr.detectChanges();
   }
 
   setSeccionEditor(seccion: 'evaluacion' | 'nutrition' | 'training' | 'tecnica') {
     this.seccionEditor = seccion;
     this.cdr.detectChanges();
+  }
+
+  async cargarCatalogos() {
+    try {
+      const supabase = (this.authService as any).supabase || (this.authService as any).supabaseClient;
+      if (!supabase) return;
+      
+      const [ejerciciosRes, alimentosRes] = await Promise.all([
+        supabase.from('catalogo_ejercicios').select('*').order('nombre'),
+        supabase.from('catalogo_alimentos').select('*').order('nombre')
+      ]);
+      if (ejerciciosRes.data) this.catalogoEjercicios = ejerciciosRes.data;
+      if (alimentosRes.data) this.catalogoAlimentos = alimentosRes.data;
+    } catch (error) {
+      console.error('Error cargando catálogos:', error);
+    }
+  }
+
+  async guardarItemCatalogo() {
+    if (this.catalogoForm.invalid) {
+      this.catalogoForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSavingCatalogo = true;
+    this.catalogoMessage = '';
+    this.cdr.detectChanges();
+
+    const { tipo, categoria, nombre } = this.catalogoForm.value;
+    const supabase = (this.authService as any).supabase || (this.authService as any).supabaseClient;
+
+    try {
+      if (tipo === 'alimento') {
+        const { error } = await supabase.from('catalogo_alimentos').insert([{ categoria, nombre }]);
+        if (error) throw error;
+        
+        this.catalogoAlimentos.push({ categoria, nombre });
+        this.catalogoMessage = '¡Alimento guardado con éxito!';
+      } else if (tipo === 'ejercicio') {
+        const { error } = await supabase.from('catalogo_ejercicios').insert([{ categoria, nombre }]);
+        if (error) throw error;
+
+        this.catalogoEjercicios.push({ categoria, nombre });
+        this.catalogoMessage = '¡Ejercicio guardado con éxito!';
+      }
+      
+      this.catalogoForm.get('nombre')?.reset();
+
+    } catch (error: any) {
+      this.catalogoMessage = `Error al guardar: ${error.message}`;
+    } finally {
+      this.isSavingCatalogo = false;
+      this.cdr.detectChanges();
+    }
   }
 
   async cargarPacientes() {
@@ -397,15 +466,26 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
             nombre: [c.nombre || '', Validators.required],
             nota_comida: [c.nota_comida || ''],
             alimentos_comida: this.fb.array(
-              (c.alimentos_comida || []).map((a: any) =>
-                this.fb.group({
-                  descripcion: [a.descripcion || '', Validators.required],
+              (c.alimentos_comida || []).map((a: any) => {
+                
+                // Mapear si es opción basado en el texto cuando se carga el plan
+                const descripcionOriginal = String(a.descripcion || '');
+                const esOpcionValue = /^\s*\[?\s*opci[oó]n\s*\]?\s*:?\s*/i.test(descripcionOriginal);
+                
+                // El marcador técnico no debe mezclarse con el nombre que edita el coach.
+                const descLimpia = esOpcionValue
+                  ? descripcionOriginal.replace(/^\s*\[?\s*opci[oó]n\s*\]?\s*:?\s*/i, '').trim()
+                  : descripcionOriginal;
+
+                return this.fb.group({
+                  descripcion: [descLimpia || '', Validators.required],
                   calorias: [a.calorias || 0],
                   proteinas: [a.proteinas || 0],
                   carbos: [a.carbos || 0],
                   grasas: [a.grasas || 0],
-                })
-              )
+                  esOpcion: [esOpcionValue] // <--- AQUÍ SE CARGA EL VALOR BOOLEANO
+                });
+              })
             ),
           });
           this.comidas.push(comidaGroup);
@@ -429,7 +509,9 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
                 this.fb.group({
                   ejercicio: [e.ejercicio || '', Validators.required],
                   series: [e.series || 4, [Validators.required, Validators.min(1)]],
-                  reps: [e.reps || '10-12', Validators.required]
+                  reps: [e.reps || '10-12', Validators.required],
+                  carga_objetivo: [e.carga_objetivo || ''],
+                  video_url: [e.video_url || '']
                 })
               )
             )
@@ -469,7 +551,27 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
       const tareas: Promise<void>[] = [];
 
       if (this.tieneComidasConAlimentos()) {
-        tareas.push(this.planNutricionalService.guardarPlanCompleto(this.pacienteSeleccionado.id, this.planForm.value));
+        
+        // ¡PREPARACIÓN DE DATOS (Intercepción de Guardado)!
+        // Creamos una copia del valor del formulario para manipularlo antes de enviarlo
+        const planDataRaw = JSON.parse(JSON.stringify(this.planForm.value));
+        
+        // Iteramos las comidas y los alimentos para poner [Opcion] a los que tienen la bandera
+        if (planDataRaw.comidas) {
+          planDataRaw.comidas.forEach((comida: any) => {
+            if (comida.alimentos_comida) {
+              comida.alimentos_comida.forEach((alimento: any) => {
+                if (alimento.esOpcion) {
+                  // Si tiene la bandera de opción, le agregamos el prefijo [Opcion]
+                  alimento.descripcion = `[Opcion] ${alimento.descripcion}`;
+                }
+              });
+            }
+          });
+        }
+
+        // Enviamos el dato manipulado, no el valor crudo del formulario
+        tareas.push(this.planNutricionalService.guardarPlanCompleto(this.pacienteSeleccionado.id, planDataRaw));
       }
 
       if (this.tieneRutinaConEjercicios()) {
@@ -513,7 +615,9 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Getters y helpers de Nutrición
+  // ========================================================
+  // GETTERS Y HELPERS DE NUTRICIÓN (Actualizado para Opciones)
+  // ========================================================
   get comidas() { return this.planForm.get('comidas') as FormArray; }
   alimentosDeComida(idx: number) { return this.comidas.at(idx).get('alimentos_comida') as FormArray; }
 
@@ -522,8 +626,29 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  agregarAlimento(idx: number) {
-    this.alimentosDeComida(idx).push(this.fb.group({ descripcion: ['', Validators.required], calorias: [0], proteinas: [0], carbos: [0], grasas: [0] }));
+  // 1. Añadir Alimento Fijo normal
+  agregarAlimentoFijo(idx: number) {
+    this.alimentosDeComida(idx).push(this.fb.group({ 
+      descripcion: ['', Validators.required], 
+      calorias: [0], 
+      proteinas: [0], 
+      carbos: [0], 
+      grasas: [0],
+      esOpcion: [false],
+    }));
+    this.cdr.detectChanges();
+  }
+
+  // 2. Añadir Alternativa (Mágicamente pone la bandera para que el celular lo detecte)
+  agregarOpcionIntercambiable(idx: number) {
+    this.alimentosDeComida(idx).push(this.fb.group({ 
+      descripcion: ['', Validators.required], // <- Ya no le ponemos [Opcion] aquí al inicio
+      calorias: [0], 
+      proteinas: [0], 
+      carbos: [0], 
+      grasas: [0],
+      esOpcion: [true] // <- Usamos la bandera
+    }));
     this.cdr.detectChanges();
   }
 
@@ -543,7 +668,13 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   }
 
   agregarEjercicio(idx: number) {
-    this.ejerciciosDeDia(idx).push(this.fb.group({ ejercicio: ['', Validators.required], series: [4, [Validators.required, Validators.min(1)]], reps: ['10-12', Validators.required] }));
+    this.ejerciciosDeDia(idx).push(this.fb.group({
+      ejercicio: ['', Validators.required],
+      series: [4, [Validators.required, Validators.min(1)]],
+      reps: ['10-12', Validators.required],
+      carga_objetivo: [''],
+      video_url: ['']
+    }));
     this.cdr.detectChanges();
   }
 
