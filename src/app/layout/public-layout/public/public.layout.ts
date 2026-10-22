@@ -11,6 +11,4 @@ import { Footer } from '../../footer/footer';
   templateUrl: './public.layout.html',
   styleUrl: './public.layout.scss',
 })
-export class PublicLayout {
-
-}
+export class PublicLayout {}

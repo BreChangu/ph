@@ -1,6 +1,16 @@
 <div class="auth-wrapper">
   <div class="auth-card">
-    
+    <section *ngIf="isAccountReview; else authForm" class="account-review" aria-live="polite">
+      <span class="review-kicker">ESTADO DE CUENTA</span>
+      <h2>{{ accountReviewTitle }}</h2>
+      <p>{{ message }}</p>
+      <div class="review-actions">
+        <button type="button" class="btn-primary" (click)="volverAlInicio()">VOLVER AL INICIO</button>
+        <button type="button" class="btn-secondary" (click)="volverAlLogin()">INICIAR CON OTRA CUENTA</button>
+      </div>
+    </section>
+
+    <ng-template #authForm>
     <header class="auth-header">
       <h2 class="title">
         {{ isRecoveryMode ? 'RECUPERAR ACCESO' : (isLoginMode ? 'BIENVENIDO' : 'CREAR CUENTA') }}
@@ -11,10 +21,12 @@
     </header>
 
     <ng-container *ngIf="!isRecoveryMode">
-      <button class="btn-google" (click)="handleGoogleLogin()" type="button">
-        <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/google/google-original.svg" alt="Google" class="icon-google">
-        <span>Continuar con Google</span>
-      </button>
+    <button type="button" class="btn-google" (click)="handleGoogleLogin()" [disabled]="isLoadingGoogle">
+  <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+    <!-- SVG path de Google (no lo borres, déjalo como estaba) -->
+  </svg>
+  {{ isLoadingGoogle ? 'Conectando...' : 'Continuar con Google' }}
+</button>
 
       <div class="divider">
         <span>o ingresa con tu correo</span>
@@ -126,6 +138,7 @@
         </button>
       </p>
     </div>
+    </ng-template>
 
   </div>
 </div>

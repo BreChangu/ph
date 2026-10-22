@@ -18,7 +18,7 @@ export class FaqComponent implements OnInit {
   faqs: FAQ[] = [
     {
       question: '¿Cuentan con envíos a todo México?',
-      answer: 'Sí, gestionamos envíos a nivel nacional con tiempos de entrega de 3 a 5 días hábiles dependiendo de la zona. El costo se calcula al momento de confirmar tu cotización.',
+      answer: 'Sí, gestionamos envíos a nivel nacional  dependiendo de la zona. El costo se calcula al momento de confirmar tu cotización.',
       isOpen: false
     },
     {

@@ -1,1 +1,9 @@
-{"0": "@angular/core", "1": "AdminPanelComponent", "2": "AuthService", "3": "package.json", "4": "options", "5": "ServicePackage", "6": "BlogService", "7": "Suplementos", "8": "app.config.server.ts", "9": "PanelComponent", "10": "PlanNutricionalService", "11": "panel.ts", "12": "EntrenamientoService", "13": "Home", "14": "Navbar", "15": "FaqComponent", "16": "EjerciciosService", "17": ".ngOnInit", "18": "user.model.ts"}
+{
+  "4": "options",
+  "6": "BlogService",
+  "8": "app.config.server.ts",
+  "13": "Home",
+  "14": "Navbar",
+  "15": "FaqComponent",
+  "18": "user.model.ts"
+}

@@ -23,7 +23,7 @@ using (published = true);
 
 drop policy if exists "Admins can manage service packages" on public.service_packages;
 create policy "Admins can manage service packages"
-on public.service_packages
+on public.service_packages                                                                                                                                                                                                                                                        
 for all
 using (
   exists (

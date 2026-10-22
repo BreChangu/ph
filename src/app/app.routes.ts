@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 // 🟢 FIX: Importamos el cadenero (la FUNCIÓN), no el servicio.
 // Asegúrate de que la ruta coincida con donde guardaste tu auth.guard.ts
 import { authGuard } from './core/guards/auth-guard';
+import { oauthRootRedirectGuard } from './core/guards/oauth-root-redirect.guard';
 
 export const routes: Routes = [
   {
@@ -12,6 +13,7 @@ export const routes: Routes = [
     children: [
       {
         path: '',
+        canActivate: [oauthRootRedirectGuard],
         loadComponent: () => import('./features/home/home').then((m) => m.Home),
       },
       {
@@ -43,6 +45,10 @@ loadComponent: () => import('./features/legal/terminos-condiciones/terminos-cond
         loadComponent: () => import('./features/blog-detail/blog-detail').then((m) => m.BlogDetail),
       },
 
+      {
+        path: 'auth/callback',
+        loadComponent: () => import('./features/auth/callback/auth-callback').then((m) => m.AuthCallbackComponent),
+      },
       {
         path: 'auth',
         loadComponent: () => import('./features/auth/auth').then((m) => m.AuthComponent),

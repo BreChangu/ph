@@ -1,0 +1,44 @@
+.auth-callback {
+  display: grid;
+  min-height: 60vh;
+  place-items: center;
+  padding: 2rem;
+  background: #f2f2f2;
+}
+
+.auth-callback__content {
+  width: min(100%, 34rem);
+  border-top: 4px solid #ff0000;
+  background: #fff;
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.auth-callback__eyebrow {
+  color: #ff0000;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0.75rem 0;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  text-transform: uppercase;
+}
+
+p { color: #6c6c6c; line-height: 1.6; }
+
+a {
+  display: inline-flex;
+  margin-top: 1rem;
+  color: #fff;
+  background: #000;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 0.78rem;
+  padding: 0.9rem 1.2rem;
+  text-decoration: none;
+  text-transform: uppercase;
+}

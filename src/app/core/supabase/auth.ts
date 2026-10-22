@@ -3,6 +3,11 @@ import { isPlatformBrowser } from '@angular/common';
 import { createClient, SupabaseClient, User, Session, RealtimeChannel } from '@supabase/supabase-js';
 import { environment } from '../../../enviroments/enviroments';
 
+export type AuthDestination = {
+  commands: string[];
+  queryParams?: Record<string, string>;
+};
+
 @Injectable({
   providedIn: 'root'
 })
@@ -21,11 +26,16 @@ export class AuthService {
     @Inject(PLATFORM_ID) private platformId: Object,
     private ngZone: NgZone
   ) {
+    const isPasswordRecoveryRoute = isPlatformBrowser(this.platformId)
+      && window.location.pathname === '/actualizar-password';
+
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        // OAuth is processed only by /auth/callback so the router can preserve the code.
+        // Password-recovery links still need Supabase's automatic hash processing.
+        detectSessionInUrl: isPasswordRecoveryRoute,
       },
     });
     this.initAuthState();
@@ -79,8 +89,82 @@ export class AuthService {
   async signInWithGoogle() {
     return await this.supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://ph-hazel-omega.vercel.app/' }
+      options: { 
+        // Esta ruta concentra la validación del perfil antes de mostrar contenido privado.
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
     });
+  }
+
+  async waitForOAuthSession(timeoutMs = 8000): Promise<Session | null> {
+    const currentSession = await this.getSession();
+    if (currentSession) return currentSession;
+
+    return new Promise((resolve) => {
+      let resolved = false;
+      const { data: { subscription } } = this.supabase.auth.onAuthStateChange((event, session) => {
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !resolved) {
+          resolved = true;
+          globalThis.clearTimeout(timeout);
+          subscription.unsubscribe();
+          resolve(session);
+        }
+      });
+
+      const timeout = globalThis.setTimeout(() => {
+        if (resolved) return;
+        resolved = true;
+        subscription.unsubscribe();
+        resolve(null);
+      }, timeoutMs);
+    });
+  }
+
+  async completeOAuthCallback(): Promise<Session | null> {
+    if (!isPlatformBrowser(this.platformId)) return null;
+
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (code) {
+      const { data, error } = await this.supabase.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+      return data.session;
+    }
+
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
+    if (accessToken && refreshToken) {
+      const { data, error } = await this.supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (error) throw error;
+      return data.session;
+    }
+
+    return this.waitForOAuthSession();
+  }
+
+  async getAuthenticatedDestination(userId: string, email?: string): Promise<AuthDestination> {
+    const perfil = await this.getUserProfileForAuth(userId, email);
+
+    if (!perfil) {
+      await this.signOut();
+      return { commands: ['/auth'], queryParams: { error: 'perfil_no_encontrado' } };
+    }
+
+    if (perfil.rol !== 'admin' && perfil.estado_aprobacion !== 'aprobado') {
+      await this.signOut();
+      return {
+        commands: ['/auth'],
+        queryParams: { pendiente: perfil.estado_aprobacion === 'pendiente' ? '1' : 'suspendido' },
+      };
+    }
+
+    if (perfil.rol === 'admin') return { commands: ['/admin-panel'] };
+
+    const expediente = await this.getExpedienteClinico(perfil.id);
+    return { commands: [expediente ? '/panel' : '/onboarding'] };
   }
 
   async resetPassword(email: string) {

@@ -1,0 +1,8 @@
+<section class="auth-callback" aria-live="polite">
+  <div class="auth-callback__content">
+    <span class="auth-callback__eyebrow">PH Team</span>
+    <h1>{{ error ? 'No pudimos iniciar sesión' : 'Verificando tu acceso' }}</h1>
+    <p>{{ error || 'Estamos validando tu cuenta y preparando tu espacio.' }}</p>
+    <a *ngIf="error" routerLink="/auth">Volver a iniciar sesión</a>
+  </div>
+</section>

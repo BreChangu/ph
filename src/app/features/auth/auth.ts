@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
   selector: 'app-auth',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  providers: [AuthService], // 🟢 Proveedor para solucionar el error NG2003
   templateUrl: './auth.html',
   styleUrls: ['./auth.scss'],
 })
@@ -20,7 +21,10 @@ export class AuthComponent implements OnInit {
   isRecoveryMode = false;
   isEmailSent = false;
   isLoading = false;
+  isLoadingGoogle = false;
   showPassword = false;
+  isAccountReview = false;
+  accountReviewTitle = '';
   message = '';
   isError = false;
 
@@ -29,16 +33,72 @@ export class AuthComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
     private router: Router,
-    private ngZone: NgZone // 🟢 Necesario para que Angular actualice la vista al entrar
+    private ngZone: NgZone
   ) {}
 
   async ngOnInit() {
-    // 🟢 FIX: Usamos el método signOut reactivo
-    if (this.route.snapshot.queryParamMap.get('signedOut') === '1') {
-      await this.authService.signOut();
+    const authError = this.route.snapshot.queryParamMap.get('error');
+    if (authError) {
+      this.showMessage(
+        authError === 'perfil_no_encontrado'
+          ? 'No encontramos un perfil asociado a esta cuenta. Contacta a tu coach.'
+          : 'No pudimos completar el inicio de sesión. Inténtalo nuevamente.',
+        true,
+      );
+      this.router.navigate(['/auth'], { replaceUrl: true });
       return;
     }
 
+    // 1. 🔴 Revisamos si el Guardia nos expulsó por cuenta pendiente
+    const approvalStatus = this.route.snapshot.queryParamMap.get('pendiente');
+    const isPendiente = approvalStatus === '1' || approvalStatus === 'suspendido';
+    
+    if (isPendiente) {
+      await this.authService.signOut();
+      this.isAccountReview = true;
+      this.accountReviewTitle = approvalStatus === 'suspendido'
+        ? 'CUENTA SUSPENDIDA'
+        : 'ESTAMOS REVISANDO TU CUENTA';
+      this.showMessage(
+        approvalStatus === 'suspendido'
+          ? 'Tu cuenta está suspendida. Contacta a tu coach para recibir ayuda.'
+          : 'Tu cuenta está en revisión. Te avisaremos cuando el Coach la apruebe.',
+        true,
+      );
+
+      // 🟢 Limpiamos la URL para romper el bucle infinito al recargar o navegar
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { pendiente: null }, 
+        queryParamsHandling: 'merge', 
+        replaceUrl: true 
+      });
+
+      return;
+    }
+
+    // 2. Revisamos si fue un cierre de sesión manual
+    if (this.route.snapshot.queryParamMap.get('signedOut') === '1') {
+      await this.authService.signOut();
+      
+      // 🟢 Limpiamos el query param de la URL
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { signedOut: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+      return;
+    }
+
+    // 3. 🟢 Esperamos a que Supabase procese el token de Google si viene en el hash de la URL
+    const hash = typeof window === 'undefined' ? '' : window.location.hash;
+    if (hash && hash.includes('access_token')) {
+      // Retraso de 500ms para asegurar que Supabase extrajo la sesión del OAuth
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // 4. Flujo normal: Evaluamos sesión activa y redirigimos
     const session = await this.authService.getSession();
     if (session?.user) {
       await this.redirigirUsuarioAutenticado(session.user.id, session.user.email);
@@ -50,6 +110,16 @@ export class AuthComponent implements OnInit {
     this.isRecoveryMode = false;
     this.isEmailSent = false;
     this.resetForm();
+  }
+
+  volverAlLogin(): void {
+    this.isAccountReview = false;
+    this.message = '';
+    void this.router.navigate(['/auth'], { replaceUrl: true });
+  }
+
+  volverAlInicio(): void {
+    void this.router.navigate(['/'], { replaceUrl: true });
   }
 
   toggleRecoveryMode() {
@@ -70,7 +140,14 @@ export class AuthComponent implements OnInit {
   }
 
   async handleGoogleLogin() {
-    await this.authService.signInWithGoogle();
+    this.isLoadingGoogle = true;
+    try {
+      await this.authService.signInWithGoogle();
+    } catch (error) {
+      console.error('Error al iniciar sesión con Google:', error);
+      this.isLoadingGoogle = false;
+      this.showMessage('Hubo un error al conectar con Google.', true);
+    }
   }
 
   async handleEmailAuth() {
@@ -174,6 +251,7 @@ export class AuthComponent implements OnInit {
 
   private async redirigirUsuarioAutenticado(userId: string, email?: string) {
     const perfil = await this.authService.getUserProfileForAuth(userId, email);
+    this.isLoadingGoogle = false;
 
     if (!perfil) {
       this.showMessage('Error de sistema: Perfil no encontrado.', true);
@@ -181,19 +259,24 @@ export class AuthComponent implements OnInit {
       return;
     }
 
+    // Bloquear acceso a pendientes, a menos que sean admin
     if (perfil.estado_aprobacion === 'pendiente' && perfil.rol !== 'admin') {
-      this.showMessage('Tu cuenta está en revisión. Te avisaremos cuando sea aprobada.', true);
+      this.isAccountReview = true;
+      this.accountReviewTitle = 'ESTAMOS REVISANDO TU CUENTA';
+      this.showMessage('Tu cuenta está en revisión. Te avisaremos cuando el Coach la apruebe.', true);
       await this.authService.signOut();
       return;
     }
 
-    // 🟢 Hacemos que Angular salte a la vista deseada instantáneamente
     this.ngZone.run(async () => {
       if (perfil.rol === 'admin') {
-        await this.router.navigate(['/admin-panel']);
+        await this.router.navigate(['/admin-panel'], { replaceUrl: true });
       } else {
+        // Consultar si tiene el formulario inicial llenado
         const expediente = await this.authService.getExpedienteClinico(perfil.id);
-        await this.router.navigate([expediente ? '/panel' : '/onboarding']);
+        
+        // Redirige al panel si hay expediente, o al onboarding para llenar sus datos
+        await this.router.navigate([expediente ? '/panel' : '/onboarding'], { replaceUrl: true });
       }
     });
   }
