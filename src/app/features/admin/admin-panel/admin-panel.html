@@ -393,9 +393,6 @@
 
   </ng-container>
 
-  <!-- ============================================== -->
-  <!-- EDITOR DE EXPEDIENTE DEL PACIENTE -->
-  <!-- ============================================== -->
   <ng-container *ngIf="vistaActual === 'editor'">
     <header class="admin-header editor-heading">
       <div class="header-titles">
@@ -528,13 +525,12 @@
               <span></span>
             </div>
 
-            <!-- 🟢 [style.z-index] AÑADIDO PARA EVITAR QUE EL MENÚ SE ESCONDA DETRÁS DE LAS OTRAS FILAS -->
             <div *ngFor="let alimento of alimentosDeComida(i).controls; let j = index" [formGroupName]="j" 
                  class="food-row" [class.is-option-row]="alimento.value.esOpcion"
                  [style.position]="'relative'"
                  [style.z-index]="activeSearchDropdown === (i + '-' + j) ? 9999 : 1">
               
-              <!-- 🟢 CONTENEDOR DE AUTOCOMPLETADO Y EDICIÓN INLINE -->
+              <!-- 🟢 CONTENEDOR DE AUTOCOMPLETADO Y EDICIÓN INLINE CON CATEGORÍAS -->
               <div class="food-input-wrapper autocomplete-container">
                 <span class="option-badge" *ngIf="alimento.value.esOpcion">
                   ⇄ Opción
@@ -548,74 +544,87 @@
                        (focus)="activeSearchDropdown = i + '-' + j"
                        autocomplete="off">
 
-                <!-- 🟢 EL MENÚ DESPLEGABLE CON EDICIÓN INLINE -->
-            <!-- 🟢 EL MENÚ DESPLEGABLE CON EDICIÓN INLINE -->
+                <!-- 🟢 EL MENÚ DESPLEGABLE CON EDICIÓN INLINE Y CATEGORÍAS -->
                 <div class="autocomplete-dropdown" *ngIf="activeSearchDropdown === (i + '-' + j)">
                   
                   <div class="dropdown-header">
                     <small>Base de datos: {{ catalogoAlimentos.length }} ingredientes</small>
                   </div>
 
-                  <!-- MODO VISTA O EDICIÓN DEL ELEMENTO -->
-                  <div class="dropdown-item-wrapper" *ngFor="let catAlimento of getAlimentosFiltrados(i, j)">
+                  <!-- 🟢 AGRUPACIÓN POR CATEGORÍAS -->
+                  <ng-container *ngFor="let grupo of getAlimentosAgrupados(i, j)">
                     
-                    <!-- 1. VISTA NORMAL -->
-                    <div class="dropdown-item" *ngIf="inlineEditingFoodId !== catAlimento.id" (click)="seleccionarAlimento(catAlimento, i, j)">
-                      
-                      <div class="item-content-left">
-                        <strong class="item-name">{{ catAlimento.nombre }}</strong>
-                        <div class="item-details">
-                          <span class="macro-tag" [ngClass]="{
-                            'macro-protein': catAlimento.macronutriente === 'Proteína',
-                            'macro-carbs': catAlimento.macronutriente === 'Carbohidrato',
-                            'macro-fats': catAlimento.macronutriente === 'Grasa'
-                          }">
-                            {{ catAlimento.macronutriente }}
-                          </span>
-                          <span class="item-category-text">{{ catAlimento.categoria || 'Sin categoría' }}</span>
-                        </div>
-                      </div>
-                      
-                      <!-- BOTONES DE ACCIÓN MÁS VISIBLES -->
-                      <div class="item-actions">
-                         <button type="button" class="action-btn edit-btn" title="Editar alimento" (click)="iniciarEdicionAlimento(catAlimento); $event.stopPropagation()">
-                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                         </button>
-                         <button type="button" class="action-btn delete-btn" title="Borrar del catálogo" (click)="eliminarItemCatalogo(catAlimento.id, catAlimento.nombre, 'alimento'); $event.stopPropagation()">
-                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                         </button>
-                      </div>
-
+                    <!-- ENCABEZADO DE LA CATEGORÍA -->
+                    <div class="category-header" 
+                         (click)="toggleCategory(i, j, grupo.categoria)">
+                      <span class="category-name">{{ grupo.categoria }}</span>
+                      <span class="category-count">{{ grupo.alimentos.length }}</span>
+                      <svg class="chevron-icon" [class.rotated]="isCategoryExpanded(i, j, grupo.categoria) || alimentoSearchTerms[(i + '-' + j)]" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
                     </div>
 
-                    <!-- 2. VISTA EDICIÓN DEL ELEMENTO -->
-                    <div class="dropdown-item-edit" *ngIf="inlineEditingFoodId === catAlimento.id" (click)="$event.stopPropagation()">
-                       <form [formGroup]="inlineFoodForm">
-                          <input type="text" formControlName="nombre" placeholder="Nombre (Ej. Salmón)">
-                          <input type="text" formControlName="categoria" placeholder="Categoría (Ej. Pescados)">
-                          <select formControlName="macronutriente">
-                            <option value="Proteína">Proteína</option>
-                            <option value="Carbohidrato">Carbohidrato</option>
-                            <option value="Grasa">Grasa</option>
-                            <option value="Otro">Otro</option>
-                          </select>
-                          <div class="edit-actions">
-                             <button type="button" class="btn-add-primary" (click)="guardarAlimentoInline()">Guardar</button>
-                             <button type="button" class="btn-add-secondary" (click)="cancelarEdicionInline()">Cancelar</button>
+                    <!-- ALIMENTOS DE ESTA CATEGORÍA -->
+                    <div class="category-items-container" 
+                         *ngIf="isCategoryExpanded(i, j, grupo.categoria) || alimentoSearchTerms[(i + '-' + j)]">
+                         
+                      <!-- 🔥 AQUI CORREGIMOS EL BUCLE, REMOVIENDO EL WRAPPER INNECESARIO -->
+                      <ng-container *ngFor="let catAlimento of grupo.alimentos">
+                        
+                        <!-- 1. VISTA NORMAL DEL ALIMENTO -->
+                        <div class="dropdown-item" *ngIf="inlineEditingFoodId !== catAlimento.id" (click)="seleccionarAlimento(catAlimento, i, j)">
+                          
+                          <div class="item-content-left">
+                            <strong class="item-name">{{ catAlimento.nombre }}</strong>
+                            <span class="macro-tag" [ngClass]="{
+                              'macro-protein': catAlimento.macronutriente === 'Proteína',
+                              'macro-carbs': catAlimento.macronutriente === 'Carbohidrato',
+                              'macro-fats': catAlimento.macronutriente === 'Grasa'
+                            }">
+                              {{ catAlimento.macronutriente }}
+                            </span>
                           </div>
-                       </form>
-                    </div>
+                          
+                          <!-- BOTONES DE ACCIÓN MINIMALISTAS -->
+                          <div class="item-actions">
+                             <button type="button" class="action-btn edit-btn" title="Editar alimento" (click)="iniciarEdicionAlimento(catAlimento); $event.stopPropagation()">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                             </button>
+                             <button type="button" class="action-btn delete-btn" title="Borrar del catálogo" (click)="eliminarItemCatalogo(catAlimento.id, catAlimento.nombre, 'alimento'); $event.stopPropagation()">
+                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                             </button>
+                          </div>
+                        </div>
 
-                  </div>
+                        <!-- 2. VISTA EDICIÓN DEL ELEMENTO INLINE -->
+                        <div class="dropdown-item-edit" *ngIf="inlineEditingFoodId === catAlimento.id" (click)="$event.stopPropagation()">
+                           <div [formGroup]="inlineFoodForm">
+                              <input type="text" formControlName="nombre" placeholder="Nombre (Ej. Salmón)">
+                              <input type="text" formControlName="categoria" placeholder="Categoría (Ej. Pescados)">
+                              <select formControlName="macronutriente">
+                                <option value="Proteína">Proteína</option>
+                                <option value="Carbohidrato">Carbohidrato</option>
+                                <option value="Grasa">Grasa</option>
+                                <option value="Otro">Otro</option>
+                              </select>
+                              <div class="edit-actions">
+                                 <button type="button" class="btn-add-primary" (click)="guardarAlimentoInline()">Guardar</button>
+                                 <button type="button" class="btn-add-secondary" (click)="cancelarEdicionInline()">Cancelar</button>
+                              </div>
+                           </div>
+                        </div>
+                      </ng-container>
+                    </div>
+                  </ng-container>
 
                   <!-- MENSAJE VACÍO -->
-                  <div class="dropdown-empty" *ngIf="getAlimentosFiltrados(i, j).length === 0 && !isAddingInlineFood">
-                    No se encontraron coincidencias.
+                  <div class="dropdown-empty" *ngIf="getAlimentosAgrupados(i, j).length === 0 && !isAddingInlineFood">
+                    No se encontraron coincidencias en la búsqueda.
                   </div>
 
                   <!-- 3. VISTA AÑADIR NUEVO ELEMENTO -->
                   <div class="dropdown-item-edit new-item-box" *ngIf="isAddingInlineFood" (click)="$event.stopPropagation()">
-                     <form [formGroup]="inlineFoodForm">
+                     <div [formGroup]="inlineFoodForm">
                         <label>Agregar Nuevo Alimento</label>
                         <input type="text" formControlName="nombre" placeholder="Nombre (Ej. Salmón)">
                         <input type="text" formControlName="categoria" placeholder="Categoría (Ej. Pescados)">
@@ -629,18 +638,16 @@
                            <button type="button" class="btn-add-primary" (click)="guardarAlimentoInline()">Guardar en catálogo</button>
                            <button type="button" class="btn-add-secondary" (click)="cancelarEdicionInline()">Cancelar</button>
                         </div>
-                     </form>
+                     </div>
                   </div>
 
                   <!-- 4. BOTÓN "AÑADIR" FIJO AL FINAL DEL DROPDOWN -->
                   <div class="dropdown-footer" *ngIf="!isAddingInlineFood" (click)="iniciarNuevoAlimentoInline(); $event.stopPropagation()">
-                     <button type="button" class="btn-add-primary full-width" style="margin: 0;">+ Añadir Alimento a la Base de Datos</button>
+                     <button type="button" class="btn-inline-add">+ Añadir Ingrediente al Catálogo</button>
                   </div>
 
                 </div>
-                
               </div>
-              
               <!-- Termina Contenedor de Autocompletado -->
 
               <input type="number" formControlName="calorias" placeholder="0">
@@ -783,16 +790,14 @@
     </div>
 
   </ng-container>
-  <!-- ==========================================
-         TOAST NOTIFICATION
-         ========================================== -->
-    <div *ngIf="showToast" class="toast-notification" [class.error]="toastType === 'error'" [class.success]="toastType === 'success'"
-         [attr.role]="toastType === 'error' ? 'alert' : 'status'" aria-live="polite">
-      <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-      </svg>
-      <span>{{ toastMessage }}</span>
-      <button type="button" class="toast-close" (click)="cerrarToast()" aria-label="Cerrar aviso">×</button>
-    </div>
+
+  <div *ngIf="showToast" class="toast-notification" [class.error]="toastType === 'error'" [class.success]="toastType === 'success'"
+       [attr.role]="toastType === 'error' ? 'alert' : 'status'" aria-live="polite">
+    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <span>{{ toastMessage }}</span>
+    <button type="button" class="toast-close" (click)="cerrarToast()" aria-label="Cerrar aviso">×</button>
+  </div>
 </div>

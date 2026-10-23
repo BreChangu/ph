@@ -188,6 +188,56 @@ export class AuthService {
     }
   }
 
+
+  //CCOMPROBAR ROLES DE ADMOnIN Y PACIENTES 
+  
+async diagnosticarAdmin() {
+  const { data: userData, error: userError } =
+    await this.supabase.auth.getUser();
+
+  if (userError || !userData.user) {
+    return {
+      email: null,
+      uid: null,
+      rolPerfil: null,
+      esAdmin: null,
+      error: userError?.message ?? 'No hay sesión activa'
+    };
+  }
+
+  const user = userData.user;
+
+  const { data: perfil, error: perfilError } =
+    await this.supabase
+      .from('perfiles')
+      .select('id, rol, estado_aprobacion')
+      .eq('id', user.id)
+      .maybeSingle();
+
+  if (perfilError) {
+    return {
+      email: user.email,
+      uid: user.id,
+      rolPerfil: null,
+      esAdmin: null,
+      error: `Error al consultar perfil: ${perfilError.message}`
+    };
+  }
+
+  const { data: esAdmin, error: adminError } =
+    await this.supabase.rpc('is_admin');
+
+  return {
+    email: user.email,
+    uid: user.id,
+    rolPerfil: perfil?.rol ?? null,
+    estado: perfil?.estado_aprobacion ?? null,
+    esAdmin: adminError ? null : esAdmin,
+    error: adminError?.message ?? null
+  };
+}
+
+
   // ==========================================
   // PERFILES Y ROLES
   // ==========================================
@@ -307,4 +357,8 @@ export class AuthService {
       .order('created_at', { ascending: false });
     return error ? [] : data;
   }
+  
+
+  //Administración de usuarios y roles
+  
 }

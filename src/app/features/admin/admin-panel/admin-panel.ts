@@ -71,12 +71,16 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   isSavingCatalogo = false;
   catalogoMessage = '';
 
-  // 🟢 VARIABLES PARA EL AUTOCOMPLETADO Y EDICIÓN INLINE
+  // 🟢 VARIABLES PARA EL AUTOCOMPLETADO Y EDICIÓN INLINE CON CATEGORÍAS
   alimentoSearchTerms: { [key: string]: string } = {};
   activeSearchDropdown: string | null = null;
   inlineEditingFoodId: string | null = null;
   isAddingInlineFood = false;
   inlineFoodForm!: FormGroup;
+  expandedCategory: string | null = null;
+  
+  // 🟢 CACHÉ INTELIGENTE PARA EVITAR ERRORES DE RENDERIZADO EN ANGULAR
+  filteredCatalogCache: { [key: string]: { categoria: string, alimentos: any[] }[] } = {};
 
   formLabels: Record<string, string> = {
     nombre_completo: 'Nombre completo',
@@ -124,7 +128,6 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     this.initPackageForm();
     this.initCatalogoForm();
     
-    // Inicializamos el formulario para edición rápida en el dropdown
     this.inlineFoodForm = this.fb.group({
       id: [null],
       nombre: ['', Validators.required],
@@ -154,6 +157,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLElement;
     if (!target.closest('.autocomplete-container')) {
       this.activeSearchDropdown = null;
+      this.expandedCategory = null;
       this.cancelarEdicionInline();
       this.cdr.detectChanges();
     }
@@ -162,25 +166,66 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   // ==========================================
   // LÓGICA DE AUTOCOMPLETADO Y CRUD INLINE
   // ==========================================
-  getAlimentosFiltrados(idxComida: number, idxAlimento: number): any[] {
+  
+  toggleCategory(idxComida: number, idxAlimento: number, categoria: string) {
+    const key = `${idxComida}-${idxAlimento}-${categoria}`;
+    if (this.expandedCategory === key) {
+      this.expandedCategory = null;
+    } else {
+      this.expandedCategory = key;
+    }
+    this.cdr.detectChanges();
+  }
+
+  isCategoryExpanded(idxComida: number, idxAlimento: number, categoria: string): boolean {
+    return this.expandedCategory === `${idxComida}-${idxAlimento}-${categoria}`;
+  }
+
+  // 🟢 CREA Y GUARDA LA LISTA DE CATEGORÍAS PARA QUE ANGULAR NO COLAPSE
+  actualizarFiltro(idxComida: number, idxAlimento: number) {
     const key = `${idxComida}-${idxAlimento}`;
     const term = (this.alimentoSearchTerms[key] || '').toLowerCase().trim();
     
-    if (!term) return this.catalogoAlimentos;
-    
-    return this.catalogoAlimentos.filter(a => {
-      // 🟢 Código protegido contra valores nulos en Supabase
+    const filtrados = this.catalogoAlimentos.filter(a => {
       const nombre = a.nombre ? String(a.nombre).toLowerCase() : '';
       const categoria = a.categoria ? String(a.categoria).toLowerCase() : '';
-      return nombre.includes(term) || categoria.includes(term);
+      return !term || nombre.includes(term) || categoria.includes(term);
     });
+
+    const grupos: { [key: string]: any[] } = {};
+    filtrados.forEach(alimento => {
+      const cat = alimento.categoria || 'Sin categoría';
+      if (!grupos[cat]) {
+        grupos[cat] = [];
+      }
+      grupos[cat].push(alimento);
+    });
+
+    this.filteredCatalogCache[key] = Object.keys(grupos)
+      .sort((a, b) => a.localeCompare(b))
+      .map(categoria => ({
+        categoria: categoria,
+        alimentos: grupos[categoria]
+      }));
+  }
+
+  // 🟢 RETORNA LA LISTA CACHEADA PARA UNA UI SÚPER FLUIDA
+  getAlimentosAgrupados(idxComida: number, idxAlimento: number): { categoria: string, alimentos: any[] }[] {
+    const key = `${idxComida}-${idxAlimento}`;
+    if (!this.filteredCatalogCache[key]) {
+      this.actualizarFiltro(idxComida, idxAlimento);
+    }
+    return this.filteredCatalogCache[key] || [];
   }
 
   onAlimentoSearch(event: any, idxComida: number, idxAlimento: number) {
     const key = `${idxComida}-${idxAlimento}`;
     this.alimentoSearchTerms[key] = event.target.value;
     this.activeSearchDropdown = key;
-    this.cancelarEdicionInline(); 
+    this.cancelarEdicionInline();
+    
+    // Al teclear, actualizamos el caché para reflejar los resultados de inmediato
+    this.actualizarFiltro(idxComida, idxAlimento); 
     this.cdr.detectChanges();
   }
 
@@ -194,6 +239,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     });
 
     this.activeSearchDropdown = null;
+    this.expandedCategory = null; 
     this.cdr.detectChanges();
   }
 
@@ -326,7 +372,10 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
         supabase.from('catalogo_alimentos').select('*').order('categoria').order('nombre')
       ]);
       if (ejerciciosRes.data) this.catalogoEjercicios = ejerciciosRes.data;
-      if (alimentosRes.data) this.catalogoAlimentos = alimentosRes.data;
+      if (alimentosRes.data) {
+        this.catalogoAlimentos = alimentosRes.data;
+        this.filteredCatalogCache = {}; // 🟢 Limpiamos el caché para que se recalcule con los nuevos datos
+      }
     } catch (error) {
       console.error('Error cargando catálogos:', error);
     }
