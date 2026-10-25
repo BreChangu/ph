@@ -207,7 +207,7 @@
       </div>
     </section>
 
-    <!-- MODAL DE VIDEO CORREGIDO (YOUTUBE / INSTAGRAM) -->
+    <!-- MODAL DE VIDEO DE EJERCICIO (YouTube, archivo directo o enlace externo) -->
     <div class="exercise-video-modal-backdrop" *ngIf="selectedExerciseVideo" (click)="closeExerciseVideo()">
       <section class="exercise-video-modal" role="dialog" aria-modal="true" [attr.aria-label]="'Video de ' + selectedExerciseVideo.title" (click)="$event.stopPropagation()">
         <header>
@@ -217,21 +217,34 @@
           </div>
           <button type="button" class="exercise-video-close" (click)="closeExerciseVideo()" aria-label="Cerrar video">×</button>
         </header>
-        
-        <div class="exercise-video-frame">
-          <ng-container *ngIf="!selectedExerciseVideo.isExternal">
-            <iframe *ngIf="selectedExerciseVideo.embedUrl" [src]="selectedExerciseVideo.embedUrl" [title]="'Video de ' + selectedExerciseVideo.title" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-            <video *ngIf="selectedExerciseVideo.directUrl && !selectedExerciseVideo.embedUrl" [src]="selectedExerciseVideo.directUrl" controls playsinline></video>
-          </ng-container>
-          <div *ngIf="selectedExerciseVideo.isExternal" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 200px; padding: 2rem; background: #f8f8f8; text-align: center;">
-            <p style="margin-bottom: 1.5rem; color: #666; font-size: 0.95rem;">
-              El video de este ejercicio se encuentra en Instagram u otra plataforma externa.
-            </p>
-            <a [href]="selectedExerciseVideo.directUrl" target="_blank" rel="noopener noreferrer" class="btn-primary" style="text-decoration: none; padding: 0.8rem 1.5rem;">
-              Abrir video en la App
-            </a>
-          </div>
+
+        <div class="exercise-video-frame" *ngIf="selectedExerciseVideo.embedUrl || (selectedExerciseVideo.directUrl && !selectedExerciseVideo.playbackFailed)">
+          <iframe *ngIf="selectedExerciseVideo.embedUrl"
+                  [src]="selectedExerciseVideo.embedUrl"
+                  [title]="'Video de ' + selectedExerciseVideo.title"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allowfullscreen></iframe>
+          <video *ngIf="!selectedExerciseVideo.embedUrl && selectedExerciseVideo.directUrl"
+                 [src]="selectedExerciseVideo.directUrl"
+                 controls playsinline preload="metadata"
+                 (error)="onExerciseVideoError()"></video>
         </div>
+
+        <div class="exercise-video-fallback"
+             *ngIf="selectedExerciseVideo.isExternal || selectedExerciseVideo.invalid || selectedExerciseVideo.playbackFailed">
+          <p>{{ selectedExerciseVideo.message }}</p>
+          <a *ngIf="selectedExerciseVideo.watchUrl" class="btn-primary"
+             [href]="selectedExerciseVideo.watchUrl" target="_blank" rel="noopener noreferrer">
+            Abrir video en una pestaña nueva
+          </a>
+        </div>
+
+        <a *ngIf="selectedExerciseVideo.embedUrl && selectedExerciseVideo.watchUrl"
+           class="exercise-video-open"
+           [href]="selectedExerciseVideo.watchUrl" target="_blank" rel="noopener noreferrer">
+          ¿No carga el video? Ábrelo en YouTube ↗
+        </a>
       </section>
     </div>
 

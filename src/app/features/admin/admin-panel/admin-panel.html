@@ -180,10 +180,37 @@
             <label>Autor</label>
             <input type="text" formControlName="author" placeholder="Pablo Herrera">
           </div>
-          <div class="input-group">
-            <label>Imagen de portada URL</label>
-            <input type="text" formControlName="coverImage" placeholder="/images/blog-inmune.webp">
-          </div>
+       
+<div class="input-group full-width blog-cover-field">
+  <label for="blog-cover-file">Imagen de portada</label>
+
+  <input
+    id="blog-cover-file"
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    (change)="seleccionarPortadaBlog($event)"
+    [disabled]="isSavingBlog || isUploadingBlogCover">
+
+  <small>JPG, PNG o WebP. Tamaño máximo: 7 MB.</small>
+
+  <div class="blog-cover-preview" *ngIf="blogCoverPreview">
+    <img
+      [src]="blogCoverPreview"
+      alt="Vista previa de la portada del artículo">
+  </div>
+
+  <label for="blog-cover-url">O utiliza una URL de imagen existente</label>
+  <input
+    id="blog-cover-url"
+    type="url"
+    formControlName="coverImage"
+    placeholder="https://...">
+    
+  <small *ngIf="isUploadingBlogCover">
+    Subiendo imagen a Supabase Storage...
+  </small>
+</div>
+
           <div class="input-group full-width">
             <label>Resumen para tarjeta</label>
             <textarea formControlName="excerpt" rows="3" placeholder="Escribe una introduccion breve y potente para el listado del blog."></textarea>
@@ -1101,26 +1128,167 @@
               </header>
 
               <div formArrayName="ejercicios" class="training-exercise-editor">
-                <div class="training-exercise-head" *ngIf="ejerciciosDeDia(activeTrainingEditorDay).length > 0">
-                  <span>Ejercicio / Variante</span>
-                  <span>Series</span>
-                  <span>Reps / RPE</span>
-                  <span>Carga objetivo</span>
-                  <span>Video de referencia</span>
-                  <span></span>
-                </div>
+                <div *ngFor="let ej of ejerciciosDeDia(activeTrainingEditorDay).controls; let j = index"
+                     [formGroupName]="j"
+                     class="training-exercise-row"
+                     [style.z-index]="selectorEjercicioActivo === (activeTrainingEditorDay + '-' + j) ? 60 : 1">
 
-                <div *ngFor="let ej of ejerciciosDeDia(activeTrainingEditorDay).controls; let j = index" [formGroupName]="j" class="training-exercise-row">
-                  <input type="text" formControlName="ejercicio" list="lista-ejercicios" placeholder="Ej. Sentadilla libre con barra" (change)="autocompletarVideoDesdeCatalogo(activeTrainingEditorDay, j)">
-                  <datalist id="lista-ejercicios">
-                    <option *ngFor="let catEj of catalogoEjercicios" [value]="catEj.nombre"></option>
-                  </datalist>
+                  <div class="te-field te-field--name autocomplete-container">
+                    <span class="te-label">Ejercicio / Variante</span>
 
-                  <input type="number" formControlName="series" placeholder="4">
-                  <input type="text" formControlName="reps" placeholder="10-12">
-                  <input type="text" formControlName="carga_objetivo" placeholder="Ej. 105 kg o 45 lb">
-                  <input type="url" formControlName="video_url" placeholder="https://youtube.com/...">
-                  <button type="button" class="btn-delete-row" (click)="eliminarEjercicio(activeTrainingEditorDay, j)">x</button>
+                    <input type="text"
+                           formControlName="ejercicio"
+                           placeholder="Busca en el catálogo o escribe uno..."
+                           autocomplete="off"
+                           role="combobox"
+                           aria-label="Ejercicio o variante"
+                           aria-autocomplete="list"
+                           aria-haspopup="listbox"
+                           [attr.aria-expanded]="selectorEjercicioActivo === (activeTrainingEditorDay + '-' + j)"
+                           (focus)="abrirSelectorEjercicio(activeTrainingEditorDay, j)"
+                           (input)="onEjercicioInput($event, activeTrainingEditorDay, j)"
+                           (change)="autocompletarVideoDesdeCatalogo(activeTrainingEditorDay, j)"
+                           (keydown.escape)="cerrarSelectorEjercicio()">
+
+                    <div class="autocomplete-dropdown"
+                         *ngIf="selectorEjercicioActivo === (activeTrainingEditorDay + '-' + j)"
+                         role="listbox"
+                         (keydown.escape)="cerrarSelectorEjercicio()">
+
+                      <div class="dropdown-header">
+                        <small>Catálogo: {{ catalogoEjercicios.length }} ejercicios</small>
+                      </div>
+
+                      <ng-container *ngFor="let grupo of gruposSelectorEjercicio; trackBy: trackByCategoria">
+                        <button type="button"
+                                class="category-header"
+                                [attr.aria-expanded]="grupoSelectorExpandido(grupo.categoria)"
+                                (click)="toggleGrupoSelector(grupo.categoria)">
+                          <span class="category-name">{{ grupo.categoria }}</span>
+                          <span class="category-count">{{ grupo.ejercicios.length }}</span>
+                          <svg class="chevron-icon" [class.rotated]="grupoSelectorExpandido(grupo.categoria)" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+
+                        <div class="category-items-container" *ngIf="grupoSelectorExpandido(grupo.categoria)">
+                          <ng-container *ngFor="let item of grupo.ejercicios; trackBy: trackById">
+
+                            <div class="dropdown-item"
+                                 *ngIf="!estaEditandoCatalogo('ejercicio', item.id); else editarEnSelector"
+                                 (click)="seleccionarEjercicioCatalogo(item, activeTrainingEditorDay, j)">
+                              <div class="item-content-left">
+                                <button type="button" class="item-select">
+                                  <strong class="item-name">{{ item.nombre }}</strong>
+                                  <span class="video-tag" *ngIf="item.video_url">▶ Video</span>
+                                </button>
+                              </div>
+
+                              <div class="item-actions">
+                                <button type="button" class="action-btn edit-btn"
+                                        title="Editar ejercicio"
+                                        [attr.aria-label]="'Editar ejercicio ' + item.nombre"
+                                        (click)="iniciarEdicionCatalogo('ejercicio', item, true); $event.stopPropagation()">
+                                  <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                </button>
+                                <button type="button" class="action-btn delete-btn"
+                                        title="Borrar del catálogo"
+                                        [attr.aria-label]="'Borrar ejercicio ' + item.nombre"
+                                        (click)="eliminarItemCatalogo(item.id, item.nombre, 'ejercicio'); $event.stopPropagation()">
+                                  <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                              </div>
+                            </div>
+
+                            <ng-template #editarEnSelector>
+                              <div class="dropdown-item-edit selector-edit-form"
+                                   [formGroup]="catalogoEditForm"
+                                   (click)="$event.stopPropagation()"
+                                   (keydown.enter)="enterEnEdicionCatalogo($event)"
+                                   (keydown.escape)="cancelarEdicionCatalogo(); $event.stopPropagation()">
+                                <input type="text" formControlName="nombre" placeholder="Nombre del ejercicio" autocomplete="off">
+                                <input type="text" formControlName="categoria" list="lista-grupos-ejercicios" placeholder="Grupo muscular (Ej. Pecho)" autocomplete="off">
+                                <input type="url" formControlName="video_url" placeholder="Video de referencia (https://...)">
+                                <small class="catalog-field-error"
+                                       *ngIf="catalogoEditForm.get('video_url')?.invalid && catalogoEditForm.get('video_url')?.touched">
+                                  El enlace debe empezar con http:// o https://
+                                </small>
+                                <div class="selector-edit-actions">
+                                  <button type="button" class="catalog-btn" (click)="cancelarEdicionCatalogo()">Cancelar</button>
+                                  <button type="button" class="catalog-btn catalog-btn--primary"
+                                          [disabled]="isSavingCatalogoEdit"
+                                          (click)="guardarEdicionCatalogo()">
+                                    {{ isSavingCatalogoEdit ? 'Guardando...' : 'Guardar' }}
+                                  </button>
+                                </div>
+                              </div>
+                            </ng-template>
+
+                          </ng-container>
+                        </div>
+                      </ng-container>
+
+                      <div class="dropdown-empty"
+                           *ngIf="gruposSelectorEjercicio.length === 0 && !agregandoEjercicioSelector">
+                        No hay coincidencias en el catálogo. Puedes dejar el texto tal cual o añadirlo abajo.
+                      </div>
+
+                      <div class="dropdown-item-edit selector-edit-form"
+                           *ngIf="agregandoEjercicioSelector"
+                           [formGroup]="nuevoEjercicioForm"
+                           (click)="$event.stopPropagation()"
+                           (keydown.enter)="enterEnNuevoEjercicio($event, activeTrainingEditorDay, j)"
+                           (keydown.escape)="cancelarNuevoEjercicioSelector(); $event.stopPropagation()">
+                        <strong class="selector-edit-title">Nuevo ejercicio en el catálogo</strong>
+                        <input type="text" formControlName="nombre" placeholder="Nombre del ejercicio" autocomplete="off">
+                        <input type="text" formControlName="grupo_muscular" list="lista-grupos-ejercicios" placeholder="Grupo muscular (Ej. Pecho)" autocomplete="off">
+                        <input type="url" formControlName="video_url" placeholder="Video de referencia (https://...)">
+                        <small class="catalog-field-error"
+                               *ngIf="nuevoEjercicioForm.get('video_url')?.invalid && nuevoEjercicioForm.get('video_url')?.touched">
+                          El enlace debe empezar con http:// o https://
+                        </small>
+                        <div class="selector-edit-actions">
+                          <button type="button" class="catalog-btn" (click)="cancelarNuevoEjercicioSelector()">Cancelar</button>
+                          <button type="button" class="catalog-btn catalog-btn--primary"
+                                  [disabled]="isSavingNuevoEjercicio"
+                                  (click)="guardarNuevoEjercicioSelector(activeTrainingEditorDay, j)">
+                            {{ isSavingNuevoEjercicio ? 'Guardando...' : 'Guardar y usar' }}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="dropdown-footer" *ngIf="!agregandoEjercicioSelector">
+                        <button type="button" class="btn-inline-add"
+                                (click)="iniciarNuevoEjercicioSelector(); $event.stopPropagation()">
+                          + Añadir ejercicio al catálogo
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <label class="te-field te-field--series">
+                    <span class="te-label">Series</span>
+                    <input type="number" formControlName="series" placeholder="4">
+                  </label>
+
+                  <label class="te-field te-field--reps">
+                    <span class="te-label">Reps / RPE</span>
+                    <input type="text" formControlName="reps" placeholder="10-12">
+                  </label>
+
+                  <label class="te-field te-field--carga">
+                    <span class="te-label">Carga objetivo</span>
+                    <input type="text" formControlName="carga_objetivo" placeholder="Ej. 105 kg o 45 lb">
+                  </label>
+
+                  <label class="te-field te-field--video">
+                    <span class="te-label">Video de referencia</span>
+                    <input type="url" formControlName="video_url" placeholder="https://youtube.com/...">
+                  </label>
+
+                  <button type="button"
+                          class="btn-delete-row te-remove"
+                          title="Quitar ejercicio"
+                          aria-label="Quitar ejercicio de la rutina"
+                          (click)="eliminarEjercicio(activeTrainingEditorDay, j)">x</button>
                 </div>
               </div>
 

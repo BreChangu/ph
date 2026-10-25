@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,20 @@ import { AuthService } from '../../core/supabase/auth';
 import { PlanNutricionalService } from '../../core/services/plan-nutricional/plan-nutricional.service';
 import { EntrenamientoService } from '../../core/services/entrenamiento/entrenamiento.service';
 import { DiaEntrenamiento, Ejercicio } from '../../core/models/entrenamiento.models';
+
+type ExerciseVideoView = {
+  title: string;
+  /** Reproductor incrustado (YouTube). */
+  embedUrl?: SafeResourceUrl;
+  /** Archivo de video directo (.mp4, .webm, Supabase Storage...). */
+  directUrl?: string;
+  /** Enlace original, siempre disponible para abrirlo en otra pestaña. */
+  watchUrl?: string;
+  isExternal?: boolean;
+  invalid?: boolean;
+  playbackFailed?: boolean;
+  message?: string;
+};
 
 type PanelSection = 'nutrition' | 'training' | 'measurements' | 'photos' | 'testimonio' | 'tecnica';
 type PhotoKind = 'frente' | 'perfil' | 'espalda';
@@ -64,7 +78,7 @@ export class PanelComponent implements OnInit, OnDestroy {
   trainingError = '';
   
   // VARIABLE CORREGIDA PARA EL MODAL DE VIDEO
-  selectedExerciseVideo: { title: string; embedUrl?: SafeResourceUrl; directUrl?: string; isExternal?: boolean } | null = null;
+  selectedExerciseVideo: ExerciseVideoView | null = null;
   
   trainingDiaryNote = '';
   trainingDiaryMessage = '';
@@ -341,26 +355,68 @@ export class PanelComponent implements OnInit, OnDestroy {
   }
 
   openExerciseVideo(exercise: Ejercicio) {
+    const title = exercise.ejercicio;
     const source = this.resolveExerciseVideo(exercise.video_url);
-    if (!source) return;
+
+    if (!source) {
+      this.selectedExerciseVideo = {
+        title,
+        invalid: true,
+        message: 'El enlace de este video no es válido. Avísale a tu coach para que lo corrija.',
+      };
+      return;
+    }
 
     this.selectedExerciseVideo = {
-      title: exercise.ejercicio,
-      isExternal: source.isExternal, 
-      directUrl: source.directUrl,   
-      embedUrl: source.embedUrl      
-        ? this.sanitizer.bypassSecurityTrustResourceUrl(source.embedUrl) 
-        : undefined
+      title,
+      watchUrl: source.watchUrl,
+      directUrl: source.directUrl,
+      isExternal: source.isExternal,
+      message: source.isExternal
+        ? 'Este video está en una plataforma externa (Instagram, TikTok, etc.) y se abre en otra pestaña.'
+        : undefined,
+      embedUrl: source.embedUrl
+        ? this.sanitizer.bypassSecurityTrustResourceUrl(source.embedUrl)
+        : undefined,
     };
   }
-  
+
   closeExerciseVideo() {
     this.selectedExerciseVideo = null;
   }
 
-  private resolveExerciseVideo(value?: string | null): { embedUrl?: string; directUrl?: string; isExternal?: boolean } | null {
-    const input = String(value ?? '').trim();
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.selectedExerciseVideo) this.closeExerciseVideo();
+  }
+
+  /** El navegador no pudo reproducir el archivo: se ofrece abrirlo aparte. */
+  onExerciseVideoError() {
+    if (!this.selectedExerciseVideo) return;
+
+    this.selectedExerciseVideo = {
+      ...this.selectedExerciseVideo,
+      playbackFailed: true,
+      message: 'Tu navegador no pudo reproducir este archivo aquí. Ábrelo en una pestaña nueva.',
+    };
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Convierte el enlace que guardó el coach en algo reproducible.
+   *  - YouTube (watch, youtu.be, shorts, live, embed) -> reproductor incrustado.
+   *  - Archivo de video directo o Supabase Storage     -> etiqueta <video>.
+   *  - Cualquier otro sitio (Instagram, TikTok...)     -> enlace externo.
+   * Devuelve null solo si el texto no es una URL http(s) válida.
+   */
+  private resolveExerciseVideo(
+    value?: string | null
+  ): { embedUrl?: string; directUrl?: string; watchUrl?: string; isExternal?: boolean } | null {
+    let input = String(value ?? '').trim();
     if (!input) return null;
+
+    // Enlaces pegados sin protocolo, p. ej. "www.youtube.com/watch?v=..."
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(input)) input = `https://${input}`;
 
     let url: URL;
     try {
@@ -369,28 +425,59 @@ export class PanelComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    if (url.protocol !== 'https:') return null;
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
 
     const host = url.hostname.replace(/^www\./, '').toLowerCase();
-    
-    // YOUTUBE
-    if (host === 'youtu.be' || host === 'youtube.com' || host === 'm.youtube.com') {
-      let id = '';
-      if (host === 'youtu.be') {
-        id = url.pathname.split('/').filter(Boolean)[0];
-      } else {
-        id = url.pathname.match(/^\/embed\/([^/]+)/)?.[1] || url.searchParams.get('v') || '';
-      }
-      return id ? { embedUrl: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0` } : null;
+    const watchUrl = url.toString();
+
+    const hostsYoutube = ['youtu.be', 'youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com'];
+    if (hostsYoutube.includes(host)) {
+      const id = this.extraerIdYoutube(url, host);
+      if (!id) return { watchUrl, isExternal: true };
+
+      const inicio = this.segundosDeTiempoYoutube(url.searchParams.get('t') ?? url.searchParams.get('start'));
+      const start = inicio > 0 ? `&start=${inicio}` : '';
+
+      return {
+        embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0&playsinline=1${start}`,
+        watchUrl: `https://www.youtube.com/watch?v=${id}`,
+      };
     }
 
-    // ARCHIVOS DIRECTOS O SUPABASE
-    if (/\.(mp4|webm|ogg)$/i.test(url.pathname) || host.includes('supabase')) {
-      return { directUrl: url.toString() };
+    // Un archivo http:// no se puede incrustar en una página https:// (contenido mixto).
+    const esArchivo = /\.(mp4|webm|ogg|mov|m4v)$/i.test(url.pathname) || host.includes('supabase');
+    if (esArchivo && url.protocol === 'https:') {
+      return { directUrl: watchUrl, watchUrl };
     }
 
-    // INSTAGRAM, FB, TIKTOK
-    return { directUrl: url.toString(), isExternal: true };
+    return { watchUrl, isExternal: true };
+  }
+
+  /** Los IDs de YouTube miden exactamente 11 caracteres [A-Za-z0-9_-]. */
+  private extraerIdYoutube(url: URL, host: string): string {
+    const partes = url.pathname.split('/').filter(Boolean);
+    let id = '';
+
+    if (host === 'youtu.be') {
+      id = partes[0] ?? '';
+    } else if (['embed', 'shorts', 'live', 'v'].includes(partes[0])) {
+      id = partes[1] ?? '';
+    } else {
+      id = url.searchParams.get('v') ?? '';
+    }
+
+    return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : '';
+  }
+
+  /** Acepta "90", "1m30s" o "1h2m3s". */
+  private segundosDeTiempoYoutube(valor: string | null): number {
+    if (!valor) return 0;
+    if (/^\d+$/.test(valor)) return Number(valor);
+
+    const m = valor.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/i);
+    if (!m) return 0;
+
+    return Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0);
   }
 
   private activarRealtime(id: string) {

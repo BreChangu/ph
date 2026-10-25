@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, from } from 'rxjs';
 import { BlogPost } from '../models/blog-post.model';
-import { BLOG_POSTS } from '../data/mock-blog-posts';
 import { AuthService } from '../supabase/auth';
 
 type BlogPostPayload = Omit<BlogPost, 'id' | 'date' | 'updatedAt'> & {
@@ -9,47 +8,170 @@ type BlogPostPayload = Omit<BlogPost, 'id' | 'date' | 'updatedAt'> & {
   date?: string;
 };
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class BlogService {
-  private authService = inject(AuthService);
+  private readonly authService = inject(AuthService);
   private readonly tableName = 'blog_posts';
   private readonly storageKey = 'ph_blog_posts';
-  private readonly requestTimeoutMs = 4500;
+  private readonly bucketName = 'blog-images';
+  private readonly maxImageSize = 7 * 1024 * 1024;
+  private readonly allowedImageTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+  ];
 
+  /**
+   * Listado público: solo artículos publicados.
+   * La protección principal sigue siendo RLS en Supabase.
+   */
   getPosts(): Observable<BlogPost[]> {
-    return of(this.getLocalPosts(false));
+    return from(this.loadPosts(true));
   }
 
+  /**
+   * Detalle público: solo devuelve el artículo si está publicado.
+   */
   getPostById(id: string): Observable<BlogPost | undefined> {
-    return of(this.getLocalPosts(true).find((post) => post.id === id));
+    return from(this.loadPublishedPostById(id));
   }
 
   getFeaturedPost(): Observable<BlogPost | undefined> {
-    const posts = this.getLocalPosts(false);
-    return of(posts.find((post) => post.featured) ?? posts[0]);
+    return from(this.loadFeaturedPost());
   }
 
+  /**
+   * Listado del panel administrativo, incluidos borradores.
+   */
   async getAdminPosts(): Promise<BlogPost[]> {
-    return this.getLocalPosts(true);
+    try {
+      const { data, error } = await this.authService.supabase
+        .from(this.tableName)
+        .select('*')
+        .order('published_at', { ascending: false });
+
+      if (error) throw error;
+
+      return (data ?? []).map((row: any) => this.fromDb(row));
+    } catch (error) {
+      console.error('No se pudieron recuperar los artículos de Supabase.', error);
+      throw new Error(
+        'No se pudieron cargar los artículos desde Supabase. Revisa tu sesión y las políticas RLS.'
+      );
+    }
   }
 
+  /**
+   * Guarda el artículo en Supabase. No informa éxito si el servidor falla.
+   */
   async savePost(post: BlogPostPayload): Promise<BlogPost> {
     const normalized = this.normalizePost(post);
-    this.saveLocalPost(normalized);
-    void this.trySaveRemotePost(normalized);
-    return normalized;
+
+    const { data, error } = await this.authService.supabase
+      .from(this.tableName)
+      .upsert(this.toDb(normalized), { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Falló el guardado remoto del artículo:', error);
+      throw new Error(
+        `No se pudo guardar el artículo en Supabase: ${error.message}. Revisa tu sesión y las políticas RLS.`
+      );
+    }
+
+    const savedPost = this.fromDb(data);
+    this.saveLocalPost(savedPost);
+    return savedPost;
   }
 
   async deletePost(id: string): Promise<void> {
-    const nextPosts = this.getLocalPosts(true).filter((post) => post.id !== id);
-    this.writeLocalPosts(nextPosts);
-    void this.tryDeleteRemotePost(id);
+    const { data, error } = await this.authService.supabase
+      .from(this.tableName)
+      .delete()
+      .eq('id', id)
+      .select('id');
+
+    if (error) {
+      console.error('No se pudo eliminar el artículo en Supabase:', error);
+      throw new Error(
+        `No se pudo eliminar el artículo en Supabase: ${error.message}`
+      );
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error(
+        'Supabase no eliminó ningún artículo. Comprueba que exista y que tu cuenta tenga permisos de administrador.'
+      );
+    }
+
+    this.removeLocalPost(id);
+  }
+
+  /**
+   * Sube una imagen al bucket público blog-images y devuelve su URL.
+   * El bucket puede ser público para lectura, pero las escrituras deben
+   * estar protegidas por políticas de Storage para administradores.
+   */
+  async uploadCoverImage(file: File): Promise<string> {
+    if (!this.allowedImageTypes.includes(file.type)) {
+      throw new Error('Formato no permitido. Utiliza JPG, PNG o WebP.');
+    }
+
+    if (file.size <= 0) {
+      throw new Error('El archivo de imagen está vacío.');
+    }
+
+    if (file.size > this.maxImageSize) {
+      throw new Error('La imagen supera el límite de 7 MB.');
+    }
+
+    const extensionByType: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+
+    const extension = extensionByType[file.type];
+
+    // Evita depender de que crypto.randomUUID esté disponible en todos
+    // los contextos de desarrollo. Se genera un nombre único para el archivo.
+    const uniqueName =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    const filePath = `covers/${uniqueName}.${extension}`;
+
+    const { error: uploadError } = await this.authService.supabase.storage
+      .from(this.bucketName)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('Error al subir la portada:', uploadError);
+      throw new Error(
+        `No se pudo subir la imagen a Supabase Storage: ${uploadError.message}. Revisa la sesión y las políticas del bucket.`
+      );
+    }
+
+    const { data } = this.authService.supabase.storage
+      .from(this.bucketName)
+      .getPublicUrl(filePath);
+
+    if (!data?.publicUrl) {
+      throw new Error('Supabase no devolvió la URL pública de la imagen.');
+    }
+
+    return data.publicUrl;
   }
 
   createEmptyPost(): BlogPost {
     const now = new Date().toISOString();
+
     return {
       id: this.createId(),
       title: '',
@@ -57,7 +179,7 @@ export class BlogService {
       content: '',
       coverImage: '',
       date: now,
-      category: 'Nutricion',
+      category: 'Nutrición',
       readTime: '4 min',
       author: 'Pablo Herrera',
       published: false,
@@ -66,7 +188,7 @@ export class BlogService {
     };
   }
 
-  private async tryGetRemotePosts(onlyPublished: boolean): Promise<BlogPost[] | null> {
+  private async loadPosts(onlyPublished: boolean): Promise<BlogPost[]> {
     try {
       let query = this.authService.supabase
         .from(this.tableName)
@@ -77,55 +199,60 @@ export class BlogService {
         query = query.eq('published', true);
       }
 
-      const { data, error } = await this.withTimeout(query, 'La consulta del blog tardo demasiado.');
+      const { data, error } = await query;
       if (error) throw error;
-      return this.sortPosts((data ?? []).map((post) => this.fromDb(post)));
+
+      const posts = (data ?? []).map((row: any) => this.fromDb(row));
+
+      // Filtrado defensivo adicional para el blog público.
+      return onlyPublished
+        ? posts.filter((post) => post.published === true)
+        : posts;
     } catch (error) {
-      console.warn('Blog remoto no disponible, usando respaldo local:', error);
-      return null;
+      console.error('No se pudieron cargar los artículos remotos:', error);
+
+      // En el sitio público no mostramos borradores guardados localmente.
+      return this.getLocalPosts(onlyPublished);
     }
   }
 
-  private async trySaveRemotePost(post: BlogPost): Promise<BlogPost | null> {
+  private async loadPublishedPostById(
+    id: string
+  ): Promise<BlogPost | undefined> {
     try {
-      const { data, error } = await this.withTimeout(
-        this.authService.supabase
-          .from(this.tableName)
-          .upsert(this.toDb(post), { onConflict: 'id' })
-          .select()
-          .single(),
-        'El guardado remoto del blog tardo demasiado.'
-      );
+      const { data, error } = await this.authService.supabase
+        .from(this.tableName)
+        .select('*')
+        .eq('id', id)
+        .eq('published', true)
+        .maybeSingle();
 
       if (error) throw error;
-      return this.fromDb(data);
+
+      return data ? this.fromDb(data) : undefined;
     } catch (error) {
-      console.warn('No se pudo guardar el blog remoto, usando respaldo local:', error);
-      return null;
+      console.error('Error al consultar el artículo publicado:', error);
+
+      return this.getLocalPosts(true).find((post) => post.id === id);
     }
   }
 
-  private async tryDeleteRemotePost(id: string): Promise<void> {
-    try {
-      await this.withTimeout(
-        this.authService.supabase.from(this.tableName).delete().eq('id', id),
-        'La eliminacion remota del blog tardo demasiado.'
-      );
-    } catch (error) {
-      console.warn('No se pudo eliminar el blog remoto:', error);
-    }
+  private async loadFeaturedPost(): Promise<BlogPost | undefined> {
+    const posts = await this.loadPosts(true);
+    return posts.find((post) => post.featured) ?? posts[0];
   }
 
   private normalizePost(post: BlogPostPayload): BlogPost {
     const now = new Date().toISOString();
+
     return {
       id: post.id || this.createId(),
       title: String(post.title ?? '').trim(),
       excerpt: String(post.excerpt ?? '').trim(),
       content: this.toReadableHtml(post.content),
-      coverImage: String(post.coverImage ?? '').trim() || '/images/blog-inmune.webp',
+      coverImage: String(post.coverImage ?? '').trim(),
       date: post.date || now,
-      category: String(post.category ?? '').trim() || 'Nutricion',
+      category: String(post.category ?? '').trim() || 'Nutrición',
       readTime: String(post.readTime ?? '').trim() || '4 min',
       author: String(post.author ?? '').trim() || 'Pablo Herrera',
       published: post.published ?? false,
@@ -134,40 +261,20 @@ export class BlogService {
     };
   }
 
-  private toReadableHtml(content: string): string {
-    const value = String(content ?? '').trim();
-    if (!value) return '';
-    if (/<[a-z][\s\S]*>/i.test(value)) return value;
-
-    return value
-      .split(/\n{2,}/)
-      .map((paragraph) => `<p>${this.escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`)
-      .join('');
-  }
-
-  private escapeHtml(value: string): string {
-    return value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
-  }
-
   private fromDb(row: any): BlogPost {
     return {
-      id: row.id,
-      title: row.title,
-      excerpt: row.excerpt,
-      content: row.content,
-      coverImage: row.cover_image,
-      date: row.published_at || row.created_at,
-      category: row.category,
-      readTime: row.read_time,
-      author: row.author,
-      published: row.published,
-      featured: row.featured,
-      updatedAt: row.updated_at,
+      id: String(row.id),
+      title: row.title ?? '',
+      excerpt: row.excerpt ?? '',
+      content: row.content ?? '',
+      coverImage: row.cover_image ?? '',
+      date: row.published_at || row.created_at || new Date().toISOString(),
+      category: row.category ?? 'Nutrición',
+      readTime: row.read_time ?? '4 min',
+      author: row.author ?? 'Pablo Herrera',
+      published: row.published === true,
+      featured: row.featured === true,
+      updatedAt: row.updated_at ?? row.created_at,
     };
   }
 
@@ -189,66 +296,79 @@ export class BlogService {
   }
 
   private getLocalPosts(includeDrafts: boolean): BlogPost[] {
-    const stored = this.readLocalPosts();
-    const basePosts = BLOG_POSTS.map((post, index) => ({
-      ...post,
-      published: true,
-      featured: index === 0,
-      updatedAt: post.date,
-    }));
-    const merged = this.mergePosts([...stored, ...basePosts]);
-    return includeDrafts ? this.sortPosts(merged) : this.sortPosts(merged.filter((post) => post.published !== false));
+    return this.readLocalPosts()
+      .filter((post) => includeDrafts || post.published === true)
+      .sort(
+        (a, b) =>
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
   }
 
   private readLocalPosts(): BlogPost[] {
-    if (!this.hasLocalStorage()) return [];
     try {
-      return JSON.parse(globalThis.localStorage.getItem(this.storageKey) || '[]');
+      if (typeof localStorage === 'undefined') return [];
+
+      const value = localStorage.getItem(this.storageKey);
+      if (!value) return [];
+
+      const parsed: unknown = JSON.parse(value);
+      return Array.isArray(parsed) ? (parsed as BlogPost[]) : [];
     } catch {
       return [];
     }
   }
 
-  private writeLocalPosts(posts: BlogPost[]) {
-    if (!this.hasLocalStorage()) return;
-    globalThis.localStorage.setItem(this.storageKey, JSON.stringify(this.sortPosts(posts)));
+  private writeLocalPosts(posts: BlogPost[]): void {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.storageKey, JSON.stringify(posts));
+      }
+    } catch (error) {
+      console.warn('No se pudo actualizar el respaldo local del blog:', error);
+    }
   }
 
-  private saveLocalPost(post: BlogPost) {
+  private saveLocalPost(post: BlogPost): void {
     const posts = this.readLocalPosts().filter((item) => item.id !== post.id);
     posts.unshift(post);
     this.writeLocalPosts(posts);
   }
 
-  private mergePosts(posts: BlogPost[]): BlogPost[] {
-    const byId = new Map<string, BlogPost>();
-    posts.forEach((post) => byId.set(post.id, post));
-    return Array.from(byId.values());
-  }
-
-  private sortPosts(posts: BlogPost[]): BlogPost[] {
-    return [...posts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  private removeLocalPost(id: string): void {
+    this.writeLocalPosts(
+      this.readLocalPosts().filter((post) => post.id !== id)
+    );
   }
 
   private createId(): string {
-    if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-    return `post-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 
-  private hasLocalStorage(): boolean {
-    try {
-      return typeof globalThis.localStorage !== 'undefined';
-    } catch {
-      return false;
-    }
+  private toReadableHtml(content: string): string {
+    const value = String(content ?? '').trim();
+
+    if (!value) return '';
+
+    // Conserva HTML cuando el contenido ya viene en formato enriquecido.
+    if (/<[a-z][\s\S]*>/i.test(value)) return value;
+
+    return value
+      .split(/\n{2,}/)
+      .map(
+        (paragraph) =>
+          `<p>${this.escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`
+      )
+      .join('');
   }
 
-  private withTimeout<T>(request: PromiseLike<T>, message: string): Promise<T> {
-    return Promise.race([
-      Promise.resolve(request),
-      new Promise<T>((_, reject) => {
-        globalThis.setTimeout(() => reject(new Error(message)), this.requestTimeoutMs);
-      }),
-    ]);
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 }
