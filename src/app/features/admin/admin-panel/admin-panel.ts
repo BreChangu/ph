@@ -158,8 +158,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     return [
       ...new Set(
         this.catalogoEjercicios
-          .map((ejercicio) => String(ejercicio.categoria || '').trim())
-          .filter(Boolean)
+          .map((ejercicio) => this.grupoEjercicio(ejercicio))
       )
     ].sort((a, b) => a.localeCompare(b, 'es'));
   }
@@ -180,9 +179,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
       const nombre = String(ejercicio.nombre || '')
         .toLocaleLowerCase('es');
 
-      const categoria = String(
-        ejercicio.categoria || 'Sin categoría'
-      ).trim();
+      const categoria = this.grupoEjercicio(ejercicio);
 
       const coincideTexto =
         !termino ||
@@ -199,9 +196,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     const grupos = new Map<string, any[]>();
 
     filtrados.forEach((ejercicio) => {
-      const categoria = String(
-        ejercicio.categoria || 'Sin categoría'
-      ).trim();
+      const categoria = this.grupoEjercicio(ejercicio);
 
       if (!grupos.has(categoria)) {
         grupos.set(categoria, []);
@@ -221,6 +216,262 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
           )
         )
       }));
+  }
+
+  // ==========================================
+  // CATÁLOGOS: AGRUPACIÓN Y DESPLEGABLES (<details>)
+  // ==========================================
+
+  /** La tabla catalogo_ejercicios guarda el grupo en la columna `grupo_muscular`. */
+  private grupoEjercicio(ejercicio: any): string {
+    return (
+      String(ejercicio?.grupo_muscular ?? '').trim() ||
+      'Sin grupo muscular'
+    );
+  }
+
+  /** La tabla catalogo_alimentos guarda el grupo en la columna `categoria`. */
+  private categoriaAlimento(alimento: any): string {
+    return String(alimento?.categoria ?? '').trim() || 'Sin categoría';
+  }
+
+  // Búsqueda del catálogo de alimentos (la de ejercicios ya existe arriba).
+  busquedaAlimentos = '';
+
+  /** Alimentos filtrados por texto y agrupados por categoría. */
+  get catalogoAlimentosAgrupados(): {
+    categoria: string;
+    alimentos: any[];
+  }[] {
+    const termino = this.busquedaAlimentos
+      .trim()
+      .toLocaleLowerCase('es');
+
+    const grupos = new Map<string, any[]>();
+
+    for (const alimento of this.catalogoAlimentos) {
+      const categoria = this.categoriaAlimento(alimento);
+
+      const texto = `${alimento.nombre ?? ''} ${categoria}`
+        .toLocaleLowerCase('es');
+
+      if (termino && !texto.includes(termino)) continue;
+
+      if (!grupos.has(categoria)) {
+        grupos.set(categoria, []);
+      }
+
+      grupos.get(categoria)!.push(alimento);
+    }
+
+    return Array.from(grupos.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], 'es'))
+      .map(([categoria, alimentos]) => ({
+        categoria,
+        alimentos: [...alimentos].sort((a, b) =>
+          String(a.nombre || '').localeCompare(
+            String(b.nombre || ''),
+            'es'
+          )
+        ),
+      }));
+  }
+
+  /**
+   * trackBy: mantiene el mismo elemento del DOM entre ciclos de detección
+   * de cambios. Sin esto, Angular recrearía los <details> y se cerrarían.
+   */
+  trackByCategoria = (_: number, grupo: { categoria: string }) =>
+    grupo.categoria;
+
+  trackById = (_: number, item: { id: string }) => item.id;
+
+  // ==========================================
+  // CATÁLOGOS: EDICIÓN EN LA MISMA FILA
+  // ==========================================
+
+  /** Vacío o una URL que empieza con http:// o https:// */
+  private readonly patronUrlOpcional = /^(https?:\/\/\S+)?$/i;
+
+  catalogoEditando: { tipo: 'alimento' | 'ejercicio'; id: string | number } | null = null;
+
+  catalogoEditForm!: FormGroup;
+
+  isSavingCatalogoEdit = false;
+
+  /** Grupos musculares que ya existen (para sugerir en un datalist). */
+  get gruposEjerciciosSugeridos(): string[] {
+    return [
+      ...new Set(
+        this.catalogoEjercicios
+          .map((e) => String(e?.grupo_muscular ?? '').trim())
+          .filter(Boolean)
+      ),
+    ].sort((a, b) => a.localeCompare(b, 'es'));
+  }
+
+  /** Categorías de alimentos que ya existen (para sugerir en un datalist). */
+  get categoriasAlimentosSugeridas(): string[] {
+    return [
+      ...new Set(
+        this.catalogoAlimentos
+          .map((a) => String(a?.categoria ?? '').trim())
+          .filter(Boolean)
+      ),
+    ].sort((a, b) => a.localeCompare(b, 'es'));
+  }
+
+  estaEditandoCatalogo(
+    tipo: 'alimento' | 'ejercicio',
+    id: string | number
+  ): boolean {
+    return (
+      this.catalogoEditando?.tipo === tipo &&
+      this.catalogoEditando?.id === id
+    );
+  }
+
+  iniciarEdicionCatalogo(tipo: 'alimento' | 'ejercicio', item: any) {
+    this.catalogoEditando = { tipo, id: item.id };
+
+    this.catalogoEditForm.reset({
+      nombre: item.nombre ?? '',
+      categoria:
+        tipo === 'ejercicio'
+          ? item.grupo_muscular ?? ''
+          : item.categoria ?? '',
+      macronutriente: item.macronutriente || 'Otro',
+      video_url: item.video_url ?? '',
+    });
+
+    this.cdr.detectChanges();
+
+    // Enfoca el campo "Nombre" de la fila que se acaba de abrir.
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLInputElement>('.catalog-edit-form input')
+        ?.focus();
+    }, 0);
+  }
+
+  cancelarEdicionCatalogo() {
+    this.catalogoEditando = null;
+
+    this.catalogoEditForm.reset({ macronutriente: 'Otro' });
+
+    this.cdr.detectChanges();
+  }
+
+  async guardarEdicionCatalogo() {
+    const edicion = this.catalogoEditando;
+
+    if (!edicion) return;
+
+    const valores = this.catalogoEditForm.value;
+
+    const nombre = String(valores.nombre ?? '').trim();
+
+    if (!nombre || this.catalogoEditForm.invalid) {
+      this.catalogoEditForm.markAllAsTouched();
+
+      this.mostrarToast(
+        'Revisa el nombre y que el enlace del video empiece con http:// o https://',
+        'error'
+      );
+
+      return;
+    }
+
+    const categoria = String(valores.categoria ?? '').trim();
+
+    const tabla =
+      edicion.tipo === 'alimento'
+        ? 'catalogo_alimentos'
+        : 'catalogo_ejercicios';
+
+    // Se envía '' (y no null) cuando está vacío: es seguro aunque la
+    // columna sea NOT NULL.
+    const cambios =
+      edicion.tipo === 'alimento'
+        ? {
+            nombre,
+            categoria,
+            macronutriente: valores.macronutriente || 'Otro',
+          }
+        : {
+            nombre,
+            grupo_muscular: categoria,
+            video_url: String(valores.video_url ?? '').trim(),
+          };
+
+    const supabase =
+      (this.authService as any).supabase ||
+      (this.authService as any).supabaseClient;
+
+    this.isSavingCatalogoEdit = true;
+
+    this.cdr.detectChanges();
+
+    try {
+      // .select() devuelve las filas modificadas. Con RLS, un UPDATE
+      // bloqueado NO da error: devuelve 0 filas. Por eso se comprueba.
+      const { data, error } = await supabase
+        .from(tabla)
+        .update(cambios)
+        .eq('id', edicion.id)
+        .select('id');
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        throw new Error(
+          'No se modificó ningún registro. Revisa tus permisos de administrador.'
+        );
+      }
+
+      this.mostrarToast('Registro actualizado.', 'success');
+
+      this.catalogoEditando = null;
+
+      await this.cargarCatalogos();
+    } catch (error: any) {
+      this.mostrarToast(
+        'No se pudo guardar: ' + (error?.message ?? 'error desconocido'),
+        'error'
+      );
+    } finally {
+      this.isSavingCatalogoEdit = false;
+
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * Al elegir un ejercicio del catálogo en la rutina del paciente, copia su
+   * video de referencia. Solo si la fila aún no tiene uno, para no pisar un
+   * enlace que el coach haya puesto a mano.
+   */
+  autocompletarVideoDesdeCatalogo(idxDia: number, idxEjercicio: number) {
+    const fila = this.ejerciciosDeDia(idxDia).at(idxEjercicio);
+
+    const nombre = String(fila.get('ejercicio')?.value ?? '')
+      .trim()
+      .toLocaleLowerCase('es');
+
+    if (!nombre) return;
+
+    const coincidencia = this.catalogoEjercicios.find(
+      (e) =>
+        String(e?.nombre ?? '').trim().toLocaleLowerCase('es') === nombre
+    );
+
+    const url = String(coincidencia?.video_url ?? '').trim();
+
+    const control = fila.get('video_url');
+
+    if (url && control && !String(control.value ?? '').trim()) {
+      control.setValue(url);
+    }
   }
 
   catalogoAlimentos: any[] = [];
@@ -635,6 +886,17 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
       categoria: [''],
       nombre: ['', Validators.required],
       macronutriente: [''],
+      video_url: ['', Validators.pattern(this.patronUrlOpcional)],
+    });
+
+    // Formulario propio de la edición en fila del catálogo.
+    // No se reutiliza inlineFoodForm: lo usa el autocompletado de dietas
+    // y onClickOutside() lo cancela con cualquier clic externo.
+    this.catalogoEditForm = this.fb.group({
+      nombre: ['', Validators.required],
+      categoria: [''],
+      macronutriente: ['Otro'],
+      video_url: ['', Validators.pattern(this.patronUrlOpcional)],
     });
   }
 
@@ -739,6 +1001,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
       categoria,
       nombre,
       macronutriente,
+      video_url,
     } = this.catalogoForm.value;
 
     const supabase =
@@ -763,7 +1026,13 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
       } else if (tipo === 'ejercicio') {
         const { error } = await supabase
           .from('catalogo_ejercicios')
-          .insert([{ categoria, nombre }]);
+          .insert([
+            {
+              nombre,
+              grupo_muscular: String(categoria ?? '').trim(),
+              video_url: String(video_url ?? '').trim(),
+            },
+          ]);
 
         if (error) throw error;
 
@@ -773,6 +1042,8 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
       await this.cargarCatalogos();
 
       this.catalogoForm.get('nombre')?.reset();
+
+      this.catalogoForm.get('video_url')?.reset('');
     } catch (error: any) {
       this.catalogoMessage = `Error al guardar: ${error.message}`;
     } finally {

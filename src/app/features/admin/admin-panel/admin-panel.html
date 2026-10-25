@@ -381,6 +381,8 @@
             <input id="catalogo-categoria"
                    type="text"
                    formControlName="categoria"
+                   [attr.list]="catalogoForm.get('tipo')?.value === 'ejercicio' ? 'lista-grupos-ejercicios' : 'lista-categorias-alimentos'"
+                   autocomplete="off"
                    placeholder="Ej. Aves, Pecho, Pierna...">
           </div>
 
@@ -399,6 +401,22 @@
             </select>
           </div>
 
+          <div class="input-group"
+               *ngIf="catalogoForm.get('tipo')?.value === 'ejercicio'">
+
+            <label for="catalogo-video">Video de referencia (opcional)</label>
+
+            <input id="catalogo-video"
+                   type="url"
+                   formControlName="video_url"
+                   placeholder="https://youtube.com/...">
+
+            <small class="catalog-field-error"
+                   *ngIf="catalogoForm.get('video_url')?.invalid && catalogoForm.get('video_url')?.touched">
+              El enlace debe empezar con http:// o https://
+            </small>
+          </div>
+
           <div class="input-group">
             <label for="catalogo-nombre">Nombre exacto a mostrar</label>
 
@@ -410,6 +428,14 @@
 
         </div>
       </form>
+
+  <datalist id="lista-grupos-ejercicios">
+    <option *ngFor="let grupo of gruposEjerciciosSugeridos" [value]="grupo"></option>
+  </datalist>
+
+  <datalist id="lista-categorias-alimentos">
+    <option *ngFor="let categoria of categoriasAlimentosSugeridas" [value]="categoria"></option>
+  </datalist>
 
         <!-- AMBOS CATÁLOGOS VISIBLES -->
   <div class="catalogs-columns">
@@ -427,38 +453,106 @@
         </span>
       </header>
 
+      <div class="exercise-catalog-toolbar catalog-toolbar-single">
+        <label class="exercise-search">
+          <span aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            [(ngModel)]="busquedaAlimentos"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Buscar alimento o categoría..."
+            aria-label="Buscar alimentos por nombre o categoría">
+        </label>
+      </div>
+
       <div class="catalog-empty"
            *ngIf="catalogoAlimentos.length === 0">
         No hay alimentos registrados.
       </div>
 
-      <div class="catalog-items" *ngIf="catalogoAlimentos.length > 0">
+      <div class="catalog-empty"
+           *ngIf="catalogoAlimentos.length > 0 && catalogoAlimentosAgrupados.length === 0">
+        No encontramos alimentos con esa búsqueda.
+      </div>
 
-        <article class="catalog-item"
-                 *ngFor="let alimento of catalogoAlimentos">
+      <div class="catalog-group-list" *ngIf="catalogoAlimentosAgrupados.length > 0">
+        <details
+          class="catalog-group"
+          *ngFor="let grupo of catalogoAlimentosAgrupados; trackBy: trackByCategoria"
+          [open]="!!busquedaAlimentos.trim()">
 
-          <div class="catalog-item-info">
-            <h4>{{ alimento.nombre }}</h4>
-            <p>{{ alimento.categoria || 'Sin categoría' }}</p>
+          <summary class="catalog-group-summary">
+            <h4>{{ grupo.categoria }}</h4>
+            <span class="catalog-group-count">{{ grupo.alimentos.length }}</span>
+            <svg class="catalog-group-chevron" viewBox="0 0 24 24" width="16" height="16"
+                 stroke="currentColor" stroke-width="2" fill="none"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </summary>
 
-            <span class="catalog-macro"
-                  *ngIf="alimento.macronutriente">
-              {{ alimento.macronutriente }}
-            </span>
-          </div>
+          <article
+            class="catalog-group-item"
+            [class.is-editing]="estaEditandoCatalogo('alimento', alimento.id)"
+            *ngFor="let alimento of grupo.alimentos; trackBy: trackById">
 
-          <button type="button"
-                  class="btn-text danger"
-                  (click)="eliminarItemCatalogo(
-                    alimento.id,
-                    alimento.nombre,
-                    'alimento'
-                  )">
-            Borrar
-          </button>
+            <ng-container *ngIf="!estaEditandoCatalogo('alimento', alimento.id); else editarAlimento">
+              <div class="catalog-group-item-info">
+                <span class="catalog-group-marker" aria-hidden="true"></span>
+                <span>{{ alimento.nombre }}</span>
+                <span class="catalog-macro" *ngIf="alimento.macronutriente">
+                  {{ alimento.macronutriente }}
+                </span>
+              </div>
 
-        </article>
+              <div class="catalog-row-actions">
+                <button type="button" class="catalog-icon-btn"
+                        title="Editar" [attr.aria-label]="'Editar alimento ' + alimento.nombre"
+                        (click)="iniciarEdicionCatalogo('alimento', alimento)">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                </button>
+                <button type="button" class="catalog-icon-btn catalog-icon-btn--danger"
+                        title="Borrar" [attr.aria-label]="'Borrar alimento ' + alimento.nombre"
+                        (click)="eliminarItemCatalogo(alimento.id, alimento.nombre, 'alimento')">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </div>
+            </ng-container>
 
+            <ng-template #editarAlimento>
+              <form class="catalog-edit-form" [formGroup]="catalogoEditForm"
+                    (ngSubmit)="guardarEdicionCatalogo()"
+                    (keydown.escape)="cancelarEdicionCatalogo()">
+                <div class="catalog-edit-fields">
+                  <label class="catalog-edit-field">
+                    <span>Nombre</span>
+                    <input type="text" formControlName="nombre" autocomplete="off">
+                  </label>
+                  <label class="catalog-edit-field">
+                    <span>Categoría</span>
+                    <input type="text" formControlName="categoria"
+                           list="lista-categorias-alimentos" autocomplete="off">
+                  </label>
+                  <label class="catalog-edit-field">
+                    <span>Macronutriente</span>
+                    <select formControlName="macronutriente">
+                      <option value="Proteína">Proteína</option>
+                      <option value="Carbohidrato">Carbohidrato</option>
+                      <option value="Grasa">Grasa</option>
+                      <option value="Otro">Otro / Mixto</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="catalog-edit-actions">
+                  <button type="button" class="catalog-btn" (click)="cancelarEdicionCatalogo()">Cancelar</button>
+                  <button type="submit" class="catalog-btn catalog-btn--primary" [disabled]="isSavingCatalogoEdit">
+                    {{ isSavingCatalogoEdit ? 'Guardando...' : 'Guardar' }}
+                  </button>
+                </div>
+              </form>
+            </ng-template>
+          </article>
+        </details>
       </div>
     </section>
 
@@ -527,44 +621,83 @@
         No encontramos ejercicios con esos filtros. Prueba con otro nombre o selecciona “Todos los grupos”.
       </div>
 
-      <div class="exercise-category-list" *ngIf="ejerciciosAgrupados.length > 0">
-        <section
-          class="exercise-category-group"
-          *ngFor="let grupo of ejerciciosAgrupados">
+      <div class="catalog-group-list" *ngIf="ejerciciosAgrupados.length > 0">
+        <details
+          class="catalog-group"
+          *ngFor="let grupo of ejerciciosAgrupados; trackBy: trackByCategoria"
+          [open]="!!busquedaEjercicios.trim() || categoriaEjerciciosSeleccionada !== 'Todas'">
 
-          <header class="exercise-category-heading">
-            <div>
-              <span class="eyebrow">Grupo muscular</span>
-              <h4>{{ grupo.categoria }}</h4>
-            </div>
-
-            <span class="exercise-category-count">
-              {{ grupo.ejercicios.length }}
-            </span>
-          </header>
+          <summary class="catalog-group-summary">
+            <h4>{{ grupo.categoria }}</h4>
+            <span class="catalog-group-count">{{ grupo.ejercicios.length }}</span>
+            <svg class="catalog-group-chevron" viewBox="0 0 24 24" width="16" height="16"
+                 stroke="currentColor" stroke-width="2" fill="none"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </summary>
 
           <article
-            class="exercise-catalog-item"
-            *ngFor="let ejercicio of grupo.ejercicios">
+            class="catalog-group-item"
+            [class.is-editing]="estaEditandoCatalogo('ejercicio', ejercicio.id)"
+            *ngFor="let ejercicio of grupo.ejercicios; trackBy: trackById">
 
-            <div class="exercise-catalog-item-info">
-              <span class="exercise-item-marker" aria-hidden="true"></span>
-              <span>{{ ejercicio.nombre }}</span>
-            </div>
+            <ng-container *ngIf="!estaEditandoCatalogo('ejercicio', ejercicio.id); else editarEjercicio">
+              <div class="catalog-group-item-info">
+                <span class="catalog-group-marker" aria-hidden="true"></span>
+                <span>{{ ejercicio.nombre }}</span>
+                <a class="catalog-video-chip" *ngIf="ejercicio.video_url"
+                   [href]="ejercicio.video_url" target="_blank" rel="noopener noreferrer"
+                   [attr.aria-label]="'Ver video de ' + ejercicio.nombre">▶ Video</a>
+              </div>
 
-            <button
-              type="button"
-              class="btn-text danger"
-              [attr.aria-label]="'Borrar ejercicio ' + ejercicio.nombre"
-              (click)="eliminarItemCatalogo(
-                ejercicio.id,
-                ejercicio.nombre,
-                'ejercicio'
-              )">
-              Borrar
-            </button>
+              <div class="catalog-row-actions">
+                <button type="button" class="catalog-icon-btn"
+                        title="Editar" [attr.aria-label]="'Editar ejercicio ' + ejercicio.nombre"
+                        (click)="iniciarEdicionCatalogo('ejercicio', ejercicio)">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                </button>
+                <button type="button" class="catalog-icon-btn catalog-icon-btn--danger"
+                        title="Borrar" [attr.aria-label]="'Borrar ejercicio ' + ejercicio.nombre"
+                        (click)="eliminarItemCatalogo(ejercicio.id, ejercicio.nombre, 'ejercicio')">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </div>
+            </ng-container>
+
+            <ng-template #editarEjercicio>
+              <form class="catalog-edit-form" [formGroup]="catalogoEditForm"
+                    (ngSubmit)="guardarEdicionCatalogo()"
+                    (keydown.escape)="cancelarEdicionCatalogo()">
+                <div class="catalog-edit-fields">
+                  <label class="catalog-edit-field">
+                    <span>Nombre</span>
+                    <input type="text" formControlName="nombre" autocomplete="off">
+                  </label>
+                  <label class="catalog-edit-field">
+                    <span>Grupo muscular</span>
+                    <input type="text" formControlName="categoria"
+                           list="lista-grupos-ejercicios" autocomplete="off">
+                  </label>
+                  <label class="catalog-edit-field catalog-edit-field--wide">
+                    <span>Video de referencia (URL)</span>
+                    <input type="url" formControlName="video_url" placeholder="https://youtube.com/...">
+                    <small class="catalog-field-error"
+                           *ngIf="catalogoEditForm.get('video_url')?.invalid && catalogoEditForm.get('video_url')?.touched">
+                      El enlace debe empezar con http:// o https://
+                    </small>
+                  </label>
+                </div>
+                <div class="catalog-edit-actions">
+                  <button type="button" class="catalog-btn" (click)="cancelarEdicionCatalogo()">Cancelar</button>
+                  <button type="submit" class="catalog-btn catalog-btn--primary" [disabled]="isSavingCatalogoEdit">
+                    {{ isSavingCatalogoEdit ? 'Guardando...' : 'Guardar' }}
+                  </button>
+                </div>
+              </form>
+            </ng-template>
           </article>
-        </section>
+        </details>
       </div>
     </section>
 
@@ -978,7 +1111,7 @@
                 </div>
 
                 <div *ngFor="let ej of ejerciciosDeDia(activeTrainingEditorDay).controls; let j = index" [formGroupName]="j" class="training-exercise-row">
-                  <input type="text" formControlName="ejercicio" list="lista-ejercicios" placeholder="Ej. Sentadilla libre con barra">
+                  <input type="text" formControlName="ejercicio" list="lista-ejercicios" placeholder="Ej. Sentadilla libre con barra" (change)="autocompletarVideoDesdeCatalogo(activeTrainingEditorDay, j)">
                   <datalist id="lista-ejercicios">
                     <option *ngFor="let catEj of catalogoEjercicios" [value]="catEj.nombre"></option>
                   </datalist>
