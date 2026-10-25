@@ -11,7 +11,9 @@
                 ? 'Editor de Blog'
                 : adminSection === 'packages'
                   ? 'Editor de Paquetes'
-                  : 'Gestión de Catálogos'
+                  : adminSection === 'testimonials'
+                    ? 'Moderación de Testimonios'
+                    : 'Gestión de Catálogos'
           }}
         </h2>
       </div>
@@ -24,6 +26,9 @@
         </button>
         <button class="btn-primary" type="button" *ngIf="adminSection === 'packages'" (click)="nuevoPaquete()">
           Nuevo Paquete
+        </button>
+        <button class="btn-primary" type="button" *ngIf="adminSection === 'testimonials'" (click)="cargarTestimonios()" [disabled]="isLoadingTestimonios">
+          {{ isLoadingTestimonios ? 'Actualizando...' : 'Actualizar Testimonios' }}
         </button>
       </div>
     </header>
@@ -40,6 +45,9 @@
       </button>
       <button type="button" [class.active]="adminSection === 'catalogs'" (click)="setAdminSection('catalogs')">
         Catálogos
+      </button>
+      <button type="button" [class.active]="adminSection === 'testimonials'" (click)="setAdminSection('testimonials')">
+        Testimonios
       </button>
     </nav>
 
@@ -307,74 +315,82 @@
     </section>
 
     <!-- SECCIÓN DE CATÁLOGOS -->
-    <section class="blog-admin-layout" *ngIf="adminSection === 'catalogs'">
-      <aside class="blog-admin-list">
-        <div class="blog-list-header">
-          <span class="eyebrow">Catálogos</span>
-          <strong>Gestión Rápida</strong>
-        </div>
-        <div class="state-banner compact" style="margin-bottom: 1rem;">
-          Base de datos inteligente para autocompletado. Tienes {{ catalogoAlimentos.length }} alimentos y {{ catalogoEjercicios.length }} ejercicios registrados.
-        </div>
 
-        <div style="margin-top: 1.5rem;" *ngIf="catalogoAlimentos.length > 0">
-          <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Últimos Alimentos</strong>
-          <article class="blog-admin-item" *ngFor="let alimento of catalogoAlimentos.slice(0, 15)">
-            <div>
-              <h3>{{ alimento.nombre }}</h3>
-              <p>{{ alimento.categoria || 'Sin categoría' }}</p>
-            </div>
-            <button type="button" class="btn-text danger" (click)="eliminarItemCatalogo(alimento.id, alimento.nombre, 'alimento'); $event.stopPropagation()">Borrar</button>
-          </article>
+    <!-- SECCIÓN DE CATÁLOGOS -->
+    <section class="catalogs-admin-layout" *ngIf="adminSection === 'catalogs'">
+
+      <!-- ENCABEZADO Y RESUMEN -->
+      <header class="catalogs-summary">
+        <div>
+          <span class="eyebrow">Base de datos</span>
+          <h3>Gestión de catálogos</h3>
+          <p>Administra los alimentos y ejercicios disponibles para el sistema.</p>
         </div>
 
-        <div style="margin-top: 1.5rem;" *ngIf="catalogoEjercicios.length > 0">
-          <strong style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem;">Últimos Ejercicios</strong>
-          <article class="blog-admin-item" *ngFor="let ejercicio of catalogoEjercicios.slice(0, 15)">
-            <div>
-              <h3>{{ ejercicio.nombre }}</h3>
-              <p>{{ ejercicio.categoria || 'Sin categoría' }}</p>
-            </div>
-            <button type="button" class="btn-text danger" (click)="eliminarItemCatalogo(ejercicio.id, ejercicio.nombre, 'ejercicio'); $event.stopPropagation()">Borrar</button>
-          </article>
+        <div class="catalogs-counters">
+          <div class="catalog-counter">
+            <span>Alimentos</span>
+            <strong>{{ catalogoAlimentos.length }}</strong>
+          </div>
+
+          <div class="catalog-counter">
+            <span>Ejercicios</span>
+            <strong>{{ catalogoEjercicios.length }}</strong>
+          </div>
         </div>
+      </header>
 
-      </aside>
+      <!-- FORMULARIO PARA AGREGAR -->
+      <form [formGroup]="catalogoForm"
+            class="catalog-add-form"
+            (ngSubmit)="guardarItemCatalogo()">
 
-      <form [formGroup]="catalogoForm" class="blog-editor-card">
-        <header class="blog-editor-header">
+        <div class="catalog-form-heading">
           <div>
-            <span class="eyebrow">Base de Datos</span>
-            <h3>Agregar al Catálogo</h3>
+            <span class="eyebrow">Nuevo registro</span>
+            <h3>Agregar al catálogo</h3>
           </div>
-          <div class="blog-editor-actions">
-            <button type="button" class="btn-primary" (click)="guardarItemCatalogo()" [disabled]="isSavingCatalogo">
-              {{ isSavingCatalogo ? 'Guardando...' : '+ Agregar' }}
-            </button>
-          </div>
-        </header>
 
-        <div class="state-banner compact" *ngIf="catalogoMessage" [class.error]="catalogoMessage.includes('Error')">
+          <button type="submit"
+                  class="btn-primary"
+                  [disabled]="isSavingCatalogo">
+            {{ isSavingCatalogo ? 'Guardando...' : '+ Agregar' }}
+          </button>
+        </div>
+
+        <div class="state-banner compact"
+             *ngIf="catalogoMessage"
+             [class.error]="catalogoMessage.includes('Error')">
           {{ catalogoMessage }}
         </div>
 
-        <div class="input-grid">
+        <div class="catalog-form-grid">
+
           <div class="input-group">
-            <label>Tipo de registro</label>
-            <select formControlName="tipo" style="height: 3.2rem; border: 1px solid rgba(0,0,0,0.2); background: transparent; padding: 0 1rem; font-family: inherit; font-size: 0.95rem; outline: none; border-radius: 0; appearance: none; -webkit-appearance: none;">
+            <label for="catalogo-tipo">Tipo de registro</label>
+
+            <select id="catalogo-tipo" formControlName="tipo">
               <option value="alimento">Alimento / Suplemento</option>
               <option value="ejercicio">Ejercicio / Variante</option>
             </select>
           </div>
-          
+
           <div class="input-group">
-            <label>Categoría (Opcional)</label>
-            <input type="text" formControlName="categoria" placeholder="Ej. Aves, Pecho, Pierna...">
+            <label for="catalogo-categoria">Categoría (opcional)</label>
+
+            <input id="catalogo-categoria"
+                   type="text"
+                   formControlName="categoria"
+                   placeholder="Ej. Aves, Pecho, Pierna...">
           </div>
 
-          <div class="input-group full-width" *ngIf="catalogoForm.get('tipo')?.value === 'alimento'">
-            <label>Macronutriente Principal</label>
-            <select formControlName="macronutriente" style="height: 3.2rem; border: 1px solid rgba(0,0,0,0.2); background: transparent; padding: 0 1rem; font-family: inherit; font-size: 0.95rem; outline: none; border-radius: 0; appearance: none; -webkit-appearance: none;">
+          <div class="input-group"
+               *ngIf="catalogoForm.get('tipo')?.value === 'alimento'">
+
+            <label for="catalogo-macronutriente">Macronutriente principal</label>
+
+            <select id="catalogo-macronutriente"
+                    formControlName="macronutriente">
               <option value="">Selecciona uno...</option>
               <option value="Proteína">Proteína</option>
               <option value="Carbohidrato">Carbohidrato</option>
@@ -383,14 +399,267 @@
             </select>
           </div>
 
-          <div class="input-group full-width">
-            <label>Nombre exacto a mostrar</label>
-            <input type="text" formControlName="nombre" placeholder="Ej. Salmón fresco o Press inclinado" (keydown.enter)="guardarItemCatalogo(); $event.preventDefault()">
+          <div class="input-group">
+            <label for="catalogo-nombre">Nombre exacto a mostrar</label>
+
+            <input id="catalogo-nombre"
+                   type="text"
+                   formControlName="nombre"
+                   placeholder="Ej. Salmón fresco o Press inclinado">
           </div>
+
         </div>
       </form>
+
+        <!-- AMBOS CATÁLOGOS VISIBLES -->
+  <div class="catalogs-columns">
+
+    <!-- CATÁLOGO DE ALIMENTOS -->
+    <section class="catalog-list-card">
+      <header class="catalog-list-heading">
+        <div>
+          <span class="eyebrow">Nutrición</span>
+          <h3>Catálogo de alimentos</h3>
+        </div>
+
+        <span class="catalog-total">
+          {{ catalogoAlimentos.length }}
+        </span>
+      </header>
+
+      <div class="catalog-empty"
+           *ngIf="catalogoAlimentos.length === 0">
+        No hay alimentos registrados.
+      </div>
+
+      <div class="catalog-items" *ngIf="catalogoAlimentos.length > 0">
+
+        <article class="catalog-item"
+                 *ngFor="let alimento of catalogoAlimentos">
+
+          <div class="catalog-item-info">
+            <h4>{{ alimento.nombre }}</h4>
+            <p>{{ alimento.categoria || 'Sin categoría' }}</p>
+
+            <span class="catalog-macro"
+                  *ngIf="alimento.macronutriente">
+              {{ alimento.macronutriente }}
+            </span>
+          </div>
+
+          <button type="button"
+                  class="btn-text danger"
+                  (click)="eliminarItemCatalogo(
+                    alimento.id,
+                    alimento.nombre,
+                    'alimento'
+                  )">
+            Borrar
+          </button>
+
+        </article>
+
+      </div>
     </section>
 
+    <!-- CATÁLOGO DE EJERCICIOS -->
+    <section class="catalog-list-card exercise-catalog-card">
+      <header class="catalog-list-heading">
+        <div>
+          <span class="eyebrow">Entrenamiento</span>
+          <h3>Catálogo de ejercicios</h3>
+          <p class="catalog-description">
+            Busca ejercicios y consulta los movimientos organizados por grupo muscular.
+          </p>
+        </div>
+
+        <span class="catalog-total">
+          {{ catalogoEjercicios.length }}
+        </span>
+      </header>
+
+      <div class="exercise-catalog-toolbar">
+        <label class="exercise-search">
+          <span aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            [(ngModel)]="busquedaEjercicios"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Buscar ejercicio o grupo muscular..."
+            aria-label="Buscar ejercicios por nombre o grupo muscular">
+        </label>
+
+        <select
+          class="exercise-category-filter"
+          [(ngModel)]="categoriaEjerciciosSeleccionada"
+          [ngModelOptions]="{ standalone: true }"
+          aria-label="Filtrar ejercicios por grupo muscular">
+
+          <option value="Todas">Todos los grupos</option>
+
+          <option
+            *ngFor="let categoria of categoriasEjercicios"
+            [value]="categoria">
+            {{ categoria }}
+          </option>
+        </select>
+      </div>
+
+      <div class="exercise-catalog-summary">
+        <span>
+          {{ ejerciciosAgrupados.length }}
+          {{ ejerciciosAgrupados.length === 1 ? 'grupo encontrado' : 'grupos encontrados' }}
+        </span>
+        <span>
+          El número de cada grupo indica sus ejercicios disponibles.
+        </span>
+      </div>
+
+      <div
+        class="catalog-empty"
+        *ngIf="catalogoEjercicios.length === 0">
+        Todavía no hay ejercicios registrados.
+      </div>
+
+      <div
+        class="catalog-empty"
+        *ngIf="catalogoEjercicios.length > 0 && ejerciciosAgrupados.length === 0">
+        No encontramos ejercicios con esos filtros. Prueba con otro nombre o selecciona “Todos los grupos”.
+      </div>
+
+      <div class="exercise-category-list" *ngIf="ejerciciosAgrupados.length > 0">
+        <section
+          class="exercise-category-group"
+          *ngFor="let grupo of ejerciciosAgrupados">
+
+          <header class="exercise-category-heading">
+            <div>
+              <span class="eyebrow">Grupo muscular</span>
+              <h4>{{ grupo.categoria }}</h4>
+            </div>
+
+            <span class="exercise-category-count">
+              {{ grupo.ejercicios.length }}
+            </span>
+          </header>
+
+          <article
+            class="exercise-catalog-item"
+            *ngFor="let ejercicio of grupo.ejercicios">
+
+            <div class="exercise-catalog-item-info">
+              <span class="exercise-item-marker" aria-hidden="true"></span>
+              <span>{{ ejercicio.nombre }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="btn-text danger"
+              [attr.aria-label]="'Borrar ejercicio ' + ejercicio.nombre"
+              (click)="eliminarItemCatalogo(
+                ejercicio.id,
+                ejercicio.nombre,
+                'ejercicio'
+              )">
+              Borrar
+            </button>
+          </article>
+        </section>
+      </div>
+    </section>
+
+  </div>
+</section>
+
+
+    <!-- SECCIÓN DE MODERACIÓN DE TESTIMONIOS -->
+    <section class="testimonials-admin-layout" *ngIf="adminSection === 'testimonials'">
+      <header class="blog-list-header">
+        <div>
+          <span class="eyebrow">Comunidad</span>
+          <h3>Moderación de testimonios</h3>
+        </div>
+        <strong>{{ testimonios.length }} testimonios</strong>
+      </header>
+
+      <div *ngIf="isLoadingTestimonios" class="state-banner">
+        Cargando testimonios...
+      </div>
+
+      <div *ngIf="!isLoadingTestimonios && testimoniosError" class="state-banner error">
+        {{ testimoniosError }}
+      </div>
+
+      <div *ngIf="!isLoadingTestimonios && testimoniosMessage" class="state-banner compact">
+        {{ testimoniosMessage }}
+      </div>
+
+      <div *ngIf="!isLoadingTestimonios && !testimoniosError && testimonios.length === 0" class="state-banner">
+        No hay testimonios para mostrar.
+      </div>
+
+      <div class="dashboard-grid" *ngIf="testimonios.length > 0">
+        <article class="patient-card" *ngFor="let testimonio of testimonios">
+          <header class="patient-info">
+            <div class="patient-avatar">
+              {{ getPacienteIniciales(testimonio) }}
+            </div>
+            <div class="patient-meta-text">
+              <h3>{{ testimonio.nombre_completo || testimonio.nombre || 'Testimonio' }}</h3>
+              <p>{{ testimonio.email || 'Sin correo disponible' }}</p>
+            </div>
+            <span
+              class="status-indicator"
+              [class.active]="testimonio.estado_moderacion === 'aprobado' || testimonio.aprobado === true">
+              {{
+                testimonio.estado_moderacion ||
+                (testimonio.aprobado ? 'Aprobado' : 'Pendiente')
+              }}
+            </span>
+          </header>
+
+          <div class="patient-details">
+            <div class="detail-item">
+              <span>Testimonio</span>
+              <p>{{ testimonio.texto || testimonio.contenido || testimonio.testimonio || 'Sin texto disponible.' }}</p>
+            </div>
+          </div>
+
+          <div class="testimonial-images" *ngIf="testimonio.foto_antes || testimonio.foto_despues">
+            <div class="detail-item" *ngIf="testimonio.foto_antes">
+              <span>Foto antes</span>
+              <a [href]="testimonio.foto_antes" target="_blank" rel="noopener noreferrer">
+                Ver imagen
+              </a>
+            </div>
+            <div class="detail-item" *ngIf="testimonio.foto_despues">
+              <span>Foto después</span>
+              <a [href]="testimonio.foto_despues" target="_blank" rel="noopener noreferrer">
+                Ver imagen
+              </a>
+            </div>
+          </div>
+
+          <footer class="patient-footer">
+            <button
+              type="button"
+              class="btn-text success"
+              *ngIf="testimonio.estado_moderacion !== 'aprobado' && testimonio.aprobado !== true"
+              (click)="moderarTestimonio(testimonio, 'aprobado')">
+              Aprobar
+            </button>
+
+            <button
+              type="button"
+              class="btn-text danger"
+              *ngIf="testimonio.estado_moderacion !== 'rechazado'"
+              (click)="moderarTestimonio(testimonio, 'rechazado')">
+              Rechazar
+            </button>
+          </footer>
+        </article>
+      </div>
+    </section>
   </ng-container>
 
   <ng-container *ngIf="vistaActual === 'editor'">
@@ -482,7 +751,7 @@
       </section>
     </div>
 
-    <!-- 👉 CONSTRUCTOR DE DIETAS CON EL NUEVO AUTOCOMPLETADO E INGREDIENTES -->
+    <!-- CONSTRUCTOR DE DIETAS CON AUTOCOMPLETADO E INGREDIENTES -->
     <form [formGroup]="planForm" class="form-layout" *ngIf="!isLoadingExpediente && seccionEditor === 'nutrition'">
       <section class="clinical-card">
         <h3 class="section-label">Configuracion Energetica General</h3>
@@ -490,7 +759,9 @@
           <div class="input-group">
             <label>Meta Calorica (Kcal)</label>
             <input type="number" formControlName="calorias_totales" placeholder="Ej. 2100">
-          </div>
+
+
+                      </div>
           <div class="input-group">
             <label>Suplementacion Estrategica</label>
             <input type="text" formControlName="suplementacion" placeholder="Ej. 5g Creatina, Whey Protein">
@@ -525,38 +796,31 @@
               <span></span>
             </div>
 
-            <div *ngFor="let alimento of alimentosDeComida(i).controls; let j = index" [formGroupName]="j" 
+            <div *ngFor="let alimento of alimentosDeComida(i).controls; let j = index" [formGroupName]="j"
                  class="food-row" [class.is-option-row]="alimento.value.esOpcion"
                  [style.position]="'relative'"
                  [style.z-index]="activeSearchDropdown === (i + '-' + j) ? 9999 : 1">
-              
-              <!-- 🟢 CONTENEDOR DE AUTOCOMPLETADO Y EDICIÓN INLINE CON CATEGORÍAS -->
+
               <div class="food-input-wrapper autocomplete-container">
                 <span class="option-badge" *ngIf="alimento.value.esOpcion">
                   ⇄ Opción
                 </span>
-                
-                <input type="text" 
-                       formControlName="descripcion" 
+
+                <input type="text"
+                       formControlName="descripcion"
                        placeholder="Busca o escribe un alimento..."
                        [class.has-badge]="alimento.value.esOpcion"
                        (input)="onAlimentoSearch($event, i, j)"
                        (focus)="activeSearchDropdown = i + '-' + j"
                        autocomplete="off">
 
-                <!-- 🟢 EL MENÚ DESPLEGABLE CON EDICIÓN INLINE Y CATEGORÍAS -->
                 <div class="autocomplete-dropdown" *ngIf="activeSearchDropdown === (i + '-' + j)">
-                  
                   <div class="dropdown-header">
                     <small>Base de datos: {{ catalogoAlimentos.length }} ingredientes</small>
                   </div>
 
-                  <!-- 🟢 AGRUPACIÓN POR CATEGORÍAS -->
                   <ng-container *ngFor="let grupo of getAlimentosAgrupados(i, j)">
-                    
-                    <!-- ENCABEZADO DE LA CATEGORÍA -->
-                    <div class="category-header" 
-                         (click)="toggleCategory(i, j, grupo.categoria)">
+                    <div class="category-header" (click)="toggleCategory(i, j, grupo.categoria)">
                       <span class="category-name">{{ grupo.categoria }}</span>
                       <span class="category-count">{{ grupo.alimentos.length }}</span>
                       <svg class="chevron-icon" [class.rotated]="isCategoryExpanded(i, j, grupo.categoria) || alimentoSearchTerms[(i + '-' + j)]" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -564,16 +828,10 @@
                       </svg>
                     </div>
 
-                    <!-- ALIMENTOS DE ESTA CATEGORÍA -->
-                    <div class="category-items-container" 
+                    <div class="category-items-container"
                          *ngIf="isCategoryExpanded(i, j, grupo.categoria) || alimentoSearchTerms[(i + '-' + j)]">
-                         
-                      <!-- 🔥 AQUI CORREGIMOS EL BUCLE, REMOVIENDO EL WRAPPER INNECESARIO -->
                       <ng-container *ngFor="let catAlimento of grupo.alimentos">
-                        
-                        <!-- 1. VISTA NORMAL DEL ALIMENTO -->
                         <div class="dropdown-item" *ngIf="inlineEditingFoodId !== catAlimento.id" (click)="seleccionarAlimento(catAlimento, i, j)">
-                          
                           <div class="item-content-left">
                             <strong class="item-name">{{ catAlimento.nombre }}</strong>
                             <span class="macro-tag" [ngClass]="{
@@ -584,71 +842,64 @@
                               {{ catAlimento.macronutriente }}
                             </span>
                           </div>
-                          
-                          <!-- BOTONES DE ACCIÓN MINIMALISTAS -->
+
                           <div class="item-actions">
-                             <button type="button" class="action-btn edit-btn" title="Editar alimento" (click)="iniciarEdicionAlimento(catAlimento); $event.stopPropagation()">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                             </button>
-                             <button type="button" class="action-btn delete-btn" title="Borrar del catálogo" (click)="eliminarItemCatalogo(catAlimento.id, catAlimento.nombre, 'alimento'); $event.stopPropagation()">
-                                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                             </button>
+                            <button type="button" class="action-btn edit-btn" title="Editar alimento" (click)="iniciarEdicionAlimento(catAlimento); $event.stopPropagation()">
+                              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                            </button>
+                            <button type="button" class="action-btn delete-btn" title="Borrar del catálogo" (click)="eliminarItemCatalogo(catAlimento.id, catAlimento.nombre, 'alimento'); $event.stopPropagation()">
+                              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
                           </div>
                         </div>
 
-                        <!-- 2. VISTA EDICIÓN DEL ELEMENTO INLINE -->
                         <div class="dropdown-item-edit" *ngIf="inlineEditingFoodId === catAlimento.id" (click)="$event.stopPropagation()">
-                           <div [formGroup]="inlineFoodForm">
-                              <input type="text" formControlName="nombre" placeholder="Nombre (Ej. Salmón)">
-                              <input type="text" formControlName="categoria" placeholder="Categoría (Ej. Pescados)">
-                              <select formControlName="macronutriente">
-                                <option value="Proteína">Proteína</option>
-                                <option value="Carbohidrato">Carbohidrato</option>
-                                <option value="Grasa">Grasa</option>
-                                <option value="Otro">Otro</option>
-                              </select>
-                              <div class="edit-actions">
-                                 <button type="button" class="btn-add-primary" (click)="guardarAlimentoInline()">Guardar</button>
-                                 <button type="button" class="btn-add-secondary" (click)="cancelarEdicionInline()">Cancelar</button>
-                              </div>
-                           </div>
+                          <div [formGroup]="inlineFoodForm">
+                            <input type="text" formControlName="nombre" placeholder="Nombre (Ej. Salmón)">
+                            <input type="text" formControlName="categoria" placeholder="Categoría (Ej. Pescados)">
+                            <select formControlName="macronutriente">
+                              <option value="Proteína">Proteína</option>
+                              <option value="Carbohidrato">Carbohidrato</option>
+                              <option value="Grasa">Grasa</option>
+                              <option value="Otro">Otro</option>
+                            </select>
+                            <div class="edit-actions">
+                              <button type="button" class="btn-add-primary" (click)="guardarAlimentoInline()">Guardar</button>
+                              <button type="button" class="btn-add-secondary" (click)="cancelarEdicionInline()">Cancelar</button>
+                            </div>
+                          </div>
                         </div>
                       </ng-container>
                     </div>
                   </ng-container>
 
-                  <!-- MENSAJE VACÍO -->
                   <div class="dropdown-empty" *ngIf="getAlimentosAgrupados(i, j).length === 0 && !isAddingInlineFood">
                     No se encontraron coincidencias en la búsqueda.
                   </div>
 
-                  <!-- 3. VISTA AÑADIR NUEVO ELEMENTO -->
                   <div class="dropdown-item-edit new-item-box" *ngIf="isAddingInlineFood" (click)="$event.stopPropagation()">
-                     <div [formGroup]="inlineFoodForm">
-                        <label>Agregar Nuevo Alimento</label>
-                        <input type="text" formControlName="nombre" placeholder="Nombre (Ej. Salmón)">
-                        <input type="text" formControlName="categoria" placeholder="Categoría (Ej. Pescados)">
-                        <select formControlName="macronutriente">
-                          <option value="Proteína">Proteína</option>
-                          <option value="Carbohidrato">Carbohidrato</option>
-                          <option value="Grasa">Grasa</option>
-                          <option value="Otro">Otro</option>
-                        </select>
-                        <div class="edit-actions">
-                           <button type="button" class="btn-add-primary" (click)="guardarAlimentoInline()">Guardar en catálogo</button>
-                           <button type="button" class="btn-add-secondary" (click)="cancelarEdicionInline()">Cancelar</button>
-                        </div>
-                     </div>
+                    <div [formGroup]="inlineFoodForm">
+                      <label>Agregar Nuevo Alimento</label>
+                      <input type="text" formControlName="nombre" placeholder="Nombre (Ej. Salmón)">
+                      <input type="text" formControlName="categoria" placeholder="Categoría (Ej. Pescados)">
+                      <select formControlName="macronutriente">
+                        <option value="Proteína">Proteína</option>
+                        <option value="Carbohidrato">Carbohidrato</option>
+                        <option value="Grasa">Grasa</option>
+                        <option value="Otro">Otro</option>
+                      </select>
+                      <div class="edit-actions">
+                        <button type="button" class="btn-add-primary" (click)="guardarAlimentoInline()">Guardar en catálogo</button>
+                        <button type="button" class="btn-add-secondary" (click)="cancelarEdicionInline()">Cancelar</button>
+                      </div>
+                    </div>
                   </div>
 
-                  <!-- 4. BOTÓN "AÑADIR" FIJO AL FINAL DEL DROPDOWN -->
                   <div class="dropdown-footer" *ngIf="!isAddingInlineFood" (click)="iniciarNuevoAlimentoInline(); $event.stopPropagation()">
-                     <button type="button" class="btn-inline-add">+ Añadir Ingrediente al Catálogo</button>
+                    <button type="button" class="btn-inline-add">+ Añadir Ingrediente al Catálogo</button>
                   </div>
-
                 </div>
               </div>
-              <!-- Termina Contenedor de Autocompletado -->
 
               <input type="number" formControlName="calorias" placeholder="0">
               <input type="number" formControlName="proteinas" placeholder="0">
@@ -657,7 +908,7 @@
               <button type="button" class="btn-delete-row" (click)="eliminarAlimento(i, j)">x</button>
             </div>
           </div>
-          
+
           <div class="meal-actions-row">
             <button type="button" class="btn-add-option" (click)="agregarOpcionIntercambiable(i)">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M17 1l4 4-4 4"></path><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><path d="M7 23l-4-4 4-4"></path><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
@@ -667,7 +918,6 @@
               + Añadir Ingrediente Fijo
             </button>
           </div>
-
         </div>
       </div>
 
@@ -728,12 +978,11 @@
                 </div>
 
                 <div *ngFor="let ej of ejerciciosDeDia(activeTrainingEditorDay).controls; let j = index" [formGroupName]="j" class="training-exercise-row">
-                  
                   <input type="text" formControlName="ejercicio" list="lista-ejercicios" placeholder="Ej. Sentadilla libre con barra">
                   <datalist id="lista-ejercicios">
                     <option *ngFor="let catEj of catalogoEjercicios" [value]="catEj.nombre"></option>
                   </datalist>
-                  
+
                   <input type="number" formControlName="series" placeholder="4">
                   <input type="text" formControlName="reps" placeholder="10-12">
                   <input type="text" formControlName="carga_objetivo" placeholder="Ej. 105 kg o 45 lb">
@@ -754,7 +1003,7 @@
     <div class="form-layout clinical-section" *ngIf="!isLoadingExpediente && seccionEditor === 'tecnica'">
       <section class="clinical-card">
         <h3 class="section-label">Laboratorio de Biomecánica</h3>
-        
+
         <div *ngIf="videosTecnica.length === 0" class="state-banner">
           Este paciente no ha subido material en video para revisión.
         </div>
@@ -767,16 +1016,16 @@
                 {{ video.estado }}
               </span>
             </header>
-            
+
             <div class="video-player-container">
               <video [src]="video.video_url" controls preload="metadata"></video>
             </div>
-            
+
             <div class="video-info">
               <p><strong>Nota del atleta:</strong> {{ video.nota_paciente || 'Sin comentarios adicionales.' }}</p>
               <small>Subido el: {{ video.created_at | date:'dd MMM yyyy, HH:mm' }}</small>
             </div>
-            
+
             <div class="video-feedback-form">
               <label>Correcciones y Feedback</label>
               <textarea [(ngModel)]="video.feedback_coach" rows="4" placeholder="Ej. Profundidad excelente, pero evita que las rodillas colapsen hacia adentro al subir..."></textarea>
@@ -788,7 +1037,6 @@
         </div>
       </section>
     </div>
-
   </ng-container>
 
   <div *ngIf="showToast" class="toast-notification" [class.error]="toastType === 'error'" [class.success]="toastType === 'success'"

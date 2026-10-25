@@ -1,6 +1,12 @@
 import { Injectable, Inject, PLATFORM_ID, NgZone, signal, computed } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { createClient, SupabaseClient, User, Session, RealtimeChannel } from '@supabase/supabase-js';
+import {
+  createClient,
+  SupabaseClient,
+  User,
+  Session,
+  RealtimeChannel,
+} from '@supabase/supabase-js';
 import { environment } from '../../../enviroments/enviroments';
 
 export type AuthDestination = {
@@ -9,7 +15,7 @@ export type AuthDestination = {
 };
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   public supabase: SupabaseClient;
@@ -24,10 +30,10 @@ export class AuthService {
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
-    private ngZone: NgZone
+    private ngZone: NgZone,
   ) {
-    const isPasswordRecoveryRoute = isPlatformBrowser(this.platformId)
-      && window.location.pathname === '/actualizar-password';
+    const isPasswordRecoveryRoute =
+      isPlatformBrowser(this.platformId) && window.location.pathname === '/actualizar-password';
 
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey, {
       auth: {
@@ -89,10 +95,10 @@ export class AuthService {
   async signInWithGoogle() {
     return await this.supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { 
+      options: {
         // Esta ruta concentra la validación del perfil antes de mostrar contenido privado.
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
   }
 
@@ -102,7 +108,9 @@ export class AuthService {
 
     return new Promise((resolve) => {
       let resolved = false;
-      const { data: { subscription } } = this.supabase.auth.onAuthStateChange((event, session) => {
+      const {
+        data: { subscription },
+      } = this.supabase.auth.onAuthStateChange((event, session) => {
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && !resolved) {
           resolved = true;
           globalThis.clearTimeout(timeout);
@@ -188,62 +196,61 @@ export class AuthService {
     }
   }
 
+  //CCOMPROBAR ROLES DE ADMOnIN Y PACIENTES
 
-  //CCOMPROBAR ROLES DE ADMOnIN Y PACIENTES 
-  
-async diagnosticarAdmin() {
-  const { data: userData, error: userError } =
-    await this.supabase.auth.getUser();
+  async diagnosticarAdmin() {
+    const { data: userData, error: userError } = await this.supabase.auth.getUser();
 
-  if (userError || !userData.user) {
-    return {
-      email: null,
-      uid: null,
-      rolPerfil: null,
-      esAdmin: null,
-      error: userError?.message ?? 'No hay sesión activa'
-    };
-  }
+    if (userError || !userData.user) {
+      return {
+        email: null,
+        uid: null,
+        rolPerfil: null,
+        esAdmin: null,
+        error: userError?.message ?? 'No hay sesión activa',
+      };
+    }
 
-  const user = userData.user;
+    const user = userData.user;
 
-  const { data: perfil, error: perfilError } =
-    await this.supabase
+    const { data: perfil, error: perfilError } = await this.supabase
       .from('perfiles')
       .select('id, rol, estado_aprobacion')
       .eq('id', user.id)
       .maybeSingle();
 
-  if (perfilError) {
+    if (perfilError) {
+      return {
+        email: user.email,
+        uid: user.id,
+        rolPerfil: null,
+        esAdmin: null,
+        error: `Error al consultar perfil: ${perfilError.message}`,
+      };
+    }
+
+    const { data: esAdmin, error: adminError } = await this.supabase.rpc('is_admin');
+
     return {
       email: user.email,
       uid: user.id,
-      rolPerfil: null,
-      esAdmin: null,
-      error: `Error al consultar perfil: ${perfilError.message}`
+      rolPerfil: perfil?.rol ?? null,
+      estado: perfil?.estado_aprobacion ?? null,
+      esAdmin: adminError ? null : esAdmin,
+      error: adminError?.message ?? null,
     };
   }
-
-  const { data: esAdmin, error: adminError } =
-    await this.supabase.rpc('is_admin');
-
-  return {
-    email: user.email,
-    uid: user.id,
-    rolPerfil: perfil?.rol ?? null,
-    estado: perfil?.estado_aprobacion ?? null,
-    esAdmin: adminError ? null : esAdmin,
-    error: adminError?.message ?? null
-  };
-}
-
 
   // ==========================================
   // PERFILES Y ROLES
   // ==========================================
 
   async getUserProfile(userId: string) {
-    const { data, error } = await this.supabase.from('perfiles').select('*').eq('id', userId).maybeSingle();
+    const { data, error } = await this.supabase
+      .from('perfiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
     if (error) {
       console.error('Error obteniendo perfil:', error);
       return null;
@@ -277,13 +284,20 @@ async diagnosticarAdmin() {
   }
 
   async getPacientes() {
-    const { data, error } = await this.supabase.from('perfiles').select('*').eq('rol', 'paciente').order('created_at', { ascending: false });
+    const { data, error } = await this.supabase
+      .from('perfiles')
+      .select('*')
+      .eq('rol', 'paciente')
+      .order('created_at', { ascending: false });
     if (error) throw error;
     return data;
   }
 
   async actualizarEstadoPaciente(pacienteId: string, nuevoEstado: string) {
-    return await this.supabase.from('perfiles').update({ estado_aprobacion: nuevoEstado }).eq('id', pacienteId);
+    return await this.supabase
+      .from('perfiles')
+      .update({ estado_aprobacion: nuevoEstado })
+      .eq('id', pacienteId);
   }
 
   // ==========================================
@@ -291,7 +305,10 @@ async diagnosticarAdmin() {
   // ==========================================
 
   subscribePacientes(callback: () => void): RealtimeChannel {
-    return this.supabase.channel('public:perfiles').on('postgres_changes', { event: '*', schema: 'public', table: 'perfiles' }, () => callback()).subscribe();
+    return this.supabase
+      .channel('public:perfiles')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'perfiles' }, () => callback())
+      .subscribe();
   }
 
   unsubscribeChannel(channel: any) {
@@ -310,12 +327,31 @@ async diagnosticarAdmin() {
   }
 
   async guardarExpedienteInicial(pacienteId: string, respuestas: any, linksFotos: any) {
-    await this.supabase.from('perfiles').update({ nombre_completo: respuestas.nombre_completo, peso_kg: respuestas.peso_kg, altura_cm: respuestas.altura_cm, edad: respuestas.edad, genero: respuestas.genero }).eq('id', pacienteId);
-    return await this.supabase.from('expedientes_clinicos').upsert({ id_perfil: pacienteId, respuestas_completas: respuestas, fotos_progreso: linksFotos });
+    await this.supabase
+      .from('perfiles')
+      .update({
+        nombre_completo: respuestas.nombre_completo,
+        peso_kg: respuestas.peso_kg,
+        altura_cm: respuestas.altura_cm,
+        edad: respuestas.edad,
+        genero: respuestas.genero,
+      })
+      .eq('id', pacienteId);
+    return await this.supabase
+      .from('expedientes_clinicos')
+      .upsert({
+        id_perfil: pacienteId,
+        respuestas_completas: respuestas,
+        fotos_progreso: linksFotos,
+      });
   }
 
   async getExpedienteClinico(pacienteId: string) {
-    const { data } = await this.supabase.from('expedientes_clinicos').select('*').eq('id_perfil', pacienteId).maybeSingle();
+    const { data } = await this.supabase
+      .from('expedientes_clinicos')
+      .select('*')
+      .eq('id_perfil', pacienteId)
+      .maybeSingle();
     return data;
   }
 
@@ -324,7 +360,13 @@ async diagnosticarAdmin() {
   }
 
   async guardarRegistroFotografico(pacienteId: string, links: any) {
-    return await this.supabase.from('expedientes_clinicos').upsert({ id_perfil: pacienteId, fotos_progreso: links, fecha_actualizacion: new Date().toISOString() });
+    return await this.supabase
+      .from('expedientes_clinicos')
+      .upsert({
+        id_perfil: pacienteId,
+        fotos_progreso: links,
+        fecha_actualizacion: new Date().toISOString(),
+      });
   }
 
   // ==========================================
@@ -338,15 +380,77 @@ async diagnosticarAdmin() {
     return data.publicUrl;
   }
 
-  async guardarTestimonio(pacienteId: string, texto: string, fotoAntesUrl?: string, fotoDespuesUrl?: string) {
+  async guardarTestimonio(
+    pacienteId: string,
+    texto: string,
+    fotoAntesUrl?: string,
+    fotoDespuesUrl?: string,
+  ) {
     const { error } = await this.supabase.from('testimonios').insert({
       id_perfil: pacienteId,
       texto: texto,
       foto_antes: fotoAntesUrl,
       foto_despues: fotoDespuesUrl,
-      aprobado: false // Siempre entra en revisión
+      aprobado: false, // Siempre entra en revisión
     });
     if (error) throw error;
+  }
+
+  //Testimonios públicos para la sección de testimonios en la página principal
+  /**
+   * Obtiene los testimonios para el panel de administración.
+   * La lectura debe estar protegida por políticas RLS.
+   */
+  async getTestimoniosModeracion() {
+    // 1. Comprobar la sesión actual
+    const { data: sessionData, error: sessionError } = await this.supabase.auth.getSession();
+
+    console.log('[Testimonios] Proyecto:', new URL(environment.supabaseUrl).hostname);
+
+    console.log(
+      '[Testimonios] Usuario autenticado:',
+      sessionData.session?.user?.id ?? 'Sin sesión',
+    );
+
+    console.log('[Testimonios] Usuario:', sessionData.session?.user?.email ?? 'Sin correo');
+
+    console.log('[Testimonios] Error de sesión:', sessionError);
+
+    // 2. Consultar los testimonios
+    const { data, error } = await this.supabase
+      .from('testimonios')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // 3. Mostrar el resultado de la consulta
+    console.log('[Testimonios] Error de consulta:', error);
+    console.log('[Testimonios] Registros recibidos:', data);
+    console.log('[Testimonios] Cantidad:', data?.length ?? 0);
+
+    // 4. Propagar el error si la consulta falla
+    if (error) {
+      throw error;
+    }
+
+    return data ?? [];
+  }
+
+  /**
+   * Actualiza el estado de moderación de un testimonio.
+   * La autorización debe garantizarse también mediante RLS.
+   */
+  async moderarTestimonio(testimonioId: string, estado: 'aprobado' | 'rechazado'): Promise<void> {
+    const { error } = await this.supabase
+      .from('testimonios')
+      .update({
+        estado_moderacion: estado,
+        aprobado: estado === 'aprobado',
+      })
+      .eq('id', testimonioId);
+
+    if (error) {
+      throw error;
+    }
   }
 
   async getTestimoniosPublicos() {
@@ -357,8 +461,6 @@ async diagnosticarAdmin() {
       .order('created_at', { ascending: false });
     return error ? [] : data;
   }
-  
 
   //Administración de usuarios y roles
-  
 }
