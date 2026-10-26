@@ -90,7 +90,11 @@
                 </button>
 
                 <div class="active-option" *ngIf="agrupados.opciones[activeOptions[i] || 0] as opcionActiva">
-                  <span class="food-desc">{{ opcionActiva.descripcion }}</span>
+                  
+<span class="food-desc">
+  {{ limpiarNombreAlimento(opcionActiva.descripcion) }}
+</span>
+
                   <div class="macros-inline">
                      <span class="macro-cal">Cal: {{ opcionActiva.calorias }}</span> <span class="divider">|</span>
                      <span class="macro-prot">Prot: {{ opcionActiva.proteinas }}</span> <span class="divider">|</span>
@@ -107,7 +111,12 @@
 
             <!-- SECCIÓN 2: ALIMENTOS FIJOS -->
             <div class="food-row" *ngFor="let fijo of agrupados.fijos">
-              <span class="food-desc">{{ fijo.descripcion }}</span>
+
+<span class="food-desc">
+  {{ limpiarNombreAlimento(fijo.descripcion) }}
+</span>
+
+              
               <span class="macro-cal">{{ fijo.calorias }}</span>
               <span class="macro-prot">{{ fijo.proteinas }}</span>
               <span class="macro-carb">{{ fijo.carbos }}</span>

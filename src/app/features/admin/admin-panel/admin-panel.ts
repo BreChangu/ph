@@ -3656,189 +3656,106 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
 
 
 
-  async guardarPlan() {
+ 
+async guardarPlan() {
+  if (this.planForm.invalid || !this.pacienteSeleccionado?.id) {
+    this.planForm.markAllAsTouched();
 
-    if (this.planForm.invalid || !this.pacienteSeleccionado?.id) {
+    this.mostrarToast(
+      'Revisa los formularios: hay campos obligatorios pendientes.',
+      'error'
+    );
 
-      this.planForm.markAllAsTouched();
+    return;
+  }
 
+  this.isSavingPlan = true;
+  this.planEditorError = '';
+  this.cdr.detectChanges();
 
+  try {
+    const tareas: Promise<void>[] = [];
 
-      this.mostrarToast(
-
-        'Revisa los formularios: hay campos obligatorios pendientes.',
-
-        'error'
-
+    if (this.tieneComidasConAlimentos()) {
+      // Copia independiente para no modificar el formulario original.
+      const planDataRaw = JSON.parse(
+        JSON.stringify(this.planForm.value)
       );
 
+      if (Array.isArray(planDataRaw.comidas)) {
+        planDataRaw.comidas.forEach((comida: any) => {
+          if (!Array.isArray(comida.alimentos_comida)) {
+            return;
+          }
 
+          comida.alimentos_comida.forEach((alimento: any) => {
+            const descripcionLimpia = String(
+              alimento.descripcion ?? ''
+            )
+              // Elimina cualquier marcador anterior.
+              .replace(/^\s*\[opci[oó]n\]\s*:?\s*/i, '')
+              .trim();
+
+            // Lo agrega una sola vez si es una alternativa.
+            alimento.descripcion = alimento.esOpcion
+              ? `[Opcion] ${descripcionLimpia}`
+              : descripcionLimpia;
+          });
+        });
+      }
+
+      tareas.push(
+        this.planNutricionalService.guardarPlanCompleto(
+          this.pacienteSeleccionado.id,
+          planDataRaw
+        )
+      );
+    }
+
+    if (this.tieneRutinaConEjercicios()) {
+      tareas.push(
+        this.entrenamientoService.guardarRutinaCompleta(
+          this.pacienteSeleccionado.id,
+          this.planForm.value
+        )
+      );
+    }
+
+    if (tareas.length === 0) {
+      this.mostrarToast(
+        'Agrega al menos una comida con alimento o un día de entrenamiento con ejercicios.',
+        'error'
+      );
 
       return;
-
     }
 
+    await Promise.all(tareas);
 
+    this.mostrarToast('Plan guardado correctamente.', 'success');
 
-    this.isSavingPlan = true;
+    void this.volverAlPanel().catch((error) => {
+      console.error('Error actualizando el directorio:', error);
 
-
-
-    this.planEditorError = '';
-
-
-
-    this.cdr.detectChanges();
-
-
-
-    try {
-
-      const tareas: Promise<void>[] = [];
-
-
-
-      if (this.tieneComidasConAlimentos()) {
-
-        const planDataRaw = JSON.parse(
-
-          JSON.stringify(this.planForm.value)
-
-        );
-
-
-
-        if (planDataRaw.comidas) {
-
-          planDataRaw.comidas.forEach((comida: any) => {
-
-            if (comida.alimentos_comida) {
-
-              comida.alimentos_comida.forEach((alimento: any) => {
-
-                if (alimento.esOpcion) {
-
-                  alimento.descripcion =
-
-                    `[Opcion] ${alimento.descripcion}`;
-
-                }
-
-              });
-
-            }
-
-          });
-
-        }
-
-
-
-        tareas.push(
-
-          this.planNutricionalService.guardarPlanCompleto(
-
-            this.pacienteSeleccionado.id,
-
-            planDataRaw
-
-          )
-
-        );
-
-      }
-
-
-
-      if (this.tieneRutinaConEjercicios()) {
-
-        tareas.push(
-
-          this.entrenamientoService.guardarRutinaCompleta(
-
-            this.pacienteSeleccionado.id,
-
-            this.planForm.value
-
-          )
-
-        );
-
-      }
-
-
-
-      if (tareas.length === 0) {
-
-        this.mostrarToast(
-
-          'Agrega al menos una comida con alimento o un día de entrenamiento con ejercicios.',
-
-          'error'
-
-        );
-
-
-
-        return;
-
-      }
-
-
-
-      await Promise.all(tareas);
-
-
-
-      this.mostrarToast('Plan guardado correctamente.', 'success');
-
-
-
-      void this.volverAlPanel().catch((error) => {
-
-        console.error('Error actualizando el directorio:', error);
-
-
-
-        this.pacientesError = this.getErrorMessage(
-
-          error,
-
-          'El plan se guardó, pero no se pudo actualizar el directorio.'
-
-        );
-
-
-
-        this.cdr.detectChanges();
-
-      });
-
-    } catch (error: any) {
-
-      const message =
-
-        `Error al guardar: ${error.message || 'Error desconocido'}`;
-
-
-
-      this.planEditorError = message;
-
-
-
-      this.mostrarToast(message, 'error');
-
-    } finally {
-
-      this.isSavingPlan = false;
-
-
+      this.pacientesError = this.getErrorMessage(
+        error,
+        'El plan se guardó, pero no se pudo actualizar el directorio.'
+      );
 
       this.cdr.detectChanges();
+    });
+  } catch (error: any) {
+    const message =
+      `Error al guardar: ${error?.message || 'Error desconocido'}`;
 
-    }
-
+    this.planEditorError = message;
+    this.mostrarToast(message, 'error');
+  } finally {
+    this.isSavingPlan = false;
+    this.cdr.detectChanges();
   }
+}
+
 
 
 

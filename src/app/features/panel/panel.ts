@@ -284,36 +284,56 @@ export class PanelComponent implements OnInit, OnDestroy {
   // ==========================================
   // LÓGICA DE INTERCAMBIOS DE ALIMENTOS
   // ==========================================
-  procesarAlimentosDeComida(alimentos: any[]) {
-    if (!alimentos || !Array.isArray(alimentos)) return { opciones: [], fijos: [] };
 
-    const opciones: any[] = [];
-    const fijos: any[] = [];
 
-    alimentos.forEach(alimento => {
-      // Normalizamos el objeto para asegurar que todo sea válido
-      const current = {
-        descripcion: String(alimento.descripcion || ''),
-        calorias: parseFloat(alimento.calorias) || 0,
-        proteinas: parseFloat(alimento.proteinas) || 0,
-        carbos: parseFloat(alimento.carbos) || 0,
-        grasas: parseFloat(alimento.grasas) || 0
-      };
+ 
 
-      const optionMarker = /^\s*\[?\s*opci[oó]n\s*\]?\s*:?\s*/i;
-      
-      // Las alternativas heredadas se guardan con el marcador [Opcion].
-      // Lo usamos sólo como metadato y nunca lo mostramos al paciente.
-      if (optionMarker.test(current.descripcion)) {
-        current.descripcion = current.descripcion.replace(optionMarker, '').trim();
-        opciones.push(current);
-      } else {
-        fijos.push(current);
-      }
-    });
-
-    return { opciones, fijos };
+procesarAlimentosDeComida(alimentos: any[]) {
+  if (!Array.isArray(alimentos)) {
+    return { opciones: [], fijos: [] };
   }
+
+  const opciones: any[] = [];
+  const fijos: any[] = [];
+
+  // Reconoce [Opcion], [Opción] y espacios o dos puntos opcionales.
+  const optionMarker = /^\s*\[opci[oó]n\]\s*:?\s*/i;
+
+  for (const alimento of alimentos) {
+    const descripcionOriginal = String(alimento?.descripcion ?? '');
+    const esOpcion = optionMarker.test(descripcionOriginal);
+
+    const current = {
+      ...alimento,
+      descripcion: descripcionOriginal.replace(optionMarker, '').trim(),
+      calorias: Number(alimento?.calorias) || 0,
+      proteinas: Number(alimento?.proteinas) || 0,
+      carbos: Number(alimento?.carbos) || 0,
+      grasas: Number(alimento?.grasas) || 0
+    };
+
+    if (esOpcion) {
+      opciones.push(current);
+    } else {
+      fijos.push(current);
+    }
+  }
+
+  return { opciones, fijos };
+}
+
+
+  // Limpia el nombre por si el marcador todavía existe
+  // en los datos que se muestran en el HTML.
+  limpiarNombreAlimento(
+    descripcion: string | null | undefined
+  ): string {
+    return String(descripcion ?? '')
+      .replace(/^\s*\[opci[oó]n\]\s*:?\s*/i, '')
+      .trim();
+  }
+
+
 
   nextOption(mealIndex: number, totalOpciones: number) {
     const actual = this.activeOptions[mealIndex] || 0;
