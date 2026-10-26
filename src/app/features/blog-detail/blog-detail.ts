@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BlogPost } from '../../core/models/blog-post.model';
@@ -10,25 +10,26 @@ import { BlogService } from '../../core/services/blog';
   imports: [CommonModule, RouterLink],
   templateUrl: './blog-detail.html',
   styleUrl: './blog-detail.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BlogDetail implements OnInit {
-  post?: BlogPost;
-  isLoading = true;
+  private readonly route = inject(ActivatedRoute);
+  private readonly blogService = inject(BlogService);
 
-  constructor(
-    private route: ActivatedRoute,
-    private blogService: BlogService
-  ) {}
+  // Signals: en una app zoneless, solo un signal avisa a Angular que debe repintar.
+  readonly post = signal<BlogPost | undefined>(undefined);
+  readonly isLoading = signal(true);
 
-  ngOnInit() {
+  ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') || '';
     this.blogService.getPostById(id).subscribe({
       next: (post) => {
-        this.post = post;
-        this.isLoading = false;
+        this.post.set(post);
+        this.isLoading.set(false);
       },
       error: () => {
-        this.isLoading = false;
+        this.post.set(undefined);
+        this.isLoading.set(false);
       },
     });
   }

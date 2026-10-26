@@ -1,26 +1,26 @@
 <main class="blog-detail-page">
-  <div class="state-banner" *ngIf="isLoading">Cargando articulo...</div>
+  <div class="state-banner" *ngIf="isLoading()">Cargando articulo...</div>
 
-  <article class="article-shell" *ngIf="!isLoading && post">
+  <article class="article-shell" *ngIf="!isLoading() && post() as article">
     <a class="back-link" routerLink="/blog">Volver al blog</a>
 
     <header class="article-header">
-      <span class="article-category">{{ post.category }}</span>
-      <h1>{{ post.title }}</h1>
-      <p>{{ post.excerpt }}</p>
+      <span class="article-category">{{ article.category }}</span>
+      <h1>{{ article.title }}</h1>
+      <p>{{ article.excerpt }}</p>
       <div class="article-meta">
-        <span>{{ post.date | date:'mediumDate' }}</span>
-        <span>{{ post.readTime }}</span>
-        <span *ngIf="post.author">{{ post.author }}</span>
+        <span>{{ article.date | date:'mediumDate' }}</span>
+        <span>{{ article.readTime }}</span>
+        <span *ngIf="article.author">{{ article.author }}</span>
       </div>
     </header>
 
-    <img class="article-cover" [src]="post.coverImage" [alt]="post.title">
+    <img class="article-cover" [src]="article.coverImage" [alt]="article.title">
 
-    <section class="article-content" [innerHTML]="post.content"></section>
+    <section class="article-content" [innerHTML]="article.content"></section>
   </article>
 
-  <div class="state-banner error" *ngIf="!isLoading && !post">
+  <div class="state-banner error" *ngIf="!isLoading() && !post()">
     No encontramos este articulo. Puede estar oculto o haber sido eliminado.
   </div>
 </main>

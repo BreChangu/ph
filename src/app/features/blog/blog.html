@@ -7,37 +7,37 @@
   </header>
 
   <!-- LOADER (Por si decides volver a poner el delay simulado) -->
-  <div class="loader-container" *ngIf="isLoading">
+  <div class="loader-container" *ngIf="isLoading()">
     <div class="spinner"></div>
     <p>Cargando artículos...</p>
   </div>
 
   <!-- CONTENIDO DEL BLOG -->
-  <ng-container *ngIf="!isLoading">
+  <ng-container *ngIf="!isLoading()">
     
     <!-- 1. NOTA DESTACADA (HERO DEL BLOG) -->
-    <section class="featured-section" *ngIf="featuredPost">
+    <section class="featured-section" *ngIf="featuredPost() as featured">
       <article class="featured-card">
         <div class="featured-image-wrapper">
           <!-- Imagen clickeable -->
-          <img [src]="featuredPost.coverImage" 
-               [alt]="featuredPost.title" 
+          <img [src]="featured.coverImage" 
+               [alt]="featured.title" 
                class="featured-img" 
-               [routerLink]="['/blog', featuredPost.id]" 
+               [routerLink]="['/blog', featured.id]" 
                style="cursor: pointer;">
-          <span class="category-badge">{{ featuredPost.category }}</span>
+          <span class="category-badge">{{ featured.category }}</span>
         </div>
         <div class="featured-content">
           <div class="meta-data">
-            <span class="date">{{ featuredPost.date | date:'mediumDate' }}</span>
+            <span class="date">{{ featured.date | date:'mediumDate' }}</span>
             <span class="dot">•</span>
-            <span class="read-time">{{ featuredPost.readTime }}</span>
+            <span class="read-time">{{ featured.readTime }}</span>
           </div>
-          <h2 class="featured-title">{{ featuredPost.title }}</h2>
-          <p class="featured-excerpt">{{ featuredPost.excerpt }}</p>
+          <h2 class="featured-title">{{ featured.title }}</h2>
+          <p class="featured-excerpt">{{ featured.excerpt }}</p>
           
           <!-- Botón conectado -->
-          <button class="btn-read-more" [routerLink]="['/blog', featuredPost.id]">
+          <button class="btn-read-more" [routerLink]="['/blog', featured.id]">
             LEER ARTÍCULO COMPLETO
           </button>
         </div>
@@ -45,8 +45,8 @@
     </section>
 
     <!-- 2. GRID DE ARTÍCULOS SECUNDARIOS -->
-    <section class="grid-section" *ngIf="gridPosts.length > 0">
-      <article class="grid-card" *ngFor="let post of gridPosts">
+    <section class="grid-section" *ngIf="gridPosts().length > 0">
+      <article class="grid-card" *ngFor="let post of gridPosts(); trackBy: trackByPostId">
         <div class="card-image-wrapper">
           <!-- Imagen clickeable -->
           <img [src]="post.coverImage" 
