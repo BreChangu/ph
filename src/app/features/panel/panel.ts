@@ -1,4 +1,12 @@
-import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  Inject,
+  PLATFORM_ID,
+} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -19,6 +27,7 @@ type ExerciseVideoView = {
   watchUrl?: string;
   isExternal?: boolean;
   invalid?: boolean;
+  isVertical?: boolean;
   playbackFailed?: boolean;
   message?: string;
 };
@@ -53,7 +62,7 @@ export class PanelComponent implements OnInit, OnDestroy {
   isLoadingPlan = false;
   planError = '';
   planPaciente: any = null;
-  
+
   // Controla qué opción intercambiable se está viendo en cada comida.
   activeOptions: Record<number, number> = {};
 
@@ -76,10 +85,10 @@ export class PanelComponent implements OnInit, OnDestroy {
   entrenamientoSemanal: DiaEntrenamiento[] = [];
   isLoadingTraining = false;
   trainingError = '';
-  
+
   // VARIABLE CORREGIDA PARA EL MODAL DE VIDEO
   selectedExerciseVideo: ExerciseVideoView | null = null;
-  
+
   trainingDiaryNote = '';
   trainingDiaryMessage = '';
 
@@ -88,7 +97,7 @@ export class PanelComponent implements OnInit, OnDestroy {
     'Mantén una intensidad que te permita sostener el ritmo.',
     'Registra tus sesiones al terminar para dar seguimiento al plan.',
   ];
-  
+
   trainingGuidelines = [
     'Toma de 2 a 4 litros de agua al día.',
     'Escucha a tu cuerpo y cuida la técnica antes de subir cargas.',
@@ -103,10 +112,15 @@ export class PanelComponent implements OnInit, OnDestroy {
   notaTecnica = '';
   isUploadingVideo = false;
   tecnicaMessage = '';
-  
+
   historialVideos = [
-    { ejercicio: 'Sentadilla Libre', fecha: '12/06/2026', estado: 'Revisado', feedback: 'Mejora la profundidad, el peso está bien controlado.' },
-    { ejercicio: 'Peso Muerto', fecha: '14/06/2026', estado: 'Pendiente', feedback: null }
+    {
+      ejercicio: 'Sentadilla Libre',
+      fecha: '12/06/2026',
+      estado: 'Revisado',
+      feedback: 'Mejora la profundidad, el peso está bien controlado.',
+    },
+    { ejercicio: 'Peso Muerto', fecha: '14/06/2026', estado: 'Pendiente', feedback: null },
   ];
 
   // ==========================================
@@ -115,7 +129,11 @@ export class PanelComponent implements OnInit, OnDestroy {
   measurementDefinitions: MeasurementDefinition[] = [
     { key: 'BIR', label: 'Brazo izq. relajado', hint: 'Punto medio entre acromion y radio.' },
     { key: 'BDR', label: 'Brazo der. relajado', hint: 'Misma altura que el brazo izquierdo.' },
-    { key: 'BIC', label: 'Brazo izq. contraído', hint: 'Brazo flexionado, cinta alrededor del bíceps.' },
+    {
+      key: 'BIC',
+      label: 'Brazo izq. contraído',
+      hint: 'Brazo flexionado, cinta alrededor del bíceps.',
+    },
     { key: 'BDC', label: 'Brazo der. contraído', hint: 'Repite el mismo punto de medición.' },
     { key: 'Torax', label: 'Tórax', hint: 'Cinta a la altura promedio del pecho.' },
     { key: 'Cintura', label: 'Cintura', hint: 'Punto más estrecho del abdomen.' },
@@ -133,7 +151,7 @@ export class PanelComponent implements OnInit, OnDestroy {
     'Mantén la cinta firme, sin apretar la piel.',
     'Si puedes, pide ayuda para mantener la postura y repetir el mismo punto.',
   ];
-  
+
   photoFiles: Partial<Record<PhotoKind, File>> = {};
   photoMessage = '';
   isSavingPhotos = false;
@@ -154,14 +172,14 @@ export class PanelComponent implements OnInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
   ) {}
 
   async ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       try {
         const session = await this.authService.getSession();
-        
+
         if (!session?.user) {
           this.router.navigate(['/auth']);
           return;
@@ -185,6 +203,7 @@ export class PanelComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.planChannels.forEach((channel) => this.planNutricionalService.unsubscribeChannel(channel));
+     this.lockScroll(false);
   }
 
   // ==========================================
@@ -194,8 +213,8 @@ export class PanelComponent implements OnInit, OnDestroy {
     this.activeSection = section;
   }
 
-  selectTrainingDay(index: number) { 
-    this.activeTrainingDay = index; 
+  selectTrainingDay(index: number) {
+    this.activeTrainingDay = index;
   }
 
   previousTrainingDay() {
@@ -244,9 +263,9 @@ export class PanelComponent implements OnInit, OnDestroy {
       // Cargamos el plan Y el cumplimiento de hoy en paralelo
       const [plan, cumplimiento] = await Promise.all([
         this.planNutricionalService.getPlanPaciente(this.pacienteId),
-        this.planNutricionalService.obtenerCumplimientoDeHoy(this.pacienteId)
+        this.planNutricionalService.obtenerCumplimientoDeHoy(this.pacienteId),
       ]);
-      
+
       this.planPaciente = plan;
       this.comidasCumplidasHoy = cumplimiento || [];
     } catch (error) {
@@ -258,12 +277,16 @@ export class PanelComponent implements OnInit, OnDestroy {
   }
 
   async marcarComidaCumplida(comidaIndex: number) {
-    if (this.comidasCumplidasHoy.includes(comidaIndex) || this.isSavingCompliance || !this.pacienteId) {
-      return; 
+    if (
+      this.comidasCumplidasHoy.includes(comidaIndex) ||
+      this.isSavingCompliance ||
+      !this.pacienteId
+    ) {
+      return;
     }
 
     this.isSavingCompliance = true;
-    
+
     // UI Optimista: Actualizamos la pantalla instantáneamente
     this.comidasCumplidasHoy.push(comidaIndex);
     this.cdr.detectChanges();
@@ -273,7 +296,7 @@ export class PanelComponent implements OnInit, OnDestroy {
       await this.planNutricionalService.registrarCumplimientoComida(this.pacienteId, comidaIndex);
     } catch (error) {
       // Si falla, revertimos
-      this.comidasCumplidasHoy = this.comidasCumplidasHoy.filter(i => i !== comidaIndex);
+      this.comidasCumplidasHoy = this.comidasCumplidasHoy.filter((i) => i !== comidaIndex);
       console.error('Fallo al guardar el cumplimiento', error);
     } finally {
       this.isSavingCompliance = false;
@@ -285,55 +308,47 @@ export class PanelComponent implements OnInit, OnDestroy {
   // LÓGICA DE INTERCAMBIOS DE ALIMENTOS
   // ==========================================
 
-
- 
-
-procesarAlimentosDeComida(alimentos: any[]) {
-  if (!Array.isArray(alimentos)) {
-    return { opciones: [], fijos: [] };
-  }
-
-  const opciones: any[] = [];
-  const fijos: any[] = [];
-
-  // Reconoce [Opcion], [Opción] y espacios o dos puntos opcionales.
-  const optionMarker = /^\s*\[opci[oó]n\]\s*:?\s*/i;
-
-  for (const alimento of alimentos) {
-    const descripcionOriginal = String(alimento?.descripcion ?? '');
-    const esOpcion = optionMarker.test(descripcionOriginal);
-
-    const current = {
-      ...alimento,
-      descripcion: descripcionOriginal.replace(optionMarker, '').trim(),
-      calorias: Number(alimento?.calorias) || 0,
-      proteinas: Number(alimento?.proteinas) || 0,
-      carbos: Number(alimento?.carbos) || 0,
-      grasas: Number(alimento?.grasas) || 0
-    };
-
-    if (esOpcion) {
-      opciones.push(current);
-    } else {
-      fijos.push(current);
+  procesarAlimentosDeComida(alimentos: any[]) {
+    if (!Array.isArray(alimentos)) {
+      return { opciones: [], fijos: [] };
     }
+
+    const opciones: any[] = [];
+    const fijos: any[] = [];
+
+    // Reconoce [Opcion], [Opción] y espacios o dos puntos opcionales.
+    const optionMarker = /^\s*\[opci[oó]n\]\s*:?\s*/i;
+
+    for (const alimento of alimentos) {
+      const descripcionOriginal = String(alimento?.descripcion ?? '');
+      const esOpcion = optionMarker.test(descripcionOriginal);
+
+      const current = {
+        ...alimento,
+        descripcion: descripcionOriginal.replace(optionMarker, '').trim(),
+        calorias: Number(alimento?.calorias) || 0,
+        proteinas: Number(alimento?.proteinas) || 0,
+        carbos: Number(alimento?.carbos) || 0,
+        grasas: Number(alimento?.grasas) || 0,
+      };
+
+      if (esOpcion) {
+        opciones.push(current);
+      } else {
+        fijos.push(current);
+      }
+    }
+
+    return { opciones, fijos };
   }
-
-  return { opciones, fijos };
-}
-
 
   // Limpia el nombre por si el marcador todavía existe
   // en los datos que se muestran en el HTML.
-  limpiarNombreAlimento(
-    descripcion: string | null | undefined
-  ): string {
+  limpiarNombreAlimento(descripcion: string | null | undefined): string {
     return String(descripcion ?? '')
       .replace(/^\s*\[opci[oó]n\]\s*:?\s*/i, '')
       .trim();
   }
-
-
 
   nextOption(mealIndex: number, totalOpciones: number) {
     const actual = this.activeOptions[mealIndex] || 0;
@@ -392,6 +407,7 @@ procesarAlimentosDeComida(alimentos: any[]) {
       watchUrl: source.watchUrl,
       directUrl: source.directUrl,
       isExternal: source.isExternal,
+      isVertical: source.isVertical,
       message: source.isExternal
         ? 'Este video está en una plataforma externa (Instagram, TikTok, etc.) y se abre en otra pestaña.'
         : undefined,
@@ -403,6 +419,13 @@ procesarAlimentosDeComida(alimentos: any[]) {
 
   closeExerciseVideo() {
     this.selectedExerciseVideo = null;
+    this.lockScroll(false); // ← nuevo
+  }
+
+  private lockScroll(lock: boolean) {
+    // ← nuevo
+    if (!isPlatformBrowser(this.platformId)) return;
+    document.body.style.overflow = lock ? 'hidden' : '';
   }
 
   @HostListener('document:keydown.escape')
@@ -430,8 +453,8 @@ procesarAlimentosDeComida(alimentos: any[]) {
    * Devuelve null solo si el texto no es una URL http(s) válida.
    */
   private resolveExerciseVideo(
-    value?: string | null
-  ): { embedUrl?: string; directUrl?: string; watchUrl?: string; isExternal?: boolean } | null {
+    value?: string | null,
+  ): { embedUrl?: string; directUrl?: string; watchUrl?: string; isExternal?: boolean; isVertical?: boolean } | null {
     let input = String(value ?? '').trim();
     if (!input) return null;
 
@@ -450,17 +473,25 @@ procesarAlimentosDeComida(alimentos: any[]) {
     const host = url.hostname.replace(/^www\./, '').toLowerCase();
     const watchUrl = url.toString();
 
-    const hostsYoutube = ['youtu.be', 'youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com'];
-    if (hostsYoutube.includes(host)) {
+    const hostsYoutube = [
+      'youtu.be',
+      'youtube.com',
+      'm.youtube.com',
+      'music.youtube.com',
+      'youtube-nocookie.com',
+    ];
+       if (hostsYoutube.includes(host)) {
       const id = this.extraerIdYoutube(url, host);
       if (!id) return { watchUrl, isExternal: true };
 
       const inicio = this.segundosDeTiempoYoutube(url.searchParams.get('t') ?? url.searchParams.get('start'));
       const start = inicio > 0 ? `&start=${inicio}` : '';
 
+      const esShort = url.pathname.startsWith('/shorts/');
       return {
-        embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0&playsinline=1${start}`,
+        embedUrl: `https://www.youtube-nocookie.com/embed/${id}?rel=0&playsinline=1&autoplay=1${start}`,
         watchUrl: `https://www.youtube.com/watch?v=${id}`,
+        isVertical: esShort,
       };
     }
 
@@ -514,7 +545,8 @@ procesarAlimentosDeComida(alimentos: any[]) {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
       if (file.size > 50 * 1024 * 1024) {
-        this.tecnicaMessage = 'El video excede el límite de 50MB. Por favor comprime o recorta tu clip.';
+        this.tecnicaMessage =
+          'El video excede el límite de 50MB. Por favor comprime o recorta tu clip.';
         this.videoFile = null;
         return;
       }
@@ -561,11 +593,14 @@ procesarAlimentosDeComida(alimentos: any[]) {
   async guardarMedidas() {
     if (!this.pacienteId) return;
     this.isSavingMeasurements = true;
-    
-    const medidasLimpas = Object.entries(this.measurementValues).reduce((acc, [key, value]) => {
-      if (value !== null && !Number.isNaN(value)) acc[key] = value;
-      return acc;
-    }, {} as Record<string, number>);
+
+    const medidasLimpas = Object.entries(this.measurementValues).reduce(
+      (acc, [key, value]) => {
+        if (value !== null && !Number.isNaN(value)) acc[key] = value;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     if (Object.keys(medidasLimpas).length === 0) {
       this.measurementMessage = 'Agrega al menos una medida válida.';
@@ -595,10 +630,13 @@ procesarAlimentosDeComida(alimentos: any[]) {
   async guardarFotos() {
     if (!this.pacienteId) return;
 
-    const fotos = Object.entries(this.photoFiles).reduce((acc, [key, file]) => {
-      if (file) acc[key] = file;
-      return acc;
-    }, {} as Record<string, File>);
+    const fotos = Object.entries(this.photoFiles).reduce(
+      (acc, [key, file]) => {
+        if (file) acc[key] = file;
+        return acc;
+      },
+      {} as Record<string, File>,
+    );
 
     if (Object.keys(fotos).length === 0) {
       this.photoMessage = 'Selecciona al menos una fotografía para guardar.';
@@ -632,7 +670,8 @@ procesarAlimentosDeComida(alimentos: any[]) {
   async enviarTestimonio() {
     if (!this.pacienteId) return;
     if (!this.testimonioTexto.trim()) {
-      this.testimonioMessage = 'Por favor, escribe unas palabras sobre tu experiencia antes de enviar.';
+      this.testimonioMessage =
+        'Por favor, escribe unas palabras sobre tu experiencia antes de enviar.';
       return;
     }
 
@@ -642,15 +681,29 @@ procesarAlimentosDeComida(alimentos: any[]) {
     try {
       let urlAntes, urlDespues;
       if (this.testimonioFileAntes) {
-        urlAntes = await this.authService.subirFotoTestimonio(this.pacienteId, 'antes', this.testimonioFileAntes);
+        urlAntes = await this.authService.subirFotoTestimonio(
+          this.pacienteId,
+          'antes',
+          this.testimonioFileAntes,
+        );
       }
       if (this.testimonioFileDespues) {
-        urlDespues = await this.authService.subirFotoTestimonio(this.pacienteId, 'despues', this.testimonioFileDespues);
+        urlDespues = await this.authService.subirFotoTestimonio(
+          this.pacienteId,
+          'despues',
+          this.testimonioFileDespues,
+        );
       }
 
-      await this.authService.guardarTestimonio(this.pacienteId, this.testimonioTexto, urlAntes, urlDespues);
-      
-      this.testimonioMessage = '¡Gracias! Tu testimonio ha sido enviado exitosamente. Será visible en la página pronto.';
+      await this.authService.guardarTestimonio(
+        this.pacienteId,
+        this.testimonioTexto,
+        urlAntes,
+        urlDespues,
+      );
+
+      this.testimonioMessage =
+        '¡Gracias! Tu testimonio ha sido enviado exitosamente. Será visible en la página pronto.';
       this.testimonioTexto = '';
       this.testimonioFileAntes = null;
       this.testimonioFileDespues = null;

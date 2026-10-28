@@ -13,8 +13,7 @@
 }
 
 .blog-page-container {
-  padding: 12rem 2.4rem 8rem 2.4rem;
-  max-width: 120rem;
+  max-width: 90rem;
   margin: 0 auto;
 }
 
@@ -160,7 +159,7 @@
 
     .card-img {
       width: 100%; height: 100%;
-      object-fit: cover;
+      object-fit:none;
       transition: all 0.5s ease;
       filter: grayscale(0.5);
     }
@@ -267,7 +266,7 @@
     height: 45rem; // Altura fija para escritorio
 
     .featured-image-wrapper {
-      width: 55%; // Toma más de la mitad
+      width: 40%; // Toma más de la mitad
       height: 100%;
     }
 

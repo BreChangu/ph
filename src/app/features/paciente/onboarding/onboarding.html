@@ -1,4 +1,14 @@
 <div class="onboarding-wrapper">
+  <section class="submission-success" *ngIf="submissionComplete" role="status" aria-live="assertive">
+    <div class="submission-success-card">
+      <span class="submission-success-icon" aria-hidden="true">✓</span>
+      <p class="submission-success-eyebrow">Solicitud registrada</p>
+      <h1>{{ submissionTitle }}</h1>
+      <p>{{ submissionMessage }}</p>
+      <div class="submission-success-progress" aria-hidden="true"><span></span></div>
+      <button type="button" (click)="continuarTrasEnvio()">Continuar</button>
+    </div>
+  </section>
   
   <header class="onboarding-header">
     <div class="brand-logo">PH TEAM</div>

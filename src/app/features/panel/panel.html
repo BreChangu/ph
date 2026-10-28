@@ -218,7 +218,11 @@
 
     <!-- MODAL DE VIDEO DE EJERCICIO (YouTube, archivo directo o enlace externo) -->
     <div class="exercise-video-modal-backdrop" *ngIf="selectedExerciseVideo" (click)="closeExerciseVideo()">
-      <section class="exercise-video-modal" role="dialog" aria-modal="true" [attr.aria-label]="'Video de ' + selectedExerciseVideo.title" (click)="$event.stopPropagation()">
+     <section class="exercise-video-modal"
+         [class.is-vertical]="selectedExerciseVideo.isVertical"
+         role="dialog" aria-modal="true"
+         [attr.aria-label]="'Video de ' + selectedExerciseVideo.title"
+         (click)="$event.stopPropagation()">
         <header>
           <div>
             <span class="panel-eyebrow">Guía de ejecución</span>
@@ -260,7 +264,7 @@
     <!-- SECCIÓN DE REVISIÓN DE TÉCNICA -->
     <section class="panel-section" *ngIf="activeSection === 'tecnica'">
       <header class="section-title">
-        <h1>Revisión de Técnica</h1>
+        <h1>Revisión de Progreso</h1>
         <p>Sube clips cortos de tus series pesadas para recibir correcciones posturales y biomecánicas.</p>
       </header>
 

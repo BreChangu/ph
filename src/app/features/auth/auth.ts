@@ -8,7 +8,6 @@ import { ActivatedRoute, Router } from '@angular/router';
   selector: 'app-auth',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  providers: [AuthService], // 🟢 Proveedor para solucionar el error NG2003
   templateUrl: './auth.html',
   styleUrls: ['./auth.scss'],
 })
@@ -249,35 +248,70 @@ export class AuthComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  private async redirigirUsuarioAutenticado(userId: string, email?: string) {
-    const perfil = await this.authService.getUserProfileForAuth(userId, email);
-    this.isLoadingGoogle = false;
+ private async redirigirUsuarioAutenticado(
+  userId: string,
+  email?: string
+): Promise<void> {
+  this.isLoading = false;
+  this.isLoadingGoogle = false;
 
-    if (!perfil) {
-      this.showMessage('Error de sistema: Perfil no encontrado.', true);
-      await this.authService.signOut();
-      return;
-    }
+  try {
+    // Usar la misma lógica centralizada que utiliza Google.
+    const destino =
+      await this.authService.getAuthenticatedDestination(userId, email);
 
-    // Bloquear acceso a pendientes, a menos que sean admin
-    if (perfil.estado_aprobacion === 'pendiente' && perfil.rol !== 'admin') {
+    const estadoPendiente = destino.queryParams?.['pendiente'];
+    const errorAuth = destino.queryParams?.['error'];
+
+    // Si la cuenta debe permanecer en revisión, mostrar el estado
+    // directamente en el componente de autenticación.
+    if (estadoPendiente) {
+      const suspendida = estadoPendiente === 'suspendido';
+
       this.isAccountReview = true;
-      this.accountReviewTitle = 'ESTAMOS REVISANDO TU CUENTA';
-      this.showMessage('Tu cuenta está en revisión. Te avisaremos cuando el Coach la apruebe.', true);
-      await this.authService.signOut();
+      this.accountReviewTitle = suspendida
+        ? 'CUENTA SUSPENDIDA'
+        : 'ESTAMOS REVISANDO TU CUENTA';
+
+      this.showMessage(
+        suspendida
+          ? 'Tu cuenta está suspendida. Contacta a tu coach para recibir ayuda.'
+          : 'Tu cuenta está en revisión. Te avisaremos cuando el Coach la apruebe.',
+        true
+      );
+
       return;
     }
 
-    this.ngZone.run(async () => {
-      if (perfil.rol === 'admin') {
-        await this.router.navigate(['/admin-panel'], { replaceUrl: true });
-      } else {
-        // Consultar si tiene el formulario inicial llenado
-        const expediente = await this.authService.getExpedienteClinico(perfil.id);
-        
-        // Redirige al panel si hay expediente, o al onboarding para llenar sus datos
-        await this.router.navigate([expediente ? '/panel' : '/onboarding'], { replaceUrl: true });
-      }
+    // Tratar los errores de autenticación sin intentar entrar al panel.
+    if (errorAuth) {
+      this.showMessage(
+        errorAuth === 'perfil_no_encontrado'
+          ? 'No encontramos un perfil asociado a esta cuenta. Contacta a tu coach.'
+          : 'No pudimos verificar tu acceso. Inténtalo nuevamente.',
+        true
+      );
+
+      return;
+    }
+
+    // Navegación centralizada para todos los demás casos.
+    await this.router.navigate(destino.commands, {
+      queryParams: destino.queryParams,
+      replaceUrl: true
     });
+
+  } catch (error) {
+    console.error('Error al determinar el destino del usuario:', error);
+
+    this.showMessage(
+      'No pudimos verificar tu acceso. Inténtalo nuevamente.',
+      true
+    );
+  } finally {
+    this.isLoading = false;
+    this.isLoadingGoogle = false;
+    this.cdr.detectChanges();
   }
+}
 }

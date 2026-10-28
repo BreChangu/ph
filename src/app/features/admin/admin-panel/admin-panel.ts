@@ -16,6 +16,10 @@ import {
 
   HostListener,
 
+  ElementRef,
+
+  ViewChild,
+
 } from '@angular/core';
 
 
@@ -188,6 +192,9 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
   selectedBlogCoverFile: File | null = null;
   blogCoverPreview = '';
   isUploadingBlogCover = false;
+
+  @ViewChild('blogCoverInput')
+  private blogCoverFileInput?: ElementRef<HTMLInputElement>;
 
 
 
@@ -2938,10 +2945,32 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     reader.readAsDataURL(file);
   }
 
+  /**
+   * Cancela la imagen local seleccionada antes de subirla a Storage.
+   * Si el artículo ya tenía portada, restaura esa URL en la vista previa.
+   */
+  cancelarSeleccionPortadaBlog(): void {
+    if (this.isSavingBlog || this.isUploadingBlogCover) return;
+
+    this.selectedBlogCoverFile = null;
+
+    if (this.blogCoverFileInput) {
+      this.blogCoverFileInput.nativeElement.value = '';
+    }
+
+    this.blogCoverPreview = String(
+      this.blogForm?.get('coverImage')?.value ?? ''
+    ).trim();
+    this.blogError = '';
+    this.blogMessage = 'Selección de imagen cancelada. La portada anterior se conserva.';
+    this.cdr.detectChanges();
+  }
+
   nuevoBlogPost(): void {
     this.blogMessage = '';
     this.blogError = '';
     this.selectedBlogCoverFile = null;
+    if (this.blogCoverFileInput) this.blogCoverFileInput.nativeElement.value = '';
     this.blogCoverPreview = '';
     this.initBlogForm();
     this.cdr.detectChanges();
@@ -2951,6 +2980,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
     this.blogMessage = '';
     this.blogError = '';
     this.selectedBlogCoverFile = null;
+    if (this.blogCoverFileInput) this.blogCoverFileInput.nativeElement.value = '';
     this.blogCoverPreview = post.coverImage || '';
     this.initBlogForm(post);
     this.cdr.detectChanges();
@@ -2987,6 +3017,7 @@ export class AdminPanelComponent implements OnInit, OnDestroy {
 
       const saved = await this.blogService.savePost(payload);
       this.selectedBlogCoverFile = null;
+      if (this.blogCoverFileInput) this.blogCoverFileInput.nativeElement.value = '';
       // Mantiene visible la portada guardada al cargar el artículo desde Supabase.
       this.blogCoverPreview = saved.coverImage || '';
       this.blogMessage = saved.published

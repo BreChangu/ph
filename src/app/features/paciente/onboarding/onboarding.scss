@@ -14,6 +14,105 @@ $danger: #dc3545;
   color: $text-main;
 }
 
+.submission-success {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.submission-success-card {
+  width: min(100%, 33rem);
+  padding: 3rem;
+  border-top: 5px solid #ff0000;
+  background: #111;
+  color: #fff;
+  box-shadow: 0 1.25rem 4rem rgba(0, 0, 0, 0.35);
+  text-align: center;
+
+  h1 {
+    margin: 1rem 0 0.75rem;
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  > p:not(.submission-success-eyebrow) {
+    max-width: 27rem;
+    margin: 0 auto;
+    color: #c7c7c7;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  button {
+    width: 100%;
+    min-height: 3.35rem;
+    margin-top: 1.75rem;
+    border: 0;
+    background: #ff0000;
+    color: #fff;
+    cursor: pointer;
+    font: 800 0.85rem/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+
+    &:hover,
+    &:focus-visible {
+      background: #d90000;
+      outline: 2px solid #fff;
+      outline-offset: 3px;
+    }
+  }
+}
+
+.submission-success-icon {
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  color: #ff3b30;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.submission-success-eyebrow {
+  margin: 1.25rem 0 0;
+  color: #ff3b30;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.submission-success-progress {
+  height: 3px;
+  margin-top: 1.75rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.2);
+
+  span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform-origin: left;
+    background: #ff0000;
+    animation: submission-countdown 3.2s linear forwards;
+  }
+}
+
+@keyframes submission-countdown {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 .onboarding-header {
   max-width: 800px;
   margin: 0 auto 3rem auto;

@@ -39,6 +39,7 @@ export class AuthService {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
+        flowType: 'pkce',
         // OAuth is processed only by /auth/callback so the router can preserve the code.
         // Password-recovery links still need Supabase's automatic hash processing.
         detectSessionInUrl: isPasswordRecoveryRoute,
@@ -48,31 +49,49 @@ export class AuthService {
   }
 
   // 🟢 3. ESCUCHA GLOBAL DE SUPABASE
-  private initAuthState() {
-    if (isPlatformBrowser(this.platformId)) {
-      // Pedimos la sesión inicial
-      this.supabase.auth.getSession().then(({ data }) => {
-        this.updateState(data.session?.user || null);
-      });
-
-      // Escuchamos cualquier cambio (login, logout, token refresh)
-      this.supabase.auth.onAuthStateChange((event, session) => {
-        this.ngZone.run(() => {
-          this.updateState(session?.user || null);
-        });
-      });
+  private initAuthState(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
     }
+
+    // Supabase emite INITIAL_SESSION y también notifica los cambios posteriores.
+    // Diferimos la consulta del perfil para no ejecutar operaciones de Supabase
+    // dentro del callback de onAuthStateChange.
+    this.supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user ?? null;
+
+      globalThis.setTimeout(() => {
+        this.ngZone.run(() => {
+          void this.updateState(user).catch((error) => {
+            console.error('[Auth] Error al actualizar el estado:', error);
+          });
+        });
+      }, 0);
+    });
   }
 
   // 🟢 4. ACTUALIZADOR CENTRAL DE ESTADO
-  private async updateState(user: User | null) {
+  private async updateState(user: User | null): Promise<void> {
     this.currentUser.set(user);
-    if (user) {
-      const profile = await this.getUserProfile(user.id);
-      this.userProfile.set(profile);
-    } else {
+
+    if (!user) {
+      this.userProfile.set(null);
+      return;
+    }
+
+    // No conservar el perfil anterior mientras se carga el del usuario actual.
+    if (this.userProfile()?.id !== user.id) {
       this.userProfile.set(null);
     }
+
+    const profile = await this.getUserProfile(user.id);
+
+    // Evitar que una consulta anterior sobrescriba el estado de otra sesión.
+    if (this.currentUser()?.id !== user.id) {
+      return;
+    }
+
+    this.userProfile.set(profile);
   }
 
   // ==========================================
@@ -89,7 +108,15 @@ export class AuthService {
   }
 
   async signUpWithEmail(email: string, password: string) {
-    return await this.supabase.auth.signUp({ email, password });
+    const emailRedirectTo = isPlatformBrowser(this.platformId)
+      ? `${window.location.origin}/auth/callback`
+      : undefined;
+
+    return await this.supabase.auth.signUp({
+      email,
+      password,
+      options: emailRedirectTo ? { emailRedirectTo } : undefined,
+    });
   }
 
   async signInWithGoogle() {
@@ -154,27 +181,77 @@ export class AuthService {
   }
 
   async getAuthenticatedDestination(userId: string, email?: string): Promise<AuthDestination> {
-    const perfil = await this.getUserProfileForAuth(userId, email);
-
-    if (!perfil) {
-      await this.signOut();
-      return { commands: ['/auth'], queryParams: { error: 'perfil_no_encontrado' } };
+    // The auth session can arrive just before the database trigger creates its profile.
+    // Retry briefly so a newly registered patient is not treated as an unknown account.
+    let perfil = await this.getUserProfileForAuth(userId, email);
+    for (let attempt = 0; !perfil && attempt < 3; attempt += 1) {
+      await new Promise<void>((resolve) => {
+        globalThis.setTimeout(resolve, 250 * (attempt + 1));
+      });
+      perfil = await this.getUserProfileForAuth(userId, email);
     }
 
-    if (perfil.rol !== 'admin' && perfil.estado_aprobacion !== 'aprobado') {
+    // 1. Si no existe el perfil, cerrar sesión y regresar a autenticación.
+    if (!perfil) {
       await this.signOut();
+
       return {
         commands: ['/auth'],
-        queryParams: { pendiente: perfil.estado_aprobacion === 'pendiente' ? '1' : 'suspendido' },
+        queryParams: { error: 'perfil_no_encontrado' },
       };
     }
 
-    if (perfil.rol === 'admin') return { commands: ['/admin-panel'] };
+    // 2. Los administradores conservan su flujo habitual.
+    if (perfil.rol === 'admin') {
+      return { commands: ['/admin-panel'] };
+    }
 
+    const estado = perfil.estado_aprobacion;
+
+    // 3. Si el paciente está pendiente, primero comprobar su expediente.
+    if (estado === 'pendiente') {
+      const expediente = await this.getExpedienteClinico(perfil.id);
+
+      console.log('[Auth Destination]', {
+        rol: perfil.rol,
+        estado: perfil.estado_aprobacion,
+        tieneExpediente: Boolean(expediente),
+        tieneRespuestas: Boolean(expediente?.respuestas_completas),
+        cantidadFotos: Object.keys(expediente?.fotos_progreso ?? {}).length,
+      });
+
+      // Usuario nuevo: todavía debe completar su entrevista.
+      if (!expediente) {
+        return { commands: ['/onboarding'] };
+      }
+
+      // Ya envió su entrevista: conservar la pantalla de revisión.
+      await this.signOut();
+
+      return {
+        commands: ['/auth'],
+        queryParams: { pendiente: '1' },
+      };
+    }
+
+    // 4. Los estados distintos de "aprobado" y "pendiente"
+    // conservan el comportamiento de bloqueo anterior.
+    if (estado !== 'aprobado') {
+      await this.signOut();
+
+      return {
+        commands: ['/auth'],
+        queryParams: { pendiente: 'suspendido' },
+      };
+    }
+
+    // 5. Paciente aprobado: conservar el flujo habitual.
     const expediente = await this.getExpedienteClinico(perfil.id);
-    return { commands: [expediente ? '/panel' : '/onboarding'] };
-  }
 
+    return {
+      commands: [expediente ? '/panel' : '/onboarding'],
+    };
+  }
   async resetPassword(email: string) {
     return await this.supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'http://localhost:4200/actualizar-password',
@@ -319,15 +396,31 @@ export class AuthService {
   // ONBOARDING Y EXPEDIENTES
   // ==========================================
 
-  async subirFoto(pacienteId: string, tipo: string, archivo: File) {
-    const filePath = `${pacienteId}/${tipo}_${Date.now()}`;
-    await this.supabase.storage.from('fotos-pacientes').upload(filePath, archivo);
+  async subirFoto(pacienteId: string, tipo: string, archivo: File): Promise<string> {
+    const extension = archivo.name.split('.').pop() || 'jpg';
+    const filePath = `${pacienteId}/${tipo}_${Date.now()}.${extension}`;
+    const { error } = await this.supabase.storage
+      .from('fotos-pacientes')
+      .upload(filePath, archivo, {
+        contentType: archivo.type,
+        upsert: false,
+      });
+
+    if (error) {
+      console.error(`[Storage] Error al subir ${tipo}:`, error);
+      throw new Error(`No se pudo subir la foto de ${tipo}: ${error.message}`);
+    }
+
     const { data } = this.supabase.storage.from('fotos-pacientes').getPublicUrl(filePath);
     return data.publicUrl;
   }
 
-  async guardarExpedienteInicial(pacienteId: string, respuestas: any, linksFotos: any) {
-    await this.supabase
+  async guardarExpedienteInicial(
+    pacienteId: string,
+    respuestas: any,
+    linksFotos: any,
+  ): Promise<void> {
+    const { error: perfilError } = await this.supabase
       .from('perfiles')
       .update({
         nombre_completo: respuestas.nombre_completo,
@@ -337,36 +430,65 @@ export class AuthService {
         genero: respuestas.genero,
       })
       .eq('id', pacienteId);
-    return await this.supabase
+
+    if (perfilError) {
+      console.error('[Onboarding] Error al actualizar el perfil:', perfilError);
+      throw new Error(`No se pudo actualizar el perfil: ${perfilError.message}`);
+    }
+
+    const { data: expediente, error: expedienteError } = await this.supabase
       .from('expedientes_clinicos')
       .upsert({
         id_perfil: pacienteId,
         respuestas_completas: respuestas,
         fotos_progreso: linksFotos,
-      });
+      })
+      .select('id_perfil, respuestas_completas, fotos_progreso')
+      .maybeSingle();
+
+    if (expedienteError) {
+      console.error('[Onboarding] Error al guardar el expediente:', expedienteError);
+      throw new Error(`No se pudo guardar el expediente: ${expedienteError.message}`);
+    }
+
+    if (!expediente?.id_perfil) {
+      throw new Error('El expediente no pudo verificarse después de guardarse.');
+    }
+
+    console.info('[Onboarding] Expediente guardado y verificado:', {
+      tieneRespuestas: Boolean(expediente.respuestas_completas),
+      cantidadFotos: Object.keys(expediente.fotos_progreso ?? {}).length,
+    });
   }
 
   async getExpedienteClinico(pacienteId: string) {
-    const { data } = await this.supabase
+    const { data, error } = await this.supabase
       .from('expedientes_clinicos')
-      .select('*')
+      .select('id_perfil, respuestas_completas, fotos_progreso')
       .eq('id_perfil', pacienteId)
       .maybeSingle();
+
+    if (error) {
+      console.error('[Expediente] Error al consultar:', {
+        code: error.code,
+        message: error.message,
+      });
+
+      return null;
+    }
+
     return data;
   }
-
   async guardarCircunferencias(pacienteId: string, medidas: any) {
     return await this.supabase.from('perfiles').update(medidas).eq('id', pacienteId);
   }
 
   async guardarRegistroFotografico(pacienteId: string, links: any) {
-    return await this.supabase
-      .from('expedientes_clinicos')
-      .upsert({
-        id_perfil: pacienteId,
-        fotos_progreso: links,
-        fecha_actualizacion: new Date().toISOString(),
-      });
+    return await this.supabase.from('expedientes_clinicos').upsert({
+      id_perfil: pacienteId,
+      fotos_progreso: links,
+      fecha_actualizacion: new Date().toISOString(),
+    });
   }
 
   // ==========================================

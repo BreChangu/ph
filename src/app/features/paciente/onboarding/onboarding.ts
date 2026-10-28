@@ -15,6 +15,9 @@ export class Onboarding implements OnInit {
   onboardingForm!: FormGroup;
   isLoading = false;
   isEditMode = false;
+  submissionComplete = false;
+  submissionTitle = '';
+  submissionMessage = '';
   linksFotosActuales: Record<string, string> = {};
   private pacienteId: string | null = null;
 
@@ -176,8 +179,15 @@ export class Onboarding implements OnInit {
 
       await this.authService.guardarExpedienteInicial(this.pacienteId, this.onboardingForm.value, linksFotos);
 
-      alert(this.isEditMode ? '¡Tu información se actualizó correctamente!' : '¡Expediente enviado con éxito! Tu coach lo revisará a la brevedad.');
-      this.router.navigate(['/panel']);
+      this.submissionTitle = this.isEditMode ? 'Cambios guardados' : 'Expediente enviado';
+      this.submissionMessage = this.isEditMode
+        ? 'Tu información fue actualizada correctamente. Te llevaremos de vuelta a tu panel.'
+        : 'Tu información ya está con el equipo. Te llevaremos a la pantalla de revisión mientras tu coach valida tu expediente.';
+      this.submissionComplete = true;
+      this.isLoading = false;
+      this.cdr.detectChanges();
+
+      globalThis.setTimeout(() => void this.continuarTrasEnvio(), 3200);
 
     } catch (error) {
       console.error("Error al procesar el expediente:", error);
@@ -189,5 +199,20 @@ export class Onboarding implements OnInit {
 
   private tieneFoto(tipo: 'frente' | 'perfil' | 'espalda') {
     return Boolean(this.archivosSeleccionados[tipo] || this.linksFotosActuales[tipo]);
+  }
+
+  continuarTrasEnvio(): void {
+    if (!this.submissionComplete) return;
+    this.submissionComplete = false;
+
+    if (this.isEditMode) {
+      void this.router.navigate(['/panel'], { replaceUrl: true });
+      return;
+    }
+
+    void this.router.navigate(['/auth'], {
+      queryParams: { pendiente: '1' },
+      replaceUrl: true,
+    });
   }
 }
