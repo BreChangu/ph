@@ -1,251 +1,453 @@
+@use '../../../styles/variables' as *;
+
+// ==========================================
+// ESTRUCTURA: portada (foto) + formulario
+// ==========================================
+:host {
+  display: block;
+  background-color: $brand-black;
+  color: $brand-white;
+  font-family: $font-main;
+}
+
 .auth-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 80vh;
-  padding: 2rem;
-  background-color: #fafafa; // Ajusta a tu fondo general
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: calc(100svh - 5rem);
+
+  @media (min-width: 900px) {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
 }
 
-.auth-card {
-  background: #ffffff;
-  width: 100%;
-  max-width: 420px;
-  padding: 3rem 2.5rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  font-family: 'Open Sans', sans-serif;
-}
-
-.auth-card,
-.auth-card * {
+.auth-wrapper,
+.auth-wrapper * {
   box-sizing: border-box;
 }
 
+// ==========================================
+// PORTADA
+// ==========================================
+.auth-visual {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 17rem;
+  padding: 2rem 1.25rem;
+  overflow: hidden;
+  isolation: isolate;
+
+  // Foto con acercamiento lento
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background: url('/images/pablo-login.jpg') center 30% / cover no-repeat;
+    animation: acercamiento 24s ease-in-out infinite alternate;
+  }
+
+  // Degradado para que el texto se lea sobre la foto
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to top, rgba($brand-black, 0.95) 0%, rgba($brand-black, 0.55) 45%, rgba($brand-black, 0.15) 100%),
+      linear-gradient(to right, rgba($brand-black, 0.4), transparent 60%);
+  }
+
+  @media (min-width: 900px) {
+    min-height: auto;
+    padding: 4rem;
+  }
+}
+
+.auth-visual-copy {
+  position: relative;
+  max-width: 46rem; // ancho para que el título quede en dos líneas
+  animation: subir 0.7s 0.1s ease-out both;
+}
+
+.auth-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: $brand-red;
+  font-family: $font-h2;
+  font-size: $text-xs;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+
+  // Elemento de marca: línea con puntas redondas
+  &::before {
+    content: '';
+    width: 2.5rem;
+    height: 3px;
+    border-radius: 999px;
+    background: $brand-red;
+    transform-origin: left;
+    animation: linea 0.8s 0.4s ease-out both;
+  }
+}
+
+.auth-visual-title {
+  margin: 0;
+  font-family: $font-h1; // Archicoco: portada
+  font-size: $text-display;
+  line-height: 1.02;
+  text-transform: uppercase;
+
+  .text-red { color: $brand-red; }
+}
+
+.title-accent {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+// Trazos con textura bajo "AQUÍ.", se pintan de izquierda a derecha
+.brand-strokes {
+  position: absolute;
+  z-index: -1;
+  left: -12%;
+  top: 45%;
+  width: 135%;
+  height: 80%;
+  pointer-events: none;
+  animation: pintar 0.9s 0.6s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.auth-visual-text {
+  display: none;
+  margin: 1.25rem 0 0;
+  max-width: 28rem;
+  color: rgba($brand-white, 0.75);
+  font-size: $text-lg;
+
+  @media (min-width: 900px) {
+    display: block;
+  }
+}
+
+// ==========================================
+// FORMULARIO
+// ==========================================
+.auth-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.25rem 4rem;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at top right, rgba($brand-red, 0.08), transparent 55%),
+    $brand-black;
+
+  @media (min-width: 900px) {
+    padding: 3rem;
+  }
+}
+
+// Franjas inclinadas en contorno (esquina superior)
+.brand-stripes {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  width: 5.5rem;
+  fill: none;
+  stroke: $brand-red;
+  stroke-width: 3;
+  stroke-linejoin: miter;
+  animation: deslizar 0.7s 0.5s ease-out both;
+}
+
+// Doble chevrón como marca de agua
+.brand-chevrons {
+  position: absolute;
+  right: -3rem;
+  bottom: -2rem;
+  width: 22rem;
+  fill: none;
+  stroke: rgba($brand-white, 0.05);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  pointer-events: none;
+
+  @media (max-width: 899px) {
+    display: none;
+  }
+}
+
+.auth-card {
+  position: relative; // por encima de la marca de agua
+  width: 100%;
+  max-width: 26rem;
+  animation: subir 0.6s 0.25s ease-out both;
+}
+
 .auth-header {
-  text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
 
   .title {
-    font-family: 'Archivo Black', sans-serif;
-    font-size: 1.5rem;
-    color: #1a1a1a;
-    margin-bottom: 0.5rem;
-    letter-spacing: 1px;
+    margin: 0 0 0.5rem;
+    font-family: $font-h2;
+    font-size: $text-2xl;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
 
   .subtitle {
-    font-size: 0.9rem;
-    color: #666;
+    margin: 0;
+    color: $brand-gray;
+    font-size: $text-base;
   }
 }
 
 .btn-google {
   width: 100%;
+  min-height: 3.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  padding: 0.8rem;
-  border-radius: 8px;
-  font-weight: 600;
-  color: #333;
+  gap: 0.75rem;
+  background: $brand-white;
+  border: 1px solid $brand-white;
+  color: $brand-black;
+  font-family: $font-main;
+  font-size: $text-base;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
 
-  &:hover {
-    background: #f8f9fa;
+  &:hover:not(:disabled) {
+    background: #ffffff;
+    transform: translateY(-1px);
   }
 
-  .icon-google {
-    width: 20px;
-  }
+  &:disabled { opacity: 0.6; cursor: wait; }
 }
 
 .divider {
   display: flex;
   align-items: center;
-  text-align: center;
-  margin: 1.5rem 0;
-  color: #999;
-  font-size: 0.85rem;
+  gap: 1rem;
+  margin: 1.75rem 0;
+  color: $brand-gray;
+  font-size: $text-sm;
 
-  &::before, &::after {
+  &::before,
+  &::after {
     content: '';
     flex: 1;
-    border-bottom: 1px solid #eee;
-  }
-  
-  span {
-    padding: 0 10px;
+    border-bottom: 1px solid rgba($brand-white, 0.12);
   }
 }
 
 .input-group {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.25rem;
 
   label {
     display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
+    color: rgba($brand-white, 0.75);
+    font-family: $font-h2;
+    font-size: $text-xs;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
   input {
     width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    transition: border-color 0.3s;
+    min-height: 3.25rem;
+    padding: 0 1rem;
+    border: 1px solid rgba($brand-white, 0.18);
+    background: rgba($brand-white, 0.04);
+    color: $brand-white;
+    font-family: $font-main;
+    font-size: $text-base;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+
+    &::placeholder { color: rgba($brand-white, 0.35); }
 
     &:focus {
       outline: none;
-      border-color: #1a1a1a; // Tu color de acento
+      border-color: $brand-red;
+      background: rgba($brand-white, 0.06);
+      box-shadow: 0 0 0 3px rgba($brand-red, 0.2);
     }
-    
-    &:disabled {
-      background: #f5f5f5;
+
+    &:disabled { opacity: 0.5; }
+
+    // Autocompletado del navegador sin fondo amarillo/blanco
+    &:-webkit-autofill {
+      -webkit-text-fill-color: $brand-white;
+      -webkit-box-shadow: 0 0 0 1000px #141414 inset;
+      caret-color: $brand-white;
     }
   }
 }
 
-.password-wrapper input {
-  padding-right: 3rem !important;
+.password-wrapper {
+  position: relative;
+
+  input { padding-right: 3rem; }
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: $brand-gray;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible { color: $brand-white; }
+}
+
+.password-rules {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  color: $brand-gray;
+  font-size: $text-xs;
+  line-height: 1.6;
+}
+
+.recovery-row {
+  margin: -0.5rem 0 1.25rem;
+  text-align: right;
+}
+
+.btn-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: $brand-gray;
+  font-family: $font-main;
+  font-size: $text-sm;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+
+  &:hover { color: $brand-white; }
+
+  &.strong {
+    color: $brand-red;
+    font-weight: 700;
+
+    &:hover { color: $brand-white; }
+  }
 }
 
 .btn-primary {
   width: 100%;
-  padding: 1rem;
-  background: #1a1a1a;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
+  min-height: 3.5rem;
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 1px solid $brand-red;
+  background: $brand-red;
+  color: $brand-white;
+  font-family: $font-h2;
+  font-size: $text-sm;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   cursor: pointer;
-  margin-top: 1rem;
-  transition: opacity 0.3s;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 
-  &:hover { opacity: 0.9; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  // Elemento de marca: doble chevrón
+  .btn-chevron {
+    width: 1.1rem;
+    fill: currentColor;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover:not(:disabled) {
+    background: $brand-red-dark;
+    border-color: $brand-red-dark;
+    transform: translateY(-1px);
+
+    .btn-chevron { transform: translateX(4px); }
+  }
+
+  // Desactivado: sigue siendo rojo de marca, pero apagado
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
 }
 
 .alert-banner {
-  padding: 1rem;
-  border-radius: 8px;
   margin-bottom: 1.5rem;
-  font-size: 0.85rem;
-  text-align: center;
+  padding: 0.9rem 1rem;
+  border-left: 3px solid;
+  font-size: $text-sm;
+  line-height: 1.5;
 
   &.error {
-    background: #fff0f0;
-    color: #d32f2f;
-    border: 1px solid #ffcdd2;
+    border-color: $brand-red;
+    background: rgba($brand-red, 0.12);
+    color: #ff8a8a;
   }
 
   &.success {
-    background: #f0fff4;
-    color: #2e7d32;
-    border: 1px solid #c8e6c9;
+    border-color: #22c55e;
+    background: rgba(#22c55e, 0.12);
+    color: #86efac;
   }
 }
 
 .auth-footer {
   margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba($brand-white, 0.1);
+  color: $brand-gray;
+  font-size: $text-sm;
   text-align: center;
-  font-size: 0.9rem;
-  color: #666;
 
-  .btn-text {
-    background: none;
-    border: none;
-    color: #1a1a1a;
-    font-weight: 700;
-    cursor: pointer;
-    text-decoration: underline;
-    padding-left: 5px;
-  }
-
-  
+  p { margin: 0; }
 }
 
-.recovery-link {
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-  font-size: 0.85rem !important;
-  font-weight: 600 !important; // Un poco más de peso para que resalte
-  color: #666 !important;
-  cursor: pointer !important;
-  text-decoration: underline !important;
-  font-family: inherit !important;
-  
-  &:hover {
-    color: #1a1a1a !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .auth-wrapper {
-    align-items: flex-start;
-    min-height: calc(100vh - 80px);
-    padding: 1.5rem 1rem;
-  }
-
-  .auth-card {
-    border-radius: 8px;
-    padding: 2rem 1.25rem;
-  }
-
-  .auth-header {
-    margin-bottom: 1.5rem;
-
-    .title {
-      font-size: 1.25rem;
-    }
-  }
-
-  .btn-google,
-  .btn-primary {
-    min-height: 48px;
-  }
-}
-
-@media (max-width: 380px) {
-  .auth-wrapper {
-    padding: 1rem 0.75rem;
-  }
-
-  .auth-card {
-    padding: 1.5rem 1rem;
-  }
-}
+// ==========================================
+// ESTADO DE CUENTA (pendiente / suspendida)
+// ==========================================
 .account-review {
   display: grid;
   gap: 1.25rem;
-  padding: 2.5rem 1rem;
-  text-align: center;
-}
 
-.account-review h2 {
-  margin: 0;
-}
+  h2 {
+    margin: 0;
+    font-size: $text-2xl;
+    text-transform: uppercase;
+  }
 
-.account-review p {
-  margin: 0 auto;
-  max-width: 32rem;
-  color: #777;
-  line-height: 1.6;
+  p {
+    margin: 0;
+    color: rgba($brand-white, 0.75);
+    font-size: $text-base;
+    line-height: 1.6;
+  }
 }
 
 .review-kicker {
-  color: var(--primary-color);
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  color: $brand-red;
+  font-family: $font-h2;
+  font-size: $text-xs;
+  letter-spacing: 0.2em;
 }
 
 .review-actions {
@@ -256,14 +458,57 @@
 
 .btn-secondary {
   width: 100%;
-  padding: 1rem;
-  border: 1px solid #1a1a1a;
+  min-height: 3.5rem;
+  border: 1px solid rgba($brand-white, 0.4);
   background: transparent;
-  color: #1a1a1a;
-  font-weight: 700;
+  color: $brand-white;
+  font-family: $font-h2;
+  font-size: $text-sm;
+  letter-spacing: 0.12em;
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background: $brand-white;
+    color: $brand-black;
+  }
 }
 
-.btn-secondary:hover {
-  background: #f3f3f3;
+// ==========================================
+// ANIMACIONES
+// ==========================================
+@keyframes acercamiento {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+@keyframes subir {
+  from { opacity: 0; transform: translateY(1rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes linea {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes pintar {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes deslizar {
+  from { opacity: 0; transform: translateX(1.5rem); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-visual::before,
+  .auth-visual-copy,
+  .auth-card,
+  .auth-eyebrow::before,
+  .brand-strokes,
+  .brand-stripes {
+    animation: none;
+  }
 }
