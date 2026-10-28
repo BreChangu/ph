@@ -4,6 +4,14 @@
 @use 'styles/typography';
 @use 'styles/mixins';
 
+// El padding y el borde cuentan dentro del ancho: un elemento con width: 100%
+// y padding ya no se sale de la pantalla (causa del desborde en celular).
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   background-color: $brand-black;

@@ -1073,10 +1073,11 @@
                 </div>
               </div>
 
-              <input type="number" formControlName="calorias" placeholder="0">
-              <input type="number" formControlName="proteinas" placeholder="0">
-              <input type="number" formControlName="carbos" placeholder="0">
-              <input type="number" formControlName="grasas" placeholder="0">
+              <!-- En escritorio la etiqueta no se ve (usa la fila de títulos); en celular sí -->
+              <label class="macro-field"><span class="macro-field-label">Kcal</span><input type="number" formControlName="calorias" placeholder="0"></label>
+              <label class="macro-field"><span class="macro-field-label">Prot (g)</span><input type="number" formControlName="proteinas" placeholder="0"></label>
+              <label class="macro-field"><span class="macro-field-label">Carb (g)</span><input type="number" formControlName="carbos" placeholder="0"></label>
+              <label class="macro-field"><span class="macro-field-label">Grasa (g)</span><input type="number" formControlName="grasas" placeholder="0"></label>
               <button type="button" class="btn-delete-row" (click)="eliminarAlimento(i, j)">x</button>
             </div>
           </div>

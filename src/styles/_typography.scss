@@ -22,6 +22,8 @@ h1 {
   font-family: $font-h2;
   text-transform: uppercase;
   color: $brand-white;
+  // Una palabra que no cabe se parte en vez de salirse de la pantalla
+  overflow-wrap: break-word;
 }
 
 h2,

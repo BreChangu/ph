@@ -64,7 +64,7 @@
       <!-- TARJETAS DE COMIDA -->
       <article class="meal-card active-slide" *ngFor="let comida of planPaciente?.comidas; let i = index">
         <header class="meal-carousel-header">
-          <h2 style="font-family: 'Oswald', sans-serif; font-style: italic; font-size: 2.2rem; margin: 0; text-transform: uppercase;">
+          <h2 class="meal-title">
             {{ comida.nombre || ('COMIDA ' + (i + 1)) }}
           </h2>
         </header>

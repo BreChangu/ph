@@ -153,12 +153,13 @@
   margin-bottom: 3rem;
 
   h1 {
-    font-family: $font-h1;
-    font-size: 2.8rem;
+    font-family: $font-h2; // Archicoco es solo para portadas
+    font-size: $text-3xl;
     color: $brand-black;
     margin: 0 0 1rem;
     text-transform: uppercase;
     line-height: 1.1;
+    overflow-wrap: anywhere;
   }
 
   p {
@@ -215,8 +216,17 @@
 
   .meal-carousel-header {
     text-align: center;
-    padding: 1.5rem 0;
+    padding: 1.5rem 1rem;
     border-bottom: 1px solid $brand-red;
+  }
+
+  .meal-title {
+    margin: 0;
+    font-family: $font-h2;
+    font-size: $text-2xl;
+    font-style: italic;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
   }
 
   .nutrition-info-header {
@@ -1176,9 +1186,6 @@ button { scroll-snap-align: start; }
   .dashboard-content {
     padding: 1.5rem 1rem 3rem;
   }
-  .section-title h1 {
-    font-size: 2.2rem;
-  }
   .training-overview,
   .measurements-workspace {
     grid-template-columns: 1fr;
@@ -1230,12 +1237,43 @@ button { scroll-snap-align: start; }
       grid-column: 1 / -1;
     }
   }
-  .food-table,
   .training-table {
     overflow-x: auto;
   }
+  // Alimentos: nombre arriba y las 4 macros abajo, sin desplazamiento lateral
+  .food-head {
+    display: none;
+  }
   .food-row {
-    min-width: 32rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.35rem 0.5rem;
+    padding: 0.75rem 0;
+
+    .food-desc {
+      grid-column: 1 / -1;
+    }
+
+    > .macro-cal,
+    > .macro-prot,
+    > .macro-carb,
+    > .macro-fat {
+      display: flex;
+      flex-direction: column;
+      font-size: $text-base;
+      font-weight: 700;
+
+      &::before {
+        color: $brand-gray;
+        font-family: $font-h2;
+        font-size: $text-xs;
+        font-weight: 400;
+        text-transform: uppercase;
+      }
+    }
+    > .macro-cal::before { content: 'Cal'; }
+    > .macro-prot::before { content: 'Prot'; }
+    > .macro-carb::before { content: 'Carb'; }
+    > .macro-fat::before { content: 'Grasa'; }
   }
   .training-row {
     min-width: 30rem;

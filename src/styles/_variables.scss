@@ -23,4 +23,6 @@ $text-lg: 1.125rem;   // 18px · resúmenes, texto destacado
 $text-xl: 1.375rem;   // 22px · títulos de tarjetas
 $text-2xl: clamp(1.5rem, 1.25rem + 1vw, 2rem);     // 24–32px · títulos de sección pequeños
 $text-3xl: clamp(2rem, 1.5rem + 2vw, 3rem);        // 32–48px · títulos de sección
-$text-display: clamp(2.5rem, 1.5rem + 4vw, 4.5rem); // 40–72px · portada (con $font-h1)
+// Mínimo 32px: Archicoco es muy ancha y a 40px una palabra como
+// "CONOCIMIENTO" no cabe en un celular de 360px.
+$text-display: clamp(2rem, 1rem + 4.5vw, 4.5rem); // 32–72px · portada (con $font-h1)
