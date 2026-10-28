@@ -575,13 +575,24 @@ export class AuthService {
     }
   }
 
+   /**
+   * Testimonios aprobados para la página pública.
+   * Solo columnas públicas: no se expone id_perfil ni el nombre del paciente,
+   * y no depende de leer la tabla perfiles (que quedará protegida por RLS).
+   */
   async getTestimoniosPublicos() {
     const { data, error } = await this.supabase
       .from('testimonios')
-      .select('*, perfiles(nombre_completo)')
+      .select('id, texto, foto_antes, foto_despues, created_at')
       .eq('aprobado', true)
       .order('created_at', { ascending: false });
-    return error ? [] : data;
+
+    if (error) {
+      console.error('[Testimonios] No se pudieron cargar los testimonios públicos:', error);
+      return [];
+    }
+
+    return data ?? [];
   }
 
   //Administración de usuarios y roles
