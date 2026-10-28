@@ -3,8 +3,8 @@
 @font-face {
   font-family: 'Archicoco';
   // Angular sirve la carpeta "public" directamente en la raíz ("/")
-  src: url('/fonts/archicoco.woff2') format('woff2'),
-       url('/fonts/archicoco.ttf') format('truetype'); 
+  // El nombre debe coincidir exacto (mayúsculas incluidas) con public/fonts/Archicoco.woff2
+  src: url('/fonts/Archicoco.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap; 

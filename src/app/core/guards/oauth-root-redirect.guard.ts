@@ -22,6 +22,10 @@ export const oauthRootRedirectGuard: CanActivateFn = async () => {
     });
   }
 
+  // Navigating inside the app (e.g. clicking the logo) must reach the home page,
+  // even with an active session. Only the first load of the site is redirected.
+  if (router.navigated) return true;
+
   // A confirmed email or persisted session can arrive on the public home page.
   // Resolve its private destination immediately instead of waiting for /auth.
   const session = await authService.getSession();

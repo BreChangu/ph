@@ -2,6 +2,13 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
+  // Rutas privadas: la sesión de Supabase solo existe en el navegador. Si se
+  // renderizan en el servidor, el guard no ve la sesión y manda a /auth al recargar.
+  { path: 'panel', renderMode: RenderMode.Client },
+  { path: 'admin-panel', renderMode: RenderMode.Client },
+  { path: 'onboarding', renderMode: RenderMode.Client },
+  { path: 'auth/callback', renderMode: RenderMode.Client },
+  { path: 'actualizar-password', renderMode: RenderMode.Client },
   {
     // Le decimos que NO pre-renderice las notas del blog individualmente
     path: 'blog/:id',
