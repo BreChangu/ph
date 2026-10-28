@@ -14,7 +14,7 @@
 .eyebrow {
   color: $brand-red;
   font-family: $font-h2;
-  font-size: 0.78rem;
+  font-size: $text-xs;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
@@ -70,7 +70,7 @@
     color: $brand-white;
     font-family: $font-h1;
     /* Reducimos el tamaño máximo de 6.8rem a 4.8rem */
-    font-size: clamp(2.5rem, 6vw, 4.8rem);
+    font-size: $text-display;
     line-height: 0.95;
     text-transform: uppercase;
   }
@@ -78,7 +78,7 @@
     max-width: 50ch;
     margin: 0;
     color: rgba($brand-white, 0.74);
-    font-size: clamp(1rem, 1.4vw, 1.1rem);
+    font-size: $text-lg;
     line-height: 1.75;
   }
 }
@@ -92,7 +92,7 @@
   span {
     color: $brand-gray;
     font-family: $font-h2;
-    font-size: 0.78rem;
+    font-size: $text-xs;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
@@ -108,7 +108,7 @@
   border: 1px solid $brand-red;
   color: $brand-white;
   font-family: $font-h2;
-  font-size: 0.85rem;
+  font-size: $text-sm;
   letter-spacing: 0.08em;
   text-decoration: none;
   text-transform: uppercase;
@@ -190,7 +190,7 @@
     border-color 0.2s ease,
     color 0.2s ease;
   span {
-    font-size: 2.4rem;
+    font-size: $text-3xl;
     line-height: 1;
     transform: translateY(-0.08em);
   }
@@ -262,7 +262,7 @@
   color: $brand-white;
   padding: 0.4rem 0.6rem;
   font-family: $font-h2;
-  font-size: 0.65rem;
+  font-size: $text-xs;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -282,7 +282,7 @@
     margin: 0.5rem 0 0;
     color: $brand-white;
     font-family: $font-h2;
-    font-size: clamp(2.2rem, 5vw, 4rem);
+    font-size: $text-3xl;
     line-height: 1;
     text-transform: uppercase;
   }
@@ -323,8 +323,8 @@
 
     h3 {
       margin: 0;
-      font-family: $font-h1;
-      font-size: 2.4rem;
+      font-family: $font-h2;
+      font-size: $text-3xl;
       text-transform: uppercase;
       color: $brand-white;
       line-height: 1;
@@ -332,7 +332,7 @@
     p {
       margin: 0.5rem 0 0;
       font-family: $font-h2;
-      font-size: 0.8rem;
+      font-size: $text-xs;
       text-transform: uppercase;
       color: $brand-red;
       letter-spacing: 0.1em;
@@ -363,7 +363,7 @@
   border: none;
   color: rgba($brand-white, 0.6);
   font-family: $font-h2;
-  font-size: 0.85rem;
+  font-size: $text-sm;
   text-transform: uppercase;
   cursor: pointer;
   transition: color 0.3s;
@@ -376,7 +376,7 @@
   margin: 0;
   color: $brand-white;
   font-family: $font-h2;
-  font-size: 1.5rem;
+  font-size: $text-2xl;
   text-transform: uppercase;
   color: $brand-red;
 }
@@ -457,7 +457,7 @@
   .category {
     color: $brand-gray;
     font-family: $font-h2;
-    font-size: 0.65rem;
+    font-size: $text-xs;
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
@@ -465,7 +465,7 @@
   h3 {
     margin: 0.5rem 0 0;
     font-family: $font-h2;
-    font-size: 1.15rem;
+    font-size: $text-lg;
     line-height: 1.1;
     text-transform: uppercase;
   }
@@ -475,7 +475,7 @@
   text-align: center;
   padding: 4rem 1rem;
   color: rgba($brand-white, 0.5);
-  font-size: 1.1rem;
+  font-size: $text-lg;
   font-style: italic;
   border: 1px dashed rgba($brand-white, 0.2);
 }
@@ -544,7 +544,7 @@
   right: 1.5rem;
   background: transparent;
   border: none;
-  font-size: 1.5rem;
+  font-size: $text-2xl;
   color: $brand-gray;
   cursor: pointer;
   z-index: 10;
@@ -558,7 +558,7 @@
   padding: 3rem 2rem 1.5rem;
   h2 {
     font-family: $font-h2;
-    font-size: 2rem;
+    font-size: $text-2xl;
     line-height: 1;
     text-transform: uppercase;
     margin: 0.5rem 0;
@@ -591,7 +591,7 @@
     margin-bottom: 2rem;
     h3 {
       font-family: $font-h2;
-      font-size: 1.1rem;
+      font-size: $text-lg;
       text-transform: uppercase;
       border-bottom: 2px solid $brand-red;
       padding-bottom: 0.5rem;
@@ -629,14 +629,14 @@
   .btn-primary.w-full {
     width: 100%;
     height: 3.5rem;
-    font-size: 1rem;
+    font-size: $text-base;
   }
   .disclaimer {
     display: block;
     text-align: center;
     margin-top: 1rem;
     color: $brand-gray;
-    font-size: 0.75rem;
+    font-size: $text-xs;
   }
 }
 
@@ -657,7 +657,7 @@
     border: none;
     color: $brand-white;
     font-family: $font-h2;
-    font-size: 0.8rem;
+    font-size: $text-xs;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     cursor: pointer;
@@ -686,7 +686,7 @@
       border: 1px solid transparent;
       color: rgba($brand-white, 0.5);
       font-family: $font-main;
-      font-size: 1rem;
+      font-size: $text-base;
       cursor: pointer;
       transition: all 0.3s ease;
 
@@ -727,7 +727,7 @@
     padding: 2.5rem 1rem 5rem;
   }
   .hero-copy h1 {
-    font-size: clamp(2.25rem, 12vw, 3.5rem);
+    font-size: $text-display;
   }
   .hero-control {
     top: auto;

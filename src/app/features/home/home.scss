@@ -91,7 +91,7 @@
 // ==========================================
 .main-title {
   font-family: $font-h1;
-  font-size: clamp(32px, 4vw, 56px);
+  font-size: $text-display;
   color: $brand-white;
   text-transform: uppercase;
   line-height: 1.1;
@@ -102,7 +102,7 @@
 
 .subtitle {
   font-family: $font-main;
-  font-size: 1.1rem; /* 18px */
+  font-size: $text-lg; /* 18px */
   color: $brand-gray;
   margin: 0 auto 40px; 
   width: 100%;
@@ -124,7 +124,7 @@
     color: $brand-white; /* 🟢 FIX: Blanco para que contraste con el fondo negro */
     font-weight: 800;
     margin-top: 2.5rem; 
-    font-size: 1.15em; 
+    font-size: $text-lg;
   }
 }
 //BOTÓN RESERVAR 
@@ -138,7 +138,7 @@
   color: $brand-white;
   padding: 16px 40px;
   font-family: $font-h2;
-  font-size: 18px;
+  font-size: $text-lg;
   text-decoration: none; // Esto quita el subrayado morado/azul
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -184,7 +184,7 @@
 // 🟢 TÍTULO SECUNDARIO (Invertir en la maquinaria...)
 .section-subheading {
   font-family: $font-h2; 
-  font-size: 1rem;       
+  font-size: $text-base;       
   color: $brand-gray; // Lo pasamos a gris para que no compita con el rojo principal
   text-transform: uppercase;
   letter-spacing: 0.1em; 
@@ -197,8 +197,8 @@
 
 // 🟢 TÍTULO PRINCIPAL (Targeteamos tus clases main-hook y text-red)
 .main-hook {
-  font-family: $font-h1;
-  font-size: clamp(28px, 4vw, 40px); 
+  font-family: $font-h2;
+  font-size: $text-3xl; 
   text-transform: uppercase;
   line-height: 1.15; 
   margin-bottom: 2rem; 
@@ -214,7 +214,7 @@
 // 🟢 CUERPO DE TEXTO (Justificado y con mejor lectura)
 .section-body {
   font-family: $font-main;
-  font-size: 1rem;        
+  font-size: $text-base;        
   color: rgba($brand-white, 0.85); // Un blanco ligeramente suavizado
   line-height: 1.75;      
   margin-bottom: 2.5rem; 
@@ -232,7 +232,7 @@
   color: $brand-white;
   padding: 16px 40px;
   font-family: $font-h2;
-  font-size: 16px;
+  font-size: $text-base;
   text-decoration: none;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -267,7 +267,7 @@
     margin-bottom: 0.8rem;
     color: $brand-red;
     font-family: $font-h2;
-    font-size: 0.75rem;
+    font-size: $text-xs;
     letter-spacing: 1.3px;
     text-transform: uppercase;
   }
@@ -275,8 +275,8 @@
   h2 {
     margin: 0;
     color: $brand-white;
-    font-family: $font-h1;
-    font-size: clamp(2.35rem, 3.45vw, 3.65rem);
+    font-family: $font-h2;
+    font-size: $text-3xl;
     font-weight: 400;
     letter-spacing: 0;
     line-height: 0.98;
@@ -294,7 +294,7 @@
     border-left: 2px solid $brand-red;
     color: rgba($brand-white, 0.72);
     font-family: $font-main;
-    font-size: 1rem;
+    font-size: $text-base;
     line-height: 1.65;
 
     strong {
@@ -302,7 +302,7 @@
       margin-bottom: 0.35rem;
       color: $brand-white;
       font-family: $font-h2;
-      font-size: 0.78rem;
+      font-size: $text-xs;
       letter-spacing: 0.85px;
       text-transform: uppercase;
     }
@@ -360,12 +360,12 @@
 
     span {
       color: $brand-red;
-      font-size: 0.7rem;
+      font-size: $text-xs;
     }
 
     strong {
       color: $brand-white;
-      font-size: 1rem;
+      font-size: $text-base;
     }
   }
 }
@@ -399,7 +399,7 @@
   color: $brand-white;
   border: 1px solid rgba($brand-white, 0.5);
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: $text-xl;
   transition: background 250ms ease, border-color 250ms ease;
 
   &:hover,
@@ -416,7 +416,7 @@
   border: 1px solid rgba($brand-white, 0.3);
   color: $brand-gray;
   font-family: $font-h2;
-  font-size: 0.75rem;
+  font-size: $text-xs;
   text-align: center;
 
   strong {
@@ -503,7 +503,7 @@
 
   .main-title {
     // Reducimos ligeramente el tamaño máximo para que el texto tan largo no abrume
-    font-size: clamp(28px, 3.5vw, 48px); 
+    font-size: $text-3xl; 
   }
 }
 
@@ -527,8 +527,8 @@
   }
 
  .feature-number {
-  font-family: $font-h1; // Usa la fuente de tus títulos para darle carácter
-  font-size: 1.25rem;
+  font-family: $font-h2; // Usa la fuente de tus títulos para darle carácter
+  font-size: $text-xl;
   color: $brand-red; // El acento de color guía el ojo
   font-weight: 400;
   letter-spacing: 1px;
@@ -545,7 +545,7 @@
   .feature-text {
     margin: 0;
     font-family: $font-main;
-    font-size: 1rem;
+    font-size: $text-base;
     color: rgba($brand-white, 0.7); // Alto contraste visual: Cuerpo en gris
     line-height: 1.6;
     text-wrap: pretty;
@@ -565,7 +565,7 @@
 // Ajuste móvil para el botón largo
 @media (max-width: 600px) {
   .btn-reservar {
-    font-size: 14px; // El texto del botón es muy largo, lo achicamos en móvil
+    font-size: $text-sm; // El texto del botón es muy largo, lo achicamos en móvil
     padding: 16px 24px;
     width: 100%; // Botón a todo el ancho para mejor área de tap
   }
@@ -648,16 +648,16 @@
 
     .testimonial-kicker {
       margin-bottom: 0.6rem;
-      font-size: 0.68rem;
+      font-size: $text-xs;
     }
 
     h2 {
-      font-size: clamp(2.25rem, 12vw, 3.1rem);
+      font-size: $text-3xl;
     }
 
     p {
       padding-left: 0.9rem;
-      font-size: 0.88rem;
+      font-size: $text-sm;
     }
   }
 

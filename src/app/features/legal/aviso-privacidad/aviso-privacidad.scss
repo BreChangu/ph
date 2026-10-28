@@ -17,7 +17,7 @@
   h1 {
     font-family: $font-h1;
     color: $brand-white;
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-size: $text-display;
     text-transform: uppercase;
     margin-bottom: 0.5rem;
   }
@@ -25,7 +25,7 @@
   .last-updated {
     color: $brand-red;
     font-family: $font-h2;
-    font-size: 0.85rem;
+    font-size: $text-sm;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     margin-bottom: 3rem;
@@ -34,7 +34,7 @@
   h2 {
     font-family: $font-h2;
     color: $brand-white;
-    font-size: 1.25rem;
+    font-size: $text-xl;
     text-transform: uppercase;
     margin-top: 3rem;
     margin-bottom: 1rem;

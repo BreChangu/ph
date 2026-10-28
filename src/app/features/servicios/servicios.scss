@@ -63,7 +63,7 @@
 //Sección de titulo primera foto hero
 .main-title {
   font-family: $font-h1;
-  font-size: clamp(36px, 6vw, 3.5rem);
+  font-size: $text-display;
   color: $brand-white;
   text-transform: uppercase;
   line-height: 1.05;
@@ -81,7 +81,7 @@
 .subtitle {
   font-family: $font-main;
   // 🛑 FIX LECTURA: Aumentamos a 18px y damos más opacidad al blanco para mayor contraste
-  font-size: 1.2rem;
+  font-size: $text-lg;
   color: rgba($brand-white, 0.85);
   line-height: 1.8;
   margin-bottom: 40px;
@@ -107,7 +107,7 @@
   color: $brand-white;
   padding: 16px 40px;
   font-family: $font-h2;
-  font-size: 18px;
+  font-size: $text-lg;
   text-decoration: none; // Evita el subrayado morado
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -215,8 +215,8 @@
   position: absolute;
   top: -40px;
   right: -10px;
-  font-family: 'Georgia', serif;
-  font-size: 160px;
+  font-family: $font-h2;
+  font-size: 10rem; // Decorativo (marca de agua), fuera de la escala a propósito
   font-style: italic;
   font-weight: 900;
   line-height: 1;
@@ -245,8 +245,8 @@
 }
 
 .card-title {
-  font-family: $font-h1;
-  font-size: 20px;
+  font-family: $font-h2;
+  font-size: $text-xl;
   color: $brand-white;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -256,7 +256,7 @@
 .card-body {
   font-family: $font-main;
   // 🛑 FIX LECTURA: Aumentamos a 16px y color más blanco
-  font-size: 16px;
+  font-size: $text-base;
   color: rgba($brand-white, 0.85);
   line-height: 1.8;
   margin: 0;
@@ -296,8 +296,8 @@
   z-index: 2;
 
   .section-heading {
-    font-family: $font-h1;
-    font-size: clamp(32px, 4.5vw, 56px);
+    font-family: $font-h2;
+    font-size: $text-3xl;
     color: $brand-white;
     text-transform: uppercase;
     line-height: 1.1;
@@ -310,7 +310,7 @@
   .section-body {
     font-family: $font-main;
     // 🛑 FIX LECTURA: 18px de tamaño y color claro
-    font-size: 18px;
+    font-size: $text-lg;
     color: rgba($brand-white, 0.85);
     line-height: 1.8;
     margin-bottom: 32px;
@@ -319,7 +319,7 @@
 
   .slogan {
     font-family: $font-h2;
-    font-size: 16px; // Un poco más grande
+    font-size: $text-base; // Un poco más grande
     color: $brand-white;
     text-transform: uppercase;
     letter-spacing: 4px;
@@ -338,7 +338,7 @@
   color: $brand-white !important; // Fuerza el color blanco sobre defaults
   padding: 18px 48px;
   font-family: $font-h2;
-  font-size: 18px;
+  font-size: $text-lg;
   text-decoration: none !important; // Mata la línea morada
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -416,8 +416,8 @@
   }
 
   .video-title {
-    font-family: $font-h1;
-    font-size: 32px;
+    font-family: $font-h2;
+    font-size: $text-2xl;
     color: $brand-white;
     text-transform: uppercase;
     line-height: 1.1;
@@ -427,7 +427,7 @@
 
   .video-subtitle {
     font-family: $font-main;
-    font-size: 16px;
+    font-size: $text-base;
     font-style: italic;
     color: rgba($brand-white, 0.7);
     margin-bottom: 40px;
@@ -496,7 +496,7 @@
   width: fit-content;
   color: $brand-red;
   font-family: $font-h2;
-  font-size: 0.8rem;
+  font-size: $text-xs;
   text-transform: uppercase;
   letter-spacing: 2px;
 }
@@ -522,8 +522,8 @@
 
   h2 {
     margin: 0;
-    font-family: $font-h1;
-    font-size: clamp(3rem, 7vw, 4.5rem);
+    font-family: $font-h2;
+    font-size: $text-3xl;
     font-weight: 400;
     text-transform: uppercase;
     line-height: 0.92;
@@ -538,7 +538,7 @@
     margin: 0;
     color: rgba($brand-white, 0.78);
     font-family: $font-main;
-    font-size: clamp(1rem, 1.7vw, 1.2rem);
+    font-size: $text-lg;
     line-height: 1.9;
   }
 }
@@ -559,7 +559,7 @@
     display: block;
     color: $brand-red;
     font-family: $font-h2;
-    font-size: 0.9rem;
+    font-size: $text-sm;
     margin-bottom: 0.8rem;
   }
 
@@ -567,7 +567,7 @@
     display: block;
     color: $brand-white;
     font-family: $font-h2;
-    font-size: 0.75rem;
+    font-size: $text-xs;
     line-height: 1.4;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -618,7 +618,7 @@
   span {
     color: $brand-red;
     font-family: $font-h2;
-    font-size: 0.8rem;
+    font-size: $text-xs;
     text-transform: uppercase;
     letter-spacing: 1.5px;
   }
@@ -628,7 +628,7 @@
     margin: 0.75rem 0;
     color: $brand-white;
     font-family: $font-h2;
-    font-size: clamp(1.7rem, 4vw, 3rem);
+    font-size: $text-2xl;
     text-transform: uppercase;
     line-height: 1;
   }
@@ -637,7 +637,7 @@
     margin: 0;
     color: rgba($brand-white, 0.75);
     font-family: $font-main;
-    font-size: 1rem;
+    font-size: $text-base;
     line-height: 1.7;
   }
 }
@@ -667,8 +667,8 @@
 
   h2 {
     margin: 0;
-    font-family: $font-h1;
-    font-size: clamp(2.6rem, 6vw, 5.5rem);
+    font-family: $font-h2;
+    font-size: $text-3xl;
     font-weight: 400;
     text-transform: uppercase;
     line-height: 0.95;
@@ -678,7 +678,7 @@
     margin: 0;
     color: $brand-gray;
     font-family: $font-main;
-    font-size: 1rem;
+    font-size: $text-base;
     line-height: 1.8;
   }
 }
@@ -740,7 +740,7 @@
     color: $brand-white;
     padding: 0.55rem 0.8rem;
     font-family: $font-h2;
-    font-size: 0.68rem;
+    font-size: $text-xs;
     text-transform: uppercase;
     letter-spacing: 0.8px;
   }
@@ -759,7 +759,7 @@
     margin: 0 0 0.65rem;
     color: $brand-red;
     font-family: $font-h2;
-    font-size: 0.72rem;
+    font-size: $text-xs;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
@@ -768,7 +768,7 @@
     margin: 0;
     color: $brand-black;
     font-family: $font-h2;
-    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-size: $text-xl;
     text-transform: uppercase;
     line-height: 1;
   }
@@ -788,7 +788,7 @@
     border: 1px solid $brand-black;
     padding: 1rem 1.2rem;
     font-family: $font-h2;
-    font-size: 0.75rem;
+    font-size: $text-xs;
     text-transform: uppercase;
     letter-spacing: 1px;
     text-decoration: none;
@@ -852,7 +852,7 @@
   color: $brand-white;
   border: 0;
   cursor: pointer;
-  font-size: 1.75rem;
+  font-size: $text-2xl;
   line-height: 1;
 }
 
@@ -876,7 +876,7 @@
     background: $brand-red;
     color: $brand-white;
     font-family: $font-h2;
-    font-size: 0.68rem;
+    font-size: $text-xs;
     letter-spacing: 0.8px;
     text-transform: uppercase;
   }
@@ -893,7 +893,7 @@
     margin: 0 0 0.75rem;
     color: $brand-red;
     font-family: $font-h2;
-    font-size: 0.72rem;
+    font-size: $text-xs;
     letter-spacing: 1px;
     text-transform: uppercase;
   }
@@ -901,8 +901,8 @@
   h2 {
     margin: 0;
     color: $brand-black;
-    font-family: $font-h1;
-    font-size: clamp(2.7rem, 5vw, 4.5rem);
+    font-family: $font-h2;
+    font-size: $text-3xl;
     font-weight: 400;
     letter-spacing: 0;
     line-height: 0.9;
@@ -914,7 +914,7 @@
   margin: 1.4rem 0 2rem;
   color: $brand-gray;
   font-family: $font-main;
-  font-size: clamp(1rem, 1.5vw, 1.13rem);
+  font-size: $text-lg;
   line-height: 1.75;
 }
 
@@ -932,7 +932,7 @@
   span {
     color: $brand-red;
     font-family: $font-h2;
-    font-size: 0.68rem;
+    font-size: $text-xs;
     letter-spacing: 1px;
     text-transform: uppercase;
   }
@@ -941,7 +941,7 @@
     margin: 0;
     color: $brand-black;
     font-family: $font-h2;
-    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    font-size: $text-lg;
     letter-spacing: 0;
     text-align: right;
     text-transform: uppercase;
@@ -960,7 +960,7 @@
     padding-left: 1.25rem;
     color: $brand-black;
     font-family: $font-main;
-    font-size: 0.96rem;
+    font-size: $text-base;
     line-height: 1.6;
 
     &::before {
@@ -985,7 +985,7 @@
     background: $brand-red;
     color: $brand-white;
     font-family: $font-h2;
-    font-size: 0.75rem;
+    font-size: $text-xs;
     letter-spacing: 1px;
     text-decoration: none;
     text-transform: uppercase;
@@ -1059,7 +1059,7 @@
       max-width: 95%;
     }
     .video-title {
-      font-size: 24px;
+      font-size: $text-2xl;
     }
   }
 
@@ -1072,7 +1072,7 @@
   .btn-primary-solid {
     width: 100%;
     padding: 16px 24px;
-    font-size: 16px;
+    font-size: $text-base;
   }
 
   .precision-lab-section {

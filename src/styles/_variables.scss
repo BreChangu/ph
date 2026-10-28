@@ -8,6 +8,19 @@ $brand-red-dark: #A80A04;
 $brand-gray: #9F9B97;
 
 // Tipografías
-$font-h1: 'Archicoco', sans-serif;
+// - $font-h1 (Archicoco): SOLO en el título de portada de cada página.
+// - $font-h2 (Archivo Black): títulos de sección, tarjetas, botones y etiquetas.
+// - $font-main (Open Sans): todo el texto de lectura.
+$font-h1: 'Archicoco', 'Archivo Black', sans-serif;
 $font-h2: 'Archivo Black', sans-serif;
 $font-main: 'Open Sans', sans-serif;
+
+// Escala tipográfica (1rem = 16px). Usa SOLO estos tamaños para el texto.
+$text-xs: 0.75rem;    // 12px · etiquetas, fechas, badges
+$text-sm: 0.875rem;   // 14px · menú, botones, texto secundario
+$text-base: 1rem;     // 16px · texto normal
+$text-lg: 1.125rem;   // 18px · resúmenes, texto destacado
+$text-xl: 1.375rem;   // 22px · títulos de tarjetas
+$text-2xl: clamp(1.5rem, 1.25rem + 1vw, 2rem);     // 24–32px · títulos de sección pequeños
+$text-3xl: clamp(2rem, 1.5rem + 2vw, 3rem);        // 32–48px · títulos de sección
+$text-display: clamp(2.5rem, 1.5rem + 4vw, 4.5rem); // 40–72px · portada (con $font-h1)

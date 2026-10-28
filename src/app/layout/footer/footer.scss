@@ -22,12 +22,12 @@
 .footer-info {
   color: $brand-white;
   font-family: $font-main;
-  font-size: 14px;
+  font-size: $text-sm;
   line-height: 1.6;
 
   .footer-brand {
     font-family: $font-h2; // Tipografía pesada
-    font-size: 20px;
+    font-size: $text-xl;
     font-style: italic; // El efecto de tu imagen
     letter-spacing: 1px;
     margin-bottom: 12px;
@@ -89,7 +89,7 @@
 
   a {
     font-family: $font-h2;
-    font-size: 14px;
+    font-size: $text-sm;
     font-style: italic;
     color: $brand-white;
     text-decoration: none;

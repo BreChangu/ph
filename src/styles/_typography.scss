@@ -10,10 +10,23 @@
   font-display: swap; 
 }
 
+body {
+  font-family: $font-main;
+  font-size: $text-base;
+  line-height: 1.6;
+}
+
+// Archicoco ya no es el default de h1: solo las portadas lo piden
+// explícitamente con font-family: $font-h1 y font-size: $text-display.
 h1 {
-  font-family: $font-h1;
+  font-family: $font-h2;
   text-transform: uppercase;
   color: $brand-white;
+}
+
+h2,
+h3 {
+  font-family: $font-h2;
 }
 
 p {
