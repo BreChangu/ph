@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { WhatsappPipe } from '../../ui/whatsapp/whatsapp.pipe';
 
 type Supplement = {
   name: string;
@@ -27,7 +28,7 @@ type HeroSlide = {
 @Component({
   selector: 'app-suplementos',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, WhatsappPipe],
   templateUrl: './suplementos.html',
   styleUrl: './suplementos.scss',
 })

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { afterNextRender, Component, OnDestroy, signal } from '@angular/core';
+import { WhatsappPipe } from '../../ui/whatsapp/whatsapp.pipe';
 
 type TestimonialSlide = {
   imageUrl: string;
@@ -9,7 +10,7 @@ type TestimonialSlide = {
 
 @Component({
   selector: 'app-home',
-  imports: [CommonModule],
+  imports: [CommonModule, WhatsappPipe],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })

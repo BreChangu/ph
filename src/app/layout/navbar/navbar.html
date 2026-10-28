@@ -46,7 +46,7 @@
       </nav>
 
       <div class="nav-actions">
-        <a href="#contacto" class="btn-cta" (click)="closeMenu()">Agenda tu Cita</a>
+        <a [href]="'Hola Pablo, me interesa agendar una cita para un diagnóstico.' | whatsapp" target="_blank" rel="noopener noreferrer" class="btn-cta" (click)="closeMenu()">Agenda tu Cita</a>
       </div>
     </div>
 

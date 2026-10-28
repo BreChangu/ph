@@ -10,7 +10,7 @@
         <h1>{{ slide.title }}</h1>
         <p>{{ slide.copy }}</p>
         <div class="hero-actions">
-          <a class="btn-primary" href="#contacto">Cotizar ahora</a>
+          <a class="btn-primary" [href]="('Hola Pablo, me interesa cotizar ' + slide.product.name + '.') | whatsapp" target="_blank" rel="noopener noreferrer">Cotizar ahora</a>
           <span>{{ slide.feature }}</span>
         </div>
       </div>
@@ -139,7 +139,7 @@
     </div>
 
     <div class="drawer-footer">
-      <a href="#contacto" class="btn-primary w-full">
+      <a [href]="('Hola Pablo, me interesó el suplemento ' + selectedSupplement.name + '. ¿Me compartes precio y disponibilidad?') | whatsapp" target="_blank" rel="noopener noreferrer" class="btn-primary w-full">
         {{ selectedSupplement.quote }}
       </a>
       <small class="disclaimer">La disponibilidad y costo final se confirmarán al contactar al coach.</small>

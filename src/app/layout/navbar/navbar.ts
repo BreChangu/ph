@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../core/supabase/auth';
+import { WhatsappPipe } from '../../ui/whatsapp/whatsapp.pipe';
 
 @Component({
   selector: 'app-navbar',
-  imports: [RouterLink],
+  imports: [RouterLink, WhatsappPipe],
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss',
 })

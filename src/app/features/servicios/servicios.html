@@ -20,7 +20,7 @@ Comienza con una estrategia.
       </p>
 
       <div class="header-action">
-        <a href="#contacto" class="btn-reservar">
+        <a [href]="'Hola Pablo, estoy listo para empezar. ¿Me compartes información de tus servicios?' | whatsapp" target="_blank" rel="noopener noreferrer" class="btn-reservar">
           Abandona las excusas
           <svg
             class="chevron-icon"
@@ -138,7 +138,7 @@ Comienza con una estrategia.
       </article>
     </div>
 
-    <a href="#contacto" class="btn-primary-solid">
+    <a [href]="'Hola Pablo, me gustaría reservar una evaluación.' | whatsapp" target="_blank" rel="noopener noreferrer" class="btn-primary-solid">
       Reserva tu evaluacion
       <svg
         class="chevron-icon"
@@ -195,7 +195,7 @@ Comienza con una estrategia.
         <button type="button" class="package-detail-trigger" (click)="openPackage(item)">
           Conoce el plan
         </button>
-        <a href="#contacto">{{ item.ctaLabel || 'Cotizar paquete' }}</a>
+        <a [href]="('Hola Pablo, me interesa el paquete ' + item.title + '. ¿Me compartes la cotización?') | whatsapp" target="_blank" rel="noopener noreferrer">{{ item.ctaLabel || 'Cotizar paquete' }}</a>
       </div>
     </article>
   </div>
@@ -231,7 +231,7 @@ Comienza con una estrategia.
           <li *ngFor="let include of selectedPackage.includes">{{ include }}</li>
         </ul>
       </section>
-      <a href="#contacto" (click)="closePackage()">{{ selectedPackage.ctaLabel || 'Cotizar ahora' }}</a>
+      <a [href]="('Hola Pablo, me interesa el paquete ' + selectedPackage.title + '. ¿Me compartes la cotización?') | whatsapp" target="_blank" rel="noopener noreferrer" (click)="closePackage()">{{ selectedPackage.ctaLabel || 'Cotizar ahora' }}</a>
     </div>
   </section>
 </div>

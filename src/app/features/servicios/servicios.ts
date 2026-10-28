@@ -2,10 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ServicePackage } from '../../core/models/service-package.model';
 import { ServicePackagesService } from '../../core/services/service-packages';
+import { WhatsappPipe } from '../../ui/whatsapp/whatsapp.pipe';
 
 @Component({
   selector: 'app-servicios',
-  imports: [CommonModule],
+  imports: [CommonModule, WhatsappPipe],
   templateUrl: './servicios.html',
   styleUrl: './servicios.scss',
 })
