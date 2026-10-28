@@ -1,0 +1,474 @@
+@use '../../../../styles/variables' as *;
+
+// Los estilos del panel padre NO llegan a este componente (encapsulación),
+// por eso aquí se definen también los títulos y avisos.
+:host {
+  display: block;
+  color: $brand-black;
+  font-family: $font-main;
+}
+
+.pg {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+// ---------- encabezado ----------
+.pg-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.section-title {
+  margin: 0;
+  font-family: $font-h2;
+  font-size: clamp(1.35rem, 5vw, 1.9rem);
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+
+  span {
+    color: $brand-red;
+  }
+}
+
+.pg-sub {
+  margin: 0.35rem 0 0;
+  color: $brand-gray;
+  font-size: 0.9rem;
+}
+
+// ---------- selector segmentado (kg/lb, métrica) ----------
+.pg-seg {
+  display: inline-flex;
+  flex-shrink: 0;
+  border: 1px solid rgba($brand-black, 0.18);
+  border-radius: 999px;
+  padding: 3px;
+  background: rgba($brand-black, 0.04);
+
+  button {
+    min-height: 36px;
+    min-width: 48px;
+    padding: 0 0.9rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: $brand-gray;
+    font: 600 0.82rem $font-main;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    &.is-on {
+      background: $brand-red;
+      color: $brand-white;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $brand-black;
+      outline-offset: 2px;
+    }
+  }
+}
+
+// ---------- navegación de semana ----------
+.pg-week {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pg-week-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid rgba($brand-black, 0.18);
+  border-radius: 12px;
+  background: rgba($brand-black, 0.04);
+  color: $brand-black;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $brand-black;
+    outline-offset: 2px;
+  }
+}
+
+.pg-week-label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 0;
+
+  strong {
+    font-family: $font-h2;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+  }
+}
+
+.pg-tag {
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  background: rgba($brand-red, 0.18);
+  color: $brand-red;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pg-link {
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  color: $brand-red;
+  font: 600 0.8rem $font-main;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+// ---------- avisos ----------
+.state-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba($brand-black, 0.18);
+  border-radius: 12px;
+  background: rgba($brand-black, 0.05);
+  font-size: 0.88rem;
+
+  &.is-error {
+    border-color: rgba($brand-red, 0.6);
+    background: rgba($brand-red, 0.1);
+  }
+}
+
+.pg-loading {
+  margin: 0;
+  color: $brand-gray;
+  font-size: 0.85rem;
+}
+
+// ---------- tarjetas de resumen ----------
+.pg-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+
+  @media (min-width: 760px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.pg-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba($brand-black, 0.12);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.pg-card-label {
+  color: $brand-gray;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pg-card-value {
+  font-family: $font-h2;
+  font-size: 1.8rem;
+  line-height: 1.1;
+
+  small {
+    color: $brand-gray;
+    font-family: $font-main;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+}
+
+.pg-card-note {
+  color: $brand-gray;
+  font-size: 0.78rem;
+}
+
+// ---------- paneles ----------
+.pg-panel {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid rgba($brand-black, 0.12);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.pg-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+
+  h3 {
+    margin: 0;
+    font-family: $font-h2;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+}
+
+.pg-unit-note,
+.pg-hint {
+  color: $brand-gray;
+  font-size: 0.78rem;
+}
+
+.pg-hint {
+  margin: 0.4rem 0 0;
+  text-align: center;
+}
+
+.pg-empty {
+  margin: 0;
+  padding: 1.1rem 0.9rem;
+  border: 1px dashed rgba($brand-black, 0.2);
+  border-radius: 12px;
+  color: $brand-gray;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  text-align: center;
+
+  &.pg-empty-inline {
+    margin-top: 0.7rem;
+  }
+}
+
+// ---------- gráficas SVG ----------
+.pg-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.pg-axis {
+  stroke: rgba($brand-black, 0.2);
+  stroke-width: 1;
+}
+
+.pg-value {
+  fill: $brand-black;
+  font: 700 10px $font-main;
+}
+
+.pg-xlabel {
+  fill: $brand-gray;
+  font: 500 9px $font-main;
+}
+
+.pg-hit {
+  fill: transparent;
+}
+
+.pg-bar {
+  cursor: pointer;
+  outline: none;
+
+  .pg-bar-fill {
+    fill: rgba($brand-red, 0.45);
+    transition: fill 0.15s;
+  }
+
+  &:hover .pg-bar-fill,
+  &:focus-visible .pg-bar-fill {
+    fill: rgba($brand-red, 0.8);
+  }
+
+  &:focus-visible .pg-hit {
+    stroke: $brand-black;
+    stroke-width: 1;
+  }
+
+  &.is-selected .pg-bar-fill {
+    fill: $brand-red;
+  }
+
+  &.is-selected .pg-xlabel {
+    fill: $brand-black;
+    font-weight: 700;
+  }
+}
+
+.pg-line {
+  fill: none;
+  stroke: $brand-red;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.pg-dot {
+  fill: #ffffff;
+  stroke: $brand-red;
+  stroke-width: 2.5;
+}
+
+// ---------- tabla de progresión ----------
+.pg-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.pg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+
+  th,
+  td {
+    padding: 0.55rem 0.4rem;
+    border-bottom: 1px solid rgba($brand-black, 0.08);
+    text-align: left;
+    font-weight: 400;
+  }
+
+  thead th {
+    color: $brand-gray;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  tbody th {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .num {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.pg-delta {
+  display: inline-block;
+  min-width: 2.6rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: rgba($brand-black, 0.08);
+  color: $brand-gray;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+
+  &.is-up {
+    background: rgba(46, 204, 113, 0.16);
+    color: #15803d;
+  }
+
+  &.is-down {
+    background: rgba($brand-red, 0.16);
+    color: $brand-red-dark;
+  }
+
+  &.is-new {
+    color: $brand-black;
+  }
+}
+
+.pg-line-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.4rem 0 0.6rem;
+
+  label {
+    color: $brand-gray;
+    font-size: 0.82rem;
+  }
+}
+
+.pg-select {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 0.8rem;
+  border: 1px solid rgba($brand-black, 0.18);
+  border-radius: 10px;
+  background: #ffffff;
+  color: $brand-black;
+  font: 600 0.9rem $font-main;
+}
+
+// ---------- notas ----------
+.pg-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 0.7rem 0.85rem;
+    border-left: 3px solid $brand-red;
+    border-radius: 0 10px 10px 0;
+    background: rgba($brand-black, 0.04);
+  }
+
+  p {
+    margin: 0.2rem 0 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+}
+
+.pg-note-day {
+  color: $brand-gray;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+@media (min-width: 760px) {
+  .pg-panel {
+    padding: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pg-seg button,
+  .pg-bar .pg-bar-fill {
+    transition: none;
+  }
+}

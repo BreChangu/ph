@@ -586,89 +586,6 @@
 }
 
 /* ==========================================
-   REVISIÓN DE TÉCNICA
-   ========================================== */
-.video-dropzone {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 5rem;
-  border: 1px dashed rgba($brand-black, 0.3);
-  background: rgba($brand-black, 0.02);
-  color: $brand-gray;
-  font-family: $font-h2;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 1rem;
-  text-align: center;
-  &:hover {
-    border-color: $brand-black;
-    color: $brand-black;
-  }
-  &.has-file {
-    border: 1px solid $brand-red;
-    background: rgba($brand-red, 0.03);
-    color: $brand-black;
-  }
-}
-
-.feedback-list {
-  display: flex;
-  flex-direction: column;
-}
-.feedback-item {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba($brand-black, 0.08);
-  &:last-child {
-    border-bottom: none;
-  }
-}
-.feedback-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.25rem;
-  strong {
-    color: $brand-black;
-    font-family: $font-h2;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-  }
-}
-.status-badge {
-  font-size: 0.65rem;
-  font-family: $font-h2;
-  text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
-  background: rgba($brand-gray, 0.1);
-  color: $brand-gray;
-  letter-spacing: 0.5px;
-  &.reviewed {
-    background: $brand-black;
-    color: $brand-white;
-  }
-}
-.feedback-date {
-  display: block;
-  color: $brand-gray;
-  font-size: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-.feedback-text {
-  color: $brand-black;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  margin: 0;
-  &.empty {
-    color: $brand-gray;
-    font-style: italic;
-  }
-}
-
-/* ==========================================
    ENTRENAMIENTO: SESIONES Y NAVEGACION
    ========================================== */
 .panel-eyebrow {
@@ -885,6 +802,121 @@ button { scroll-snap-align: start; }
       font-size: 0.8rem;
     }
   }
+}
+
+/* Registro de cargas */
+.load-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 1.5rem 0;
+  color: $brand-black;
+  font-family: $font-h2;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+.load-unit-toggle {
+  display: inline-flex;
+  button {
+    min-width: 3rem;
+    min-height: 2.4rem;
+    border: 1px solid rgba($brand-black, 0.25);
+    background: transparent;
+    color: $brand-black;
+    cursor: pointer;
+    font-family: $font-h2;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    & + button { border-left: 0; }
+    &.active {
+      border-color: $brand-red;
+      background: $brand-red;
+      color: $brand-white;
+    }
+    &:focus-visible { outline: 2px solid $brand-black; outline-offset: 2px; }
+  }
+}
+.load-message {
+  margin: 0.6rem 1.5rem 0;
+  color: $brand-red-dark;
+  font-size: 0.82rem;
+}
+.exercise-load-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  padding: 0.5rem 0;
+}
+.load-input {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba($brand-black, 0.2);
+  background: rgba($brand-black, 0.04);
+  transition: border-color 0.2s ease;
+  input {
+    width: 4.5rem;
+    min-height: 2.4rem;
+    border: 0;
+    background: transparent;
+    color: $brand-black;
+    font-family: $font-main;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    &::placeholder { color: rgba($brand-black, 0.4); font-weight: 600; }
+    &:focus { outline: none; }
+  }
+  span {
+    padding-right: 0.6rem;
+    color: $brand-gray;
+    font-size: 0.75rem;
+  }
+  &:focus-within { border-color: $brand-black; }
+  &.is-pending { border-color: #b45309; background: rgba(#b45309, 0.06); }
+  &.is-saved { border-color: #15803d; }
+  &.is-error { border-color: $brand-red; background: rgba($brand-red, 0.06); }
+}
+.load-pending {
+  color: #b45309;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.session-register {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid rgba($brand-black, 0.08);
+  .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+.session-register-status {
+  flex: 1 1 16rem;
+  margin: 0;
+  color: $brand-gray;
+  font-size: 0.85rem;
+  &.is-done {
+    color: #15803d;
+    font-weight: 700;
+  }
+}
+.load-last {
+  color: $brand-gray;
+  font-size: 0.72rem;
+}
+.load-change {
+  color: $brand-gray;
+  font-family: $font-h2;
+  font-size: 0.72rem;
+  &.is-up { color: #15803d; }
+  &.is-down { color: $brand-red-dark; }
 }
 
 .exercise-video-trigger {
@@ -1259,7 +1291,7 @@ button { scroll-snap-align: start; }
     > :nth-child(4)::before { content: 'Reps '; color: $brand-black; font-weight: 800; }
 
     .exercise-video-trigger, .exercise-video-empty { grid-area: video; min-height: 2.5rem; }
-    .exercise-load { grid-area: load; justify-self: end; }
+    .exercise-load-cell { grid-area: load; justify-self: end; align-items: flex-end; }
   }
 
   /* Botones de sesión y modal */

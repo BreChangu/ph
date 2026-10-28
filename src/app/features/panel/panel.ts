@@ -16,6 +16,36 @@ import { AuthService } from '../../core/supabase/auth';
 import { PlanNutricionalService } from '../../core/services/plan-nutricional/plan-nutricional.service';
 import { EntrenamientoService } from '../../core/services/entrenamiento/entrenamiento.service';
 import { DiaEntrenamiento, Ejercicio } from '../../core/models/entrenamiento.models';
+import { ProgresoSemanalComponent } from './progreso/progreso-semanal';
+import {
+  FilaCarga,
+  Unidad,
+  claveEjercicio,
+  etiquetaDia,
+  formatoCambio,
+  formatoPeso,
+  guardarUnidadPreferida,
+  hoyISO,
+  leerPeso,
+  leerUnidadPreferida,
+  resumenCarga,
+  unidadAKg,
+} from './progreso/progreso.utils';
+
+/** Lo que muestra la columna Carga para un ejercicio. */
+type VistaCarga = {
+  valorHoy: string;
+  placeholder: string;
+  ultima: string | null;
+  cambio: string | null;
+  sube: boolean;
+  baja: boolean;
+};
+
+type EstadoCarga = 'guardado' | 'error';
+
+/** Códigos de Supabase cuando la tabla aún no existe o no hay permiso. */
+const CODIGOS_TABLA_NO_LISTA = new Set(['PGRST205', '42P01', '42501']);
 
 type ExerciseVideoView = {
   title: string;
@@ -32,7 +62,7 @@ type ExerciseVideoView = {
   message?: string;
 };
 
-type PanelSection = 'nutrition' | 'training' | 'measurements' | 'photos' | 'testimonio' | 'tecnica';
+type PanelSection = 'nutrition' | 'training' | 'measurements' | 'photos' | 'testimonio' | 'progreso';
 type PhotoKind = 'frente' | 'perfil' | 'espalda';
 type MeasurementDefinition = {
   key: string;
@@ -43,7 +73,7 @@ type MeasurementDefinition = {
 @Component({
   selector: 'app-panel',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, ProgresoSemanalComponent],
   templateUrl: './panel.html',
   styleUrls: ['./panel.scss'],
 })
@@ -92,6 +122,19 @@ export class PanelComponent implements OnInit, OnDestroy {
   trainingDiaryNote = '';
   trainingDiaryMessage = '';
 
+  // REGISTRO DE CARGAS (peso usado por ejercicio)
+  unidadCarga: Unidad = leerUnidadPreferida();
+  /** false mientras no exista la tabla registros_carga en Supabase. */
+  cargasDisponibles = true;
+  vistaCargas: Record<string, VistaCarga> = {};
+  estadoCargas: Record<string, EstadoCarga> = {};
+  /** Lo que el paciente escribió y aún no registra, por ejercicio. */
+  borradoresCarga: Record<string, string> = {};
+  guardandoSesion = false;
+  sesionMensaje = '';
+  cargaMensaje = '';
+  private historialCargas: FilaCarga[] = [];
+
   cardioGuidelines = [
     'Realiza 5 sesiones por semana de 30 minutos.',
     'Mantén una intensidad que te permita sostener el ritmo.',
@@ -102,25 +145,6 @@ export class PanelComponent implements OnInit, OnDestroy {
     'Toma de 2 a 4 litros de agua al día.',
     'Escucha a tu cuerpo y cuida la técnica antes de subir cargas.',
     'Si una molestia persiste, repórtala antes de continuar.',
-  ];
-
-  // ==========================================
-  // VARIABLES DE TÉCNICA
-  // ==========================================
-  videoFile: File | null = null;
-  ejercicioTecnica = '';
-  notaTecnica = '';
-  isUploadingVideo = false;
-  tecnicaMessage = '';
-
-  historialVideos = [
-    {
-      ejercicio: 'Sentadilla Libre',
-      fecha: '12/06/2026',
-      estado: 'Revisado',
-      feedback: 'Mejora la profundidad, el peso está bien controlado.',
-    },
-    { ejercicio: 'Peso Muerto', fecha: '14/06/2026', estado: 'Pendiente', feedback: null },
   ];
 
   // ==========================================
@@ -379,6 +403,8 @@ export class PanelComponent implements OnInit, OnDestroy {
       const rutina = await this.entrenamientoService.getRutinaPaciente(this.pacienteId);
       this.entrenamientoSemanal = rutina?.dias_entrenamiento ?? [];
       this.activeTrainingDay = 0;
+      this.recalcularVistaCargas();
+      await this.cargarHistorialCargas();
     } catch (error) {
       console.error('Error al cargar la rutina:', error);
       this.entrenamientoSemanal = [];
@@ -387,6 +413,187 @@ export class PanelComponent implements OnInit, OnDestroy {
       this.isLoadingTraining = false;
       this.cdr.detectChanges();
     }
+  }
+
+  // ==========================================
+  // MÉTODOS DE REGISTRO DE CARGAS
+  // ==========================================
+  private async cargarHistorialCargas() {
+    if (!this.pacienteId) return;
+
+    try {
+      this.historialCargas = await this.entrenamientoService.getHistorialCargas(this.pacienteId);
+      this.cargasDisponibles = true;
+    } catch (error) {
+      this.historialCargas = [];
+      if (this.esTablaNoLista(error)) {
+        this.cargasDisponibles = false;
+      } else {
+        console.error('Error al cargar el historial de cargas:', error);
+        this.cargaMensaje = 'No pudimos cargar tus pesos anteriores. Actualiza la página.';
+      }
+    }
+    this.recalcularVistaCargas();
+  }
+
+  claveDe(ejercicio: Ejercicio): string {
+    return claveEjercicio(ejercicio.ejercicio);
+  }
+
+  cambiarUnidadCarga(unidad: Unidad) {
+    if (unidad === this.unidadCarga) return;
+    // Lo que ya se escribió se convierte a la nueva unidad para no perderlo.
+    for (const [clave, texto] of Object.entries(this.borradoresCarga)) {
+      const valor = leerPeso(texto);
+      if (valor !== null) {
+        this.borradoresCarga[clave] = formatoPeso(unidadAKg(valor, this.unidadCarga), unidad);
+      }
+    }
+    this.unidadCarga = unidad;
+    guardarUnidadPreferida(unidad);
+    this.recalcularVistaCargas();
+  }
+
+  /** Valor que se ve en el campo: lo que se está escribiendo o, si no, lo registrado hoy. */
+  valorCampoCarga(ejercicio: Ejercicio): string {
+    const clave = this.claveDe(ejercicio);
+    return this.borradoresCarga[clave] ?? this.vistaCargas[clave]?.valorHoy ?? '';
+  }
+
+  actualizarBorradorCarga(ejercicio: Ejercicio, event: Event) {
+    const clave = this.claveDe(ejercicio);
+    this.borradoresCarga[clave] = (event.target as HTMLInputElement).value;
+    delete this.estadoCargas[clave];
+    this.sesionMensaje = '';
+  }
+
+  /** El campo tiene un valor distinto al que ya está guardado hoy. */
+  cargaPendiente(ejercicio: Ejercicio): boolean {
+    const clave = this.claveDe(ejercicio);
+    const borrador = this.borradoresCarga[clave];
+    return borrador !== undefined && borrador.trim() !== (this.vistaCargas[clave]?.valorHoy ?? '');
+  }
+
+  hayCargasPendientes(dia: DiaEntrenamiento): boolean {
+    return dia.ejercicios.some((ejercicio) => this.cargaPendiente(ejercicio));
+  }
+
+  sesionRegistradaHoy(dia: DiaEntrenamiento): boolean {
+    return dia.ejercicios.some((ejercicio) => !!this.vistaCargas[this.claveDe(ejercicio)]?.valorHoy);
+  }
+
+  /**
+   * Guarda de una vez los pesos que cambiaron en la sesión.
+   * Un campo vaciado borra el peso de hoy de ese ejercicio.
+   */
+  async registrarSesion(dia: DiaEntrenamiento) {
+    if (!this.pacienteId || this.guardandoSesion) return;
+
+    const cambios: { ejercicio: Ejercicio; clave: string; pesoKg: number | null }[] = [];
+    let hayErrores = false;
+
+    for (const ejercicio of dia.ejercicios) {
+      if (!this.cargaPendiente(ejercicio)) continue;
+      const clave = this.claveDe(ejercicio);
+      const texto = this.borradoresCarga[clave].trim();
+
+      if (texto === '') {
+        cambios.push({ ejercicio, clave, pesoKg: null });
+        continue;
+      }
+
+      const valor = leerPeso(texto);
+      const pesoKg = valor === null ? null : unidadAKg(valor, this.unidadCarga);
+      if (pesoKg === null || pesoKg >= 1000) {
+        this.estadoCargas[clave] = 'error';
+        hayErrores = true;
+      } else {
+        cambios.push({ ejercicio, clave, pesoKg });
+      }
+    }
+
+    if (hayErrores) {
+      this.sesionMensaje = 'Revisa los campos en rojo: escribe solo el número del peso, por ejemplo 42.5';
+      return;
+    }
+    if (cambios.length === 0) return;
+
+    this.guardandoSesion = true;
+    this.sesionMensaje = '';
+    this.cdr.detectChanges();
+
+    const resultados = await Promise.allSettled(
+      cambios.map(({ ejercicio, pesoKg }) =>
+        pesoKg === null
+          ? this.entrenamientoService.borrarCargaDeHoy(this.pacienteId!, ejercicio.ejercicio)
+          : this.entrenamientoService.guardarCarga(
+              this.pacienteId!,
+              ejercicio.ejercicio,
+              pesoKg,
+              this.unidadCarga,
+            ),
+      ),
+    );
+
+    let fallidos = 0;
+    resultados.forEach((resultado, i) => {
+      const { clave } = cambios[i];
+      if (resultado.status === 'fulfilled') {
+        delete this.borradoresCarga[clave];
+        this.estadoCargas[clave] = 'guardado';
+      } else {
+        console.error('Error al guardar la carga:', resultado.reason);
+        this.estadoCargas[clave] = 'error';
+        fallidos++;
+        if (this.esTablaNoLista(resultado.reason)) this.cargasDisponibles = false;
+      }
+    });
+
+    // Se vuelve a leer lo guardado para que "Última" y el cambio reflejen la base de datos.
+    await this.cargarHistorialCargas();
+
+    this.sesionMensaje =
+      fallidos === 0
+        ? `Sesión registrada ✓ (${cambios.length} ${cambios.length === 1 ? 'ejercicio' : 'ejercicios'})`
+        : `No se pudieron guardar ${fallidos} de ${cambios.length} pesos. Revisa tu conexión e intenta de nuevo.`;
+    this.guardandoSesion = false;
+    this.cdr.detectChanges();
+  }
+
+  private recalcularVistaCargas() {
+    const hoy = hoyISO();
+    const unidad = this.unidadCarga;
+    const porClave = new Map<string, FilaCarga[]>();
+    for (const fila of this.historialCargas) {
+      const filas = porClave.get(fila.ejercicio_clave) ?? [];
+      filas.push(fila);
+      porClave.set(fila.ejercicio_clave, filas);
+    }
+
+    const vistas: Record<string, VistaCarga> = {};
+    for (const dia of this.entrenamientoSemanal) {
+      for (const ejercicio of dia.ejercicios) {
+        const clave = this.claveDe(ejercicio);
+        const r = resumenCarga(porClave.get(clave) ?? [], hoy);
+        vistas[clave] = {
+          valorHoy: r.hoyKg === null ? '' : formatoPeso(r.hoyKg, unidad),
+          placeholder: r.previaKg === null ? 'Peso' : formatoPeso(r.previaKg, unidad),
+          ultima:
+            r.previaKg === null || r.previaFecha === null
+              ? null
+              : `Última: ${formatoPeso(r.previaKg, unidad)} ${unidad} · ${etiquetaDia(r.previaFecha)}`,
+          cambio: r.deltaKg === null ? null : formatoCambio(r.deltaKg, unidad),
+          sube: r.deltaKg !== null && r.deltaKg > 0.001,
+          baja: r.deltaKg !== null && r.deltaKg < -0.001,
+        };
+      }
+    }
+    this.vistaCargas = vistas;
+  }
+
+  private esTablaNoLista(error: unknown): boolean {
+    const codigo = String((error as { code?: string } | null)?.code ?? '');
+    return CODIGOS_TABLA_NO_LISTA.has(codigo);
   }
 
   openExerciseVideo(exercise: Ejercicio) {
@@ -536,50 +743,6 @@ export class PanelComponent implements OnInit, OnDestroy {
       this.cargarPlanPaciente();
     });
     this.planChannels.push(channel as unknown as RealtimeChannel);
-  }
-
-  // ==========================================
-  // MÉTODOS DE TÉCNICA
-  // ==========================================
-  onVideoSelected(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (file) {
-      if (file.size > 50 * 1024 * 1024) {
-        this.tecnicaMessage =
-          'El video excede el límite de 50MB. Por favor comprime o recorta tu clip.';
-        this.videoFile = null;
-        return;
-      }
-      if (!file.type.startsWith('video/')) {
-        this.tecnicaMessage = 'Formato inválido. Sube un archivo de video (MP4, MOV).';
-        this.videoFile = null;
-        return;
-      }
-      this.videoFile = file;
-      this.tecnicaMessage = '';
-    }
-  }
-
-  async subirVideoTecnica() {
-    if (!this.pacienteId || !this.videoFile || !this.ejercicioTecnica.trim()) {
-      this.tecnicaMessage = 'Selecciona un video y especifica el ejercicio.';
-      return;
-    }
-
-    this.isUploadingVideo = true;
-    this.tecnicaMessage = '';
-
-    try {
-      this.tecnicaMessage = 'Video subido correctamente. Tu coach lo revisará pronto.';
-      this.videoFile = null;
-      this.ejercicioTecnica = '';
-      this.notaTecnica = '';
-    } catch (error) {
-      this.tecnicaMessage = 'Error al subir el video. Intenta nuevamente.';
-    } finally {
-      this.isUploadingVideo = false;
-      this.cdr.detectChanges();
-    }
   }
 
   // ==========================================

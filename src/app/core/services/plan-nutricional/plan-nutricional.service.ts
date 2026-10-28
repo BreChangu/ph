@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { PlanNutricional, Comida } from '../../models/plan.models';
 import { AuthService } from '../../supabase/auth';
+import { hoyISO } from '../../../features/panel/progreso/progreso.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -215,7 +216,7 @@ export class PlanNutricionalService {
   
   // Guardar que el paciente cumplió con una comida específica hoy
   async registrarCumplimientoComida(pacienteId: string, comidaIndex: number): Promise<void> {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = hoyISO();
 
     try {
       const { data: existente } = await this.supabase
@@ -248,7 +249,7 @@ export class PlanNutricionalService {
 
   // Obtener los índices de las comidas que el paciente ya cumplió hoy
   async obtenerCumplimientoDeHoy(pacienteId: string): Promise<number[]> {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = hoyISO();
     try {
       const { data, error } = await this.supabase
         .from('cumplimiento_comidas')

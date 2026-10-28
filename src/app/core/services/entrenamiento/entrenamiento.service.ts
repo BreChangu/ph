@@ -1,6 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { AuthService } from '../../supabase/auth';
+import {
+  FilaCarga,
+  Unidad,
+  claveEjercicio,
+  hoyISO,
+} from '../../../features/panel/progreso/progreso.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -115,6 +121,61 @@ export class EntrenamientoService {
         if (errorEjs) throw errorEjs;
       }
     }
+  }
+
+  // ==========================================
+  // REGISTRO DE CARGAS DEL PACIENTE
+  // ==========================================
+  /** Historial reciente de pesos del paciente, del más nuevo al más viejo. */
+  async getHistorialCargas(pacienteId: string): Promise<FilaCarga[]> {
+    const { data, error } = await this.withTimeout(
+      this.supabase
+        .from('registros_carga')
+        .select('ejercicio, ejercicio_clave, fecha, peso_kg, unidad_captura')
+        .eq('id_perfil', pacienteId)
+        .order('fecha', { ascending: false })
+        .limit(1000),
+      'La consulta de tus cargas tardo demasiado.'
+    );
+
+    if (error) throw error;
+    return (data ?? []) as FilaCarga[];
+  }
+
+  /** Guarda (o corrige) el peso de hoy para un ejercicio. */
+  async guardarCarga(pacienteId: string, ejercicio: string, pesoKg: number, unidad: Unidad): Promise<void> {
+    const { error } = await this.withTimeout(
+      this.supabase.from('registros_carga').upsert(
+        {
+          id_perfil: pacienteId,
+          // ejercicio_clave no se envía: es una columna generada en la base de datos.
+          ejercicio: ejercicio.trim(),
+          fecha: hoyISO(),
+          peso_kg: Math.round(pesoKg * 1000) / 1000,
+          unidad_captura: unidad,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id_perfil,ejercicio_clave,fecha' }
+      ),
+      'El guardado de la carga tardo demasiado.'
+    );
+
+    if (error) throw error;
+  }
+
+  /** Borra el peso de hoy de un ejercicio (cuando el paciente vacía el campo). */
+  async borrarCargaDeHoy(pacienteId: string, ejercicio: string): Promise<void> {
+    const { error } = await this.withTimeout(
+      this.supabase
+        .from('registros_carga')
+        .delete()
+        .eq('id_perfil', pacienteId)
+        .eq('ejercicio_clave', claveEjercicio(ejercicio))
+        .eq('fecha', hoyISO()),
+      'El borrado de la carga tardo demasiado.'
+    );
+
+    if (error) throw error;
   }
 
   // ==========================================

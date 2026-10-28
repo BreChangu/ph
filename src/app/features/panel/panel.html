@@ -13,8 +13,8 @@
     <button type="button" [class.active]="activeSection === 'training'" (click)="setSection('training')">
       Entrenamiento
     </button>
-    <button type="button" [class.active]="activeSection === 'tecnica'" (click)="setSection('tecnica')">
-      Técnica
+    <button type="button" [class.active]="activeSection === 'progreso'" (click)="setSection('progreso')">
+      Progreso
     </button>
     <button type="button" [class.active]="activeSection === 'measurements'" (click)="setSection('measurements')">
       Medidas
@@ -193,6 +193,15 @@
               </div>
             </header>
 
+            <div class="load-toolbar" *ngIf="cargasDisponibles">
+              <span>Ver cargas en:</span>
+              <div class="load-unit-toggle" role="group" aria-label="Unidad de peso">
+                <button type="button" [class.active]="unidadCarga === 'kg'" [attr.aria-pressed]="unidadCarga === 'kg'" (click)="cambiarUnidadCarga('kg')">kg</button>
+                <button type="button" [class.active]="unidadCarga === 'lb'" [attr.aria-pressed]="unidadCarga === 'lb'" (click)="cambiarUnidadCarga('lb')">lb</button>
+              </div>
+            </div>
+            <p class="load-message" *ngIf="cargaMensaje" role="alert">{{ cargaMensaje }}</p>
+
             <div class="exercise-table">
               <div class="exercise-row exercise-head">
                 <span>#</span><span>Ejercicio</span><span>Series</span><span>Reps</span><span>Video</span><span>Carga</span>
@@ -204,9 +213,42 @@
                 <span>{{ ej.reps }}</span>
                 <button type="button" class="exercise-video-trigger" *ngIf="ej.video_url" (click)="openExerciseVideo(ej)">Ver video</button>
                 <span class="exercise-video-empty" *ngIf="!ej.video_url">Sin video</span>
-                <span class="exercise-load" [class.is-empty]="!ej.carga_objetivo">{{ ej.carga_objetivo || 'Por definir' }}</span>
+                <div class="exercise-load-cell">
+                  <span class="exercise-load" [class.is-empty]="!ej.carga_objetivo">{{ ej.carga_objetivo || 'Por definir' }}</span>
+                  <ng-container *ngIf="cargasDisponibles && vistaCargas[claveDe(ej)] as vc">
+                    <label class="load-input" [class.is-pending]="cargaPendiente(ej)" [class.is-saved]="!cargaPendiente(ej) && estadoCargas[claveDe(ej)] === 'guardado'" [class.is-error]="estadoCargas[claveDe(ej)] === 'error'">
+                      <input type="text" inputmode="decimal" autocomplete="off"
+                             [value]="valorCampoCarga(ej)" [placeholder]="vc.placeholder"
+                             [disabled]="guardandoSesion"
+                             [attr.aria-label]="'Peso que usaste hoy en ' + ej.ejercicio + ', en ' + unidadCarga"
+                             (input)="actualizarBorradorCarga(ej, $event)" (keydown.enter)="registrarSesion(diaActivo)">
+                      <span>{{ unidadCarga }}</span>
+                    </label>
+                    <small class="load-pending" *ngIf="cargaPendiente(ej)">Sin registrar</small>
+                    <small class="load-last" *ngIf="vc.ultima">{{ vc.ultima }}</small>
+                    <small class="load-last" *ngIf="!vc.ultima && !vc.valorHoy">Primer registro</small>
+                    <small class="load-change" *ngIf="vc.cambio" [class.is-up]="vc.sube" [class.is-down]="vc.baja">
+                      {{ vc.sube ? '▲' : vc.baja ? '▼' : '' }} {{ vc.cambio }}{{ vc.cambio === '=' ? ' sin cambio' : ' ' + unidadCarga }}
+                    </small>
+                  </ng-container>
+                </div>
               </div>
             </div>
+
+            <footer class="session-register" *ngIf="cargasDisponibles">
+              <p class="session-register-status" [class.is-done]="sesionMensaje.startsWith('Sesión registrada')" role="status">
+                {{ sesionMensaje
+                   || (hayCargasPendientes(diaActivo)
+                         ? 'Tienes pesos sin registrar.'
+                         : sesionRegistradaHoy(diaActivo)
+                           ? 'Ya registraste esta sesión hoy. Puedes corregir un peso y volver a registrar.'
+                           : 'Escribe el peso que usaste en cada ejercicio y registra tu sesión al terminar.') }}
+              </p>
+              <button type="button" class="btn-primary compact" (click)="registrarSesion(diaActivo)"
+                      [disabled]="guardandoSesion || !hayCargasPendientes(diaActivo)">
+                {{ guardandoSesion ? 'Guardando…' : 'Registrar sesión' }}
+              </button>
+            </footer>
           </article>
         </div>
       </ng-container>
@@ -261,60 +303,12 @@
       </section>
     </div>
 
-    <!-- SECCIÓN DE REVISIÓN DE TÉCNICA -->
-    <section class="panel-section" *ngIf="activeSection === 'tecnica'">
-      <header class="section-title">
-        <h1>Revisión de Progreso</h1>
-        <p>Sube clips cortos de tus series pesadas para recibir correcciones posturales y biomecánicas.</p>
-      </header>
-
-      <div class="measurements-workspace">
-        <article class="measurement-card">
-          <h2 class="card-header-dark">Nuevo Análisis</h2>
-          <div class="card-body-padded">
-            <div class="input-group">
-              <label>Ejercicio a revisar</label>
-              <input type="text" [(ngModel)]="ejercicioTecnica" placeholder="Ej. Sentadilla libre, Press de banca">
-            </div>
-            <div class="input-group" style="margin-top: 1.5rem;">
-              <label>Archivo de Video (Máx 50MB)</label>
-              <label class="video-dropzone" [class.has-file]="videoFile">
-                <span *ngIf="!videoFile">Seleccionar o arrastrar video</span>
-                <span *ngIf="videoFile">{{ videoFile.name }}</span>
-                <input type="file" accept="video/mp4,video/quicktime" (change)="onVideoSelected($event)" style="display: none;">
-              </label>
-            </div>
-            <div class="input-group" style="margin-top: 1.5rem;">
-              <label>Notas adicionales (opcional)</label>
-              <textarea [(ngModel)]="notaTecnica" rows="3" placeholder="Ej. Sentí una molestia en la zona lumbar al subir."></textarea>
-            </div>
-            <div class="action-footer" style="margin-top: 2rem;">
-              <button class="btn-primary w-100" (click)="subirVideoTecnica()" [disabled]="isUploadingVideo || !videoFile || !ejercicioTecnica">
-                {{ isUploadingVideo ? 'Procesando video...' : 'Enviar para revisión' }}
-              </button>
-              <p class="form-message" *ngIf="tecnicaMessage">{{ tecnicaMessage }}</p>
-            </div>
-          </div>
-        </article>
-
-        <article class="measurement-guide-panel">
-          <header>
-            <span class="panel-eyebrow">Historial</span>
-            <h2>Feedback del Coach</h2>
-          </header>
-          <div class="feedback-list">
-            <div class="feedback-item" *ngFor="let item of historialVideos">
-              <div class="feedback-header">
-                <strong>{{ item.ejercicio }}</strong>
-                <span class="status-badge" [class.reviewed]="item.estado === 'Revisado'">{{ item.estado }}</span>
-              </div>
-              <small class="feedback-date">{{ item.fecha }}</small>
-              <p class="feedback-text" *ngIf="item.feedback">{{ item.feedback }}</p>
-              <p class="feedback-text empty" *ngIf="!item.feedback">Esperando revisión...</p>
-            </div>
-          </div>
-        </article>
-      </div>
+    <!-- SECCIÓN DE REVISIÓN DE PROGRESO -->
+    <section class="panel-section" *ngIf="activeSection === 'progreso'">
+      <app-progreso-semanal
+        [pacienteId]="pacienteId"
+        [comidasPorDia]="planPaciente?.comidas?.length ?? 0"
+        [diasRutina]="entrenamientoSemanal.length" />
     </section>
 
     <!-- SECCIÓN DE MEDIDAS -->
