@@ -2,7 +2,7 @@
   "name": "Pablo Herrera",
   "short_name": "Pablo Herrera",
   "start_url": "/",
-  "display": "browser",
+  "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
