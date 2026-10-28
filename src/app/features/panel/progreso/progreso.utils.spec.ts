@@ -192,8 +192,11 @@ describe('cargas por ejercicio', () => {
 });
 
 describe('captura de carga', () => {
-  it('claveEjercicio ignora mayúsculas y espacios extra', () => {
-    expect(claveEjercicio('  Remo   con Barra ')).toBe('remo con barra');
+  it('claveEjercicio coincide con lower(btrim(ejercicio)) de la base de datos', () => {
+    expect(claveEjercicio('  Remo con Barra ')).toBe('remo con barra');
+    expect(claveEjercicio('LOI')).toBe('loi');
+    // btrim no toca los espacios internos
+    expect(claveEjercicio('Remo  con barra')).toBe('remo  con barra');
   });
 
   it('leerPeso acepta punto o coma y rechaza lo demás', () => {

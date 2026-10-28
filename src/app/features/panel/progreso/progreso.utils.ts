@@ -190,9 +190,12 @@ export function guardarUnidadPreferida(unidad: Unidad): void {
 // Captura de carga en Entrenamiento
 // ---------------------------------------------------------------------
 
-/** Clave con la que se agrupa un ejercicio aunque cambien mayúsculas o espacios. */
+/**
+ * Clave con la que se agrupa un ejercicio aunque cambien mayúsculas o espacios en las orillas.
+ * Debe dar lo mismo que la columna generada en Supabase: lower(btrim(ejercicio)).
+ */
 export function claveEjercicio(nombre: string): string {
-  return nombre.trim().replace(/\s+/g, ' ').toLowerCase();
+  return nombre.replace(/^ +| +$/g, '').toLowerCase();
 }
 
 export interface ResumenCarga {
