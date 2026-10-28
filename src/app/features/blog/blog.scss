@@ -15,6 +15,10 @@
 .blog-page-container {
   max-width: 90rem;
   margin: 0 auto;
+  // Espacio a los lados y antes del footer (antes solo existía en celular).
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-bottom: 10rem;
 }
 
 // ==========================================
@@ -25,8 +29,8 @@
   margin-bottom: 6rem;
 
   .page-title {
-    font-family: $font-h2; // Archivo Black
-    font-size: clamp(3rem, 5vw, 4.5rem);
+    font-family: $font-h1; // Archicoco: portada
+    font-size: $text-display;
     text-transform: uppercase;
     letter-spacing: 0.1rem;
     margin-bottom: 1.5rem;
@@ -35,7 +39,7 @@
 
   .page-subtitle {
     font-family: $font-main;
-    font-size: clamp(1.4rem, 2vw, 1.8rem);
+    font-size: $text-lg;
     color: $brand-gray;
     max-width: 60rem;
     margin: 0 auto;
@@ -50,7 +54,7 @@
   align-items: center;
   gap: 1rem;
   font-family: $font-main;
-  font-size: 1.2rem;
+  font-size: $text-xs;
   color: $brand-gray;
   text-transform: uppercase;
   letter-spacing: 0.1rem;
@@ -100,7 +104,7 @@
       color: $brand-white;
       padding: 0.6rem 1.5rem;
       font-family: $font-h2;
-      font-size: 1.1rem;
+      font-size: $text-xs;
       text-transform: uppercase;
       letter-spacing: 0.2rem;
     }
@@ -113,19 +117,37 @@
     align-items: flex-start;
 
     .featured-title {
-      font-family: $font-h1; // Archicoco
-      font-size: clamp(2.4rem, 4vw, 3.8rem);
-      line-height: 1.2;
-      margin-bottom: 2rem;
+      font-family: $font-h2; // Archivo Black, igual que las tarjetas del grid
+      font-size: $text-2xl;
+      line-height: 1.15;
+      margin: 0 0 2rem;
       text-wrap: balance;
     }
 
     .featured-excerpt {
-      font-size: 1.6rem;
-      color: rgba($brand-white, 0.8);
+      font-size: $text-base;
+      color: rgba($brand-white, 0.75);
       line-height: 1.7;
-      margin-bottom: 3rem;
-      max-width: 70rem;
+      margin: 0 0 3rem;
+      max-width: 60rem;
+      // Un resumen largo no debe empujar el botón fuera de la tarjeta.
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+      overflow: hidden;
+    }
+
+    // En el destacado el botón es la acción principal: rojo sólido.
+    .btn-read-more {
+      background-color: $brand-red;
+      border-color: $brand-red;
+
+      &:hover {
+        background-color: $brand-white;
+        border-color: $brand-white;
+        color: $brand-black;
+      }
     }
   }
 }
@@ -171,22 +193,33 @@
       color: $brand-white;
       padding: 0.4rem 1rem;
       font-family: $font-h2;
-      font-size: 1rem;
+      font-size: $text-xs;
       border-left: 2px solid $brand-red;
       text-transform: uppercase;
     }
   }
 
+  // El texto llena la tarjeta para que "Leer más" quede al fondo y los
+  // botones de una misma fila se alineen aunque los títulos midan distinto.
+  .card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    .btn-text-only { margin-top: auto; }
+  }
+
   .card-title {
     font-family: $font-h2;
-    font-size: 2.2rem;
+    font-size: $text-xl;
     line-height: 1.3;
     margin-bottom: 1.5rem;
     transition: color 0.3s ease;
   }
 
   .card-excerpt {
-    font-size: 1.5rem;
+    font-size: $text-sm;
     color: rgba($brand-white, 0.7);
     line-height: 1.6;
     margin-bottom: 2rem;
@@ -208,7 +241,7 @@
   border: 1px solid $brand-white;
   padding: 1.2rem 3rem;
   font-family: $font-h2;
-  font-size: 1.2rem;
+  font-size: $text-xs;
   text-transform: uppercase;
   letter-spacing: 0.2rem;
   cursor: pointer;
@@ -225,7 +258,7 @@
   border: none;
   color: $brand-white;
   font-family: $font-h2;
-  font-size: 1.1rem;
+  font-size: $text-xs;
   text-transform: uppercase;
   letter-spacing: 0.2rem;
   padding: 0;
@@ -263,16 +296,20 @@
   // El Hero se vuelve horizontal
   .featured-card {
     flex-direction: row;
-    height: 45rem; // Altura fija para escritorio
+    // Altura mínima (no fija): si el título es largo, la tarjeta crece
+    // en lugar de recortar la fecha y el botón.
+    min-height: 42rem;
 
     .featured-image-wrapper {
-      width: 40%; // Toma más de la mitad
-      height: 100%;
+      width: 50%;
+      height: auto;
+      flex-shrink: 0;
     }
 
     .featured-content {
-      width: 45%;
-      padding: 6rem 5rem;
+      flex: 1;
+      min-width: 0;
+      padding: 5rem;
       justify-content: center;
     }
   }
